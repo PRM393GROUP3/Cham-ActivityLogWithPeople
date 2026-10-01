@@ -1,0 +1,50 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "cham-backend",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-15",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	// Local dev (`wrangler dev`) emulates every binding below with Miniflare,
+	// persisted in .wrangler/state — no Cloudflare account needed.
+	// `npm run deploy` uses the real resources whose ids are below.
+	// Don't add `"remote": true` — that makes `wrangler dev` read/write production data.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "cham-db",
+			"database_id": "872733b4-0720-4d7e-ab32-621b5f48e35c",
+			"migrations_dir": "migrations"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "CACHE",
+			"id": "c3571c8d27e947a58f2da20ef6fcd067"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "TODO_ROOM",
+				"class_name": "TodoRoom"
+			}
+		]
+	},
+	// Free plan only supports SQLite-backed Durable Objects.
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"TodoRoom"
+			]
+		}
+	],
+	"vars": {
+		"CORS_ORIGIN": "*"
+	}
+}
