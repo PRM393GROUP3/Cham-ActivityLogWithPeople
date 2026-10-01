@@ -17,6 +17,11 @@ class Env {
 
   static String get apiBaseUrl {
     final uri = Uri.parse(_apiBaseUrl);
+    if (!uri.hasScheme || uri.host.isEmpty) {
+      throw StateError(
+        'API_BASE_URL must be an absolute URL like https://api.example.com, got "$_apiBaseUrl"',
+      );
+    }
     // The Android emulator reaches the host machine's localhost via 10.0.2.2.
     if (!kIsWeb &&
         defaultTargetPlatform == TargetPlatform.android &&

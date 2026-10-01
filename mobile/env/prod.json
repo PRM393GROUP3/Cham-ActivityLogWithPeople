@@ -1,4 +1,4 @@
 {
   "APP_ENV": "prod",
-  "API_BASE_URL": "cham-api.sm-ai.online"
+  "API_BASE_URL": "https://cham-api.sm-ai.online"
 }
