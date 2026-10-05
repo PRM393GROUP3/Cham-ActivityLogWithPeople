@@ -24,3 +24,17 @@ export const register = async (displayName = "User"): Promise<TestUser> => {
 
 export const befriend = (a: TestUser, b: TestUser) =>
   api("/friends", { method: "POST", token: a.token, body: JSON.stringify({ inviteCode: b.inviteCode }) });
+
+export const share = (
+  owner: TestUser,
+  id: string,
+  body: { targetIds?: string[] | null; occurredAt?: string; emoji?: string; name?: string } = {},
+) =>
+  api(`/shares/${id}`, {
+    method: "PUT",
+    token: owner.token,
+    body: JSON.stringify({ emoji: "☕", name: "Cà phê", occurredAt: "2026-10-01T08:30:00.000Z", ...body }),
+  });
+
+export const feedIds = async (viewer: TestUser) =>
+  (await json<{ id: string }[]>(await api("/feed", { token: viewer.token }))).map((s) => s.id);

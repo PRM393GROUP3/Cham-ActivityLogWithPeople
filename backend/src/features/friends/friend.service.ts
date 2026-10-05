@@ -35,6 +35,7 @@ export class FriendService {
     return { friend: toDto((await this.repo.find(userId, other.id))!), created: true };
   }
 
+  /** Unfriending revokes both sides' access to each other's shares (see FriendRepository.remove). */
   async remove(userId: string, friendId: string): Promise<void> {
     if (!(await this.repo.remove(userId, friendId))) throw new NotFoundError("Friend", friendId);
     this.notify([userId, friendId], { type: "friends.changed" });
