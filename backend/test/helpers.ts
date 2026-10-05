@@ -21,3 +21,6 @@ export const register = async (displayName = "User"): Promise<TestUser> => {
   const { user, token } = await json<{ user: { id: string; inviteCode: string }; token: string }>(res);
   return { id: user.id, inviteCode: user.inviteCode, token, displayName };
 };
+
+export const befriend = (a: TestUser, b: TestUser) =>
+  api("/friends", { method: "POST", token: a.token, body: JSON.stringify({ inviteCode: b.inviteCode }) });

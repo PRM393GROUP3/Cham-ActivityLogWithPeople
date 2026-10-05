@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const createdAt = integer("created_at", { mode: "timestamp_ms" })
   .notNull()
@@ -18,3 +18,18 @@ export const users = sqliteTable("users", {
   createdAt,
   updatedAt,
 });
+
+/** Friendship is mutual and stored as two rows (a→b and b→a) so lookups only need `user_id`. */
+export const friendships = sqliteTable(
+  "friendships",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    friendId: text("friend_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt,
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.friendId] })],
+);
