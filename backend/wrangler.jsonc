@@ -21,12 +21,6 @@
 			"migrations_dir": "migrations"
 		}
 	],
-	"kv_namespaces": [
-		{
-			"binding": "CACHE",
-			"id": "c3571c8d27e947a58f2da20ef6fcd067"
-		}
-	],
 	"durable_objects": {
 		"bindings": [
 			{
