@@ -3,10 +3,14 @@ For PRM393
 
 | Thư mục    | Stack                                                                                           |
 | ---------- | ----------------------------------------------------------------------------------------------- |
-| `backend/` | Cloudflare Workers + Hono, D1 + Drizzle ORM, KV (cache), Durable Objects (WebSocket) |
+| `backend/` | Cloudflare Workers + Hono, D1 + Drizzle ORM, Durable Objects (WebSocket)              |
 | `mobile/`  | Flutter (Android + Web), Riverpod, Dio, web_socket_channel                                       |
 
-Cả backend và mobile đều tổ chức theo **feature** (`features/<tên>/...`). Feature hiện có: **todos**.
+Cả backend và mobile đều tổ chức theo **feature** (`features/<tên>/...`). Nghiệp vụ: [`docs/requirement-v1.md`](docs/requirement-v1.md).
+
+- **Backend** chỉ lo phần xã hội: tài khoản ẩn danh, bạn bè (QR), chia sẻ sự kiện, reaction. Nhật ký cá nhân
+  **không** lên server (DAT-01) — nó nằm ở local trên máy.
+- **Mobile** hiện vẫn là feature mẫu `todos`, chưa chuyển sang API mới (xem mục 7).
 
 ---
 
@@ -22,7 +26,7 @@ Cả backend và mobile đều tổ chức theo **feature** (`features/<tên>/..
 
 Kiểm tra: `flutter doctor` phải có ✓ ở **Android toolchain** và **Chrome**.
 
-> Không cần tài khoản Cloudflare để dev: `wrangler dev` giả lập D1, KV, Durable Object ngay trên máy
+> Không cần tài khoản Cloudflare để dev: `wrangler dev` giả lập D1, Durable Object ngay trên máy
 > (dữ liệu lưu ở `backend/.wrangler/state`).
 
 ---
@@ -68,7 +72,7 @@ flutter run -d emulator-5554 --dart-define-from-file=env/dev.json
 |                   | **dev** (local)                                   | **prod** (Cloudflare thật)                              |
 | ----------------- | ------------------------------------------------- | ------------------------------------------------------- |
 | Backend chạy ở    | máy của bạn – `npm run dev` → `http://localhost:8787` | Cloudflare – `npm run deploy` → `https://cham-backend.<subdomain>.workers.dev` |
-| D1 / KV / Durable Object | **giả lập**, dữ liệu ở `backend/.wrangler/state` | resource thật trên Cloudflare (id trong `wrangler.jsonc`) |
+| D1 / Durable Object | **giả lập**, dữ liệu ở `backend/.wrangler/state` | resource thật trên Cloudflare (id trong `wrangler.jsonc`) |
 | Secret            | `backend/.dev.vars`                               | `npx wrangler secret put <TÊN>`                         |
 | Migration DB      | `npm run db:migrate:local`                        | `npm run db:migrate:remote`                             |
 | File env của app  | `mobile/env/dev.json`                             | `mobile/env/prod.json`                                  |
@@ -114,9 +118,9 @@ Có thể kết hợp tuỳ ý — vd. app chạy debug trên emulator nhưng d�
 
 ```bash
 # dev
-npx wrangler d1 execute cham-db --local  --command "SELECT * FROM todos"
+npx wrangler d1 execute cham-db --local  --command "SELECT * FROM users"
 # prod
-npx wrangler d1 execute cham-db --remote --command "SELECT * FROM todos"
+npx wrangler d1 execute cham-db --remote --command "SELECT * FROM users"
 npx wrangler tail            # log realtime của Worker trên Cloudflare
 ```
 
@@ -131,7 +135,7 @@ npx wrangler tail            # log realtime của Worker trên Cloudflare
 | Biến thường (vd. `CORS_ORIGIN`)        | `"vars"` trong `backend/wrangler.jsonc`      | ✅      |
 | Secret khi dev local                   | `backend/.dev.vars` (copy từ `.dev.vars.example`) | ❌  |
 | Secret production                      | `npx wrangler secret put <TÊN>`              | ❌      |
-| Bindings (D1, KV, Durable Object)      | `backend/wrangler.jsonc`                     | ✅      |
+| Bindings (D1, Durable Object)          | `backend/wrangler.jsonc`                     | ✅      |
 
 Sau khi thêm/sửa biến hoặc binding: `npm run cf-typegen` để cập nhật type `Env`. Trong code đọc bằng `c.env.<TÊN>`.
 
@@ -158,23 +162,24 @@ Thêm biến mới: thêm key vào **tất cả** file `env/*.json` + khai báo 
 ### Tổng quan
 
 ```
-┌──────────────────────┐   HTTP (REST)    ┌─────────────────── Cloudflare Worker (Hono) ───────────────────┐
-│  Flutter app         │ ───────────────▶ │  route → service → repository ──▶ D1 (SQLite, Drizzle ORM)       │
-│  (Android / Web)     │                  │              │                                                  │
-│                      │                  │              ├──▶ KV (cache danh sách, xoá khi có thay đổi)      │
-│                      │   WebSocket      │              │                                                  │
-│                      │ ◀═══════════════ │              └──▶ Durable Object TodoRoom ── broadcast sự kiện   │
-└──────────────────────┘                  │                   tới mọi client đang kết nối                    │
-                                          └─────────────────────────────────────────────────────────────────┘
+┌──────────────────────┐  HTTP (REST)     ┌─────────────────── Cloudflare Worker (Hono) ───────────────────┐
+│  Flutter app         │  Bearer token    │  auth → route → service → repository ──▶ D1 (SQLite, Drizzle)   │
+│  - nhật ký: local    │ ───────────────▶ │                     │                                           │
+│  - hàng chờ chia sẻ  │                  │                     └──▶ Durable Object UserRoom (1 / user)      │
+│                      │   WebSocket      │                          gửi "hint" tới các máy của user đó      │
+│                      │ ◀═══════════════ │                          (share.upserted, friends.changed, …)    │
+└──────────────────────┘                  └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Luồng một thay đổi (vd. tick hoàn thành todo):**
+**Luồng chia sẻ một bản ghi:**
 
-1. App cập nhật UI ngay (optimistic) rồi gọi `PATCH /api/todos/:id`.
-2. Worker: validate input (zod) → `TodoService.update` → `TodoRepository` ghi D1.
-3. Service xoá cache `todos:list` trong KV và gửi sự kiện `todo.updated` tới Durable Object `TodoRoom`.
-4. `TodoRoom` broadcast sự kiện qua WebSocket tới **mọi** client → các máy khác tự cập nhật danh sách.
-5. Nếu request lỗi, app hoàn tác thay đổi optimistic và hiện SnackBar.
+1. Người dùng chạm nút → app lưu bản ghi **vào local** trước (BR-02). Nếu loại sự kiện có bật chia sẻ, thêm bản ghi vào hàng chờ.
+2. Khi có mạng, app gọi `PUT /api/shares/:id` với `:id` = id của bản ghi local. PUT là idempotent → gửi lại bao nhiêu lần cũng chỉ có một bản (AC-05).
+3. Worker ghi D1 rồi gửi hint `share.upserted` tới `UserRoom` của từng người được xem.
+4. App của người nhận nhận hint → gọi `GET /api/feed/:id` để lấy dữ liệu (quyền xem luôn được kiểm tra ở REST, WebSocket không mang dữ liệu).
+
+**Quyền xem** một share (một chỗ duy nhất: `ShareRepository.visibleTo`): chủ sở hữu, hoặc người **đang là bạn** của chủ
+**và** (share là broadcast **hoặc** người đó nằm trong `share_targets`). Vì kiểm tra bạn bè lúc đọc, huỷ kết bạn thu hồi quyền ngay.
 
 ### Backend (`backend/`)
 
@@ -185,33 +190,37 @@ backend/
 │   ├── app.ts                    # tạo Hono app, gắn middleware (logger, CORS), mount routes, error handler
 │   │
 │   ├── features/                 # mỗi feature một thư mục, tự chứa đủ các tầng
-│   │   └── todos/
-│   │       ├── todo.route.ts       # HTTP layer: định nghĩa endpoint, validate, gọi service
-│   │       ├── todo.service.ts     # business logic: cache, phát sự kiện realtime, map Row → DTO
-│   │       ├── todo.repository.ts  # truy cập DB bằng Drizzle (không chứa logic nghiệp vụ)
-│   │       ├── todo.schema.ts      # zod schema cho input (body, params)
-│   │       └── todo.types.ts       # kiểu dữ liệu: Row, DTO, Event
+│   │   ├── users/                  # đăng ký ẩn danh, /me, mã mời (QR), WebSocket của user
+│   │   ├── friends/                # kết bạn bằng mã mời, danh sách, huỷ kết bạn (thu hồi quyền 2 chiều)
+│   │   └── shares/                 # share của mình (/shares) + feed của bạn bè và reaction (/feed)
+│   │       ├── share.route.ts        # HTTP layer: định nghĩa endpoint, validate, gọi service
+│   │       ├── share.service.ts      # business logic: quyền, phát sự kiện realtime, map Row → DTO
+│   │       ├── share.repository.ts   # truy cập DB bằng Drizzle, gồm luật quyền xem (visibleTo)
+│   │       ├── share.schema.ts       # zod schema cho input (body, params, query)
+│   │       └── share.types.ts        # kiểu dữ liệu: Row, DTO
 │   │
 │   ├── middleware/
+│   │   ├── auth.middleware.ts    # requireAuth: Bearer token → c.var.user
 │   │   └── error.middleware.ts   # chuẩn hoá mọi lỗi thành { error: { code, message, details? } }
 │   │
 │   ├── infrastructure/           # adapter tới dịch vụ Cloudflare, dùng chung cho mọi feature
 │   │   ├── db/
 │   │   │   ├── schema.ts           # định nghĩa bảng (Drizzle) — nguồn để sinh migration
 │   │   │   └── client.ts           # createDb(env.DB)
-│   │   ├── cache/kv-cache.ts       # get/set/delete JSON trên KV
 │   │   └── realtime/
-│   │       ├── todo-room.do.ts     # Durable Object giữ các WebSocket (Hibernation API) và broadcast
-│   │       └── realtime.ts         # lấy stub của room
+│   │       ├── user-room.do.ts     # Durable Object (1 / user) giữ các WebSocket (Hibernation API)
+│   │       └── realtime.ts         # RealtimeEvent + createNotifier(): gửi hint tới room của các user
 │   │
 │   └── shared/
-│       ├── errors/app-error.ts   # AppError, NotFoundError, ValidationError
-│       ├── types/env.ts          # AppEnv: kiểu Bindings + Variables cho Hono
-│       └── utils/validator.ts    # wrapper zValidator → ném ValidationError
+│       ├── errors/app-error.ts   # AppError, NotFound, Validation, Unauthorized, Forbidden, Conflict
+│       ├── types/env.ts          # AppEnv: kiểu Bindings + Variables (user) cho Hono
+│       └── utils/
+│           ├── validator.ts        # wrapper zValidator → ném ValidationError
+│           └── crypto.ts           # sinh token / hash token / mã mời
 │
 ├── migrations/                   # SQL do drizzle-kit sinh ra, áp dụng bằng wrangler d1 migrations
 ├── test/                         # Vitest chạy trong Workers runtime (@cloudflare/vitest-pool-workers)
-├── wrangler.jsonc                # cấu hình Worker + bindings DB, CACHE, TODO_ROOM
+├── wrangler.jsonc                # cấu hình Worker + bindings DB, USER_ROOM
 ├── worker-configuration.d.ts     # type Env sinh bởi `wrangler types` (không sửa tay)
 └── drizzle.config.ts
 ```
@@ -221,7 +230,8 @@ backend/
 - `route` chỉ lo HTTP: đọc input đã validate, gọi service, trả JSON. Không truy cập DB trực tiếp.
 - `service` chứa logic nghiệp vụ, ném `AppError` khi lỗi (vd. `NotFoundError`). Không biết gì về Hono/HTTP.
 - `repository` chỉ đọc/ghi DB qua Drizzle.
-- Các dependency được khởi tạo trong middleware của route và gắn vào context (`c.var.todoService`).
+- Service được tạo trong file route bằng một hàm nhỏ (vd. `shareService(c)`); user hiện tại lấy từ `c.var.user`.
+- Mọi route trừ `/api/auth/register` và `/health` đều qua `requireAuth`.
 
 **Format response:** thành công `{ "data": ... }` · lỗi `{ "error": { "code", "message", "details"? } }`
 
@@ -267,8 +277,8 @@ mobile/
 **Backend**
 1. Thêm bảng trong `src/infrastructure/db/schema.ts`.
 2. `npm run db:generate` → sinh file trong `migrations/`, rồi `npm run db:migrate:local`.
-3. Tạo `src/features/notes/` với `note.schema.ts`, `note.types.ts`, `note.repository.ts`, `note.service.ts`, `note.route.ts` (copy cấu trúc từ `todos`).
-4. Khai báo service trong `Variables` ở `src/shared/types/env.ts`.
+3. Tạo `src/features/notes/` với `note.schema.ts`, `note.types.ts`, `note.repository.ts`, `note.service.ts`, `note.route.ts` (copy cấu trúc từ `friends`).
+4. Trong route: `.use(requireAuth)` nếu cần đăng nhập, tạo service bằng hàm `noteService(c)`.
 5. Mount route trong `src/app.ts`: `app.route("/api/notes", noteRoutes)`.
 6. Viết test trong `test/`.
 
@@ -278,25 +288,68 @@ mobile/
 
 ---
 
-## 7. API hiện có
+## 7. API
 
-| Method | Path             | Body                                         | Response                |
-| ------ | ---------------- | -------------------------------------------- | ----------------------- |
-| GET    | `/health`        |                                              | `{ status: "ok" }`      |
-| GET    | `/api/todos`     |                                              | `{ data: Todo[] }`      |
-| GET    | `/api/todos/:id` |                                              | `{ data: Todo }` / 404  |
-| POST   | `/api/todos`     | `{ "title": string }` (1–200 ký tự)          | `201 { data: Todo }`    |
-| PATCH  | `/api/todos/:id` | `{ "title"?: string, "completed"?: bool }`   | `{ data: Todo }` / 404  |
-| DELETE | `/api/todos/:id` |                                              | `204` / 404             |
-| WS     | `/api/todos/ws`  | gửi `"ping"` → nhận `"pong"`                 | sự kiện JSON (bên dưới) |
+Mọi endpoint (trừ `/health`, `/api/auth/register`) cần header `Authorization: Bearer <token>`.
+Thời gian dạng ISO 8601. Danh sách phân trang: `?limit=1..50` (mặc định 20) và `?cursor=<nextCursor của trang trước>`,
+response `{ data: [...], nextCursor: string | null }`.
 
-`Todo = { id, title, completed, createdAt, updatedAt }` (thời gian dạng ISO 8601).
+**Tài khoản** — ẩn danh theo máy: lần đầu mở app gọi `register`, lưu `token` vào secure storage. Mất token = mất tài khoản.
 
-Sự kiện WebSocket:
+| Method | Path                     | Body                         | Response                                   |
+| ------ | ------------------------ | ---------------------------- | ------------------------------------------ |
+| GET    | `/health`                |                              | `{ status: "ok" }`                         |
+| POST   | `/api/auth/register`     | `{ displayName }` (1–50)     | `201 { data: { user: Me, token } }`        |
+| GET    | `/api/me`                |                              | `{ data: Me }`                             |
+| PATCH  | `/api/me`                | `{ displayName }`            | `{ data: Me }`                             |
+| POST   | `/api/me/invite-code`    |                              | `{ data: Me }` — mã mới, QR cũ hết hiệu lực |
+| WS     | `/api/me/ws?token=…`     | gửi `"ping"` → nhận `"pong"` | sự kiện JSON (bên dưới)                    |
+
+**Bạn bè** — QR của mỗi người chứa `inviteCode` (không chứa nhật ký). Quét là thành bạn hai chiều ngay.
+
+| Method | Path                     | Body                 | Response                                                      |
+| ------ | ------------------------ | -------------------- | ------------------------------------------------------------- |
+| GET    | `/api/friends`           |                      | `{ data: Friend[] }`                                          |
+| POST   | `/api/friends`           | `{ inviteCode }`     | `201` mới / `200` đã là bạn · `404 INVITE_NOT_FOUND` · `400 CANNOT_FRIEND_SELF` |
+| DELETE | `/api/friends/:userId`   |                      | `204` — thu hồi quyền xem share **2 chiều**, xoá target và reaction giữa 2 người |
+
+**Share của mình** — `:id` là **id bản ghi local** (UUID).
+
+| Method | Path               | Body                                                    | Response                          |
+| ------ | ------------------ | ------------------------------------------------------- | --------------------------------- |
+| GET    | `/api/shares`      |                                                         | `{ data: OwnShare[], nextCursor }` |
+| GET    | `/api/shares/:id`  |                                                         | `{ data: OwnShare }` / 404        |
+| PUT    | `/api/shares/:id`  | `{ emoji, name, occurredAt, targetIds? }`               | `201` tạo mới / `200` cập nhật · `409` id thuộc người khác |
+| DELETE | `/api/shares/:id`  |                                                         | `204` (kể cả khi không tồn tại → retry an toàn) |
+
+`targetIds` bỏ trống / `null` / `[]` → **broadcast** cho mọi bạn bè. Có phần tử → **multicast**, chỉ những người đó
+(id không phải bạn bè bị bỏ qua, và *không* quay về broadcast). PUT lại với `targetIds` khác = đổi quyền xem;
+reaction của người mất quyền bị xoá.
+
+**Feed của bạn bè**
+
+| Method | Path                      | Body                                    | Response                           |
+| ------ | ------------------------- | --------------------------------------- | ---------------------------------- |
+| GET    | `/api/feed`               |                                         | `{ data: FeedShare[], nextCursor }` — mới nhất trước theo `occurredAt` |
+| GET    | `/api/feed/:id`           |                                         | `{ data: FeedShare }` / 404 nếu không có quyền |
+| PUT    | `/api/feed/:id/reaction`  | `{ emoji }` ∈ `❤️ 😂 😮 😢 👍 🔥`        | `{ data: FeedShare }` — mỗi người 1 reaction, gửi lại = đổi |
+| DELETE | `/api/feed/:id/reaction`  |                                         | `204`                              |
+
+```ts
+Me        = { id, displayName, inviteCode, createdAt }
+Friend    = { id, displayName, since }
+OwnShare  = { id, emoji, name, occurredAt, audience: "all" | "targets", targetIds: string[],
+              reactions: { user: { id, displayName }, emoji, reactedAt }[], createdAt, updatedAt }
+FeedShare = { id, owner: { id, displayName }, emoji, name, occurredAt,
+              reactions: { emoji, count }[], myReaction: string | null }
+```
+
+Sự kiện WebSocket chỉ là **gợi ý để tải lại**, không chứa dữ liệu:
 ```json
-{ "type": "todo.created", "todo": { ... } }
-{ "type": "todo.updated", "todo": { ... } }
-{ "type": "todo.deleted", "id": "..." }
+{ "type": "share.upserted", "id": "..." }      // có share mới/đổi mà bạn xem được → GET /api/feed/:id
+{ "type": "share.removed", "id": "..." }       // share bị xoá hoặc bạn mất quyền → bỏ khỏi feed
+{ "type": "reaction.changed", "shareId": "..." } // có người react share của bạn → GET /api/shares/:id
+{ "type": "friends.changed" }                  // danh sách bạn đổi → tải lại bạn bè + feed
 ```
 
 ---
@@ -333,7 +386,6 @@ Xoá sạch dữ liệu local: `rm -rf .wrangler/state && npm run db:migrate:loc
 cd backend
 npx wrangler login
 npx wrangler d1 create cham-db            # dán database_id vào wrangler.jsonc
-npx wrangler kv namespace create CACHE    # dán id vào wrangler.jsonc
 npm run db:migrate:remote
 npm run deploy                            # in ra URL *.workers.dev
 ```
@@ -388,4 +440,3 @@ tạo nhánh → code → mở PR ──▶ CI chạy check ──▶ review + m
 - Durable Object dùng SQLite backend (`new_sqlite_classes`) — bắt buộc với gói Free.
 - Không dùng R2 vì Cloudflare yêu cầu liên kết thẻ thanh toán để bật R2. Khi cần lưu file, cân nhắc lại.
 - Không thêm `"remote": true` vào binding trong `wrangler.jsonc` — nó làm `npm run dev` đọc/ghi thẳng dữ liệu production.
-- KV có tính nhất quán sau (eventually consistent, tới ~60s giữa các vùng) nên chỉ dùng làm cache, D1 là nguồn dữ liệu chính.
