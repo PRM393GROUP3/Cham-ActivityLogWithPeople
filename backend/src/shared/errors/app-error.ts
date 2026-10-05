@@ -23,3 +23,9 @@ export class ValidationError extends AppError {
     super(400, "VALIDATION_ERROR", "Request validation failed", details);
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = "Missing or invalid access token") {
+    super(401, "UNAUTHORIZED", message);
+  }
+}

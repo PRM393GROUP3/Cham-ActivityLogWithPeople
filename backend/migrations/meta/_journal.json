@@ -15,6 +15,13 @@
       "when": 1791211213239,
       "tag": "0001_drop_todos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791211280767,
+      "tag": "0002_users",
+      "breakpoints": true
     }
   ]
 }

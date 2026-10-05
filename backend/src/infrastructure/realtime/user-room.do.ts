@@ -1,10 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
 
 /**
- * One instance per "room" fans out todo change events to every connected
- * WebSocket. Uses the Hibernation API so idle connections don't bill duration.
+ * One instance per user, holding that user's open WebSockets (one per device/tab).
+ * Uses the Hibernation API so idle connections don't bill duration.
  */
-export class TodoRoom extends DurableObject<Env> {
+export class UserRoom extends DurableObject<Env> {
   override async fetch(request: Request): Promise<Response> {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected WebSocket upgrade", { status: 426 });
@@ -15,7 +15,7 @@ export class TodoRoom extends DurableObject<Env> {
   }
 
   /** Called via RPC from the Worker after a successful write. */
-  broadcast(message: unknown): void {
+  send(message: unknown): void {
     const payload = JSON.stringify(message);
     for (const ws of this.ctx.getWebSockets()) {
       try {
