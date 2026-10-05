@@ -21,17 +21,12 @@
 			"migrations_dir": "migrations"
 		}
 	],
-	"kv_namespaces": [
-		{
-			"binding": "CACHE",
-			"id": "c3571c8d27e947a58f2da20ef6fcd067"
-		}
-	],
 	"durable_objects": {
 		"bindings": [
 			{
-				"name": "TODO_ROOM",
-				"class_name": "TodoRoom"
+				// One instance per user (idFromName(userId)) holding their open WebSockets.
+				"name": "USER_ROOM",
+				"class_name": "UserRoom"
 			}
 		]
 	},
@@ -41,6 +36,15 @@
 			"tag": "v1",
 			"new_sqlite_classes": [
 				"TodoRoom"
+			]
+		},
+		{
+			"tag": "v2",
+			"renamed_classes": [
+				{
+					"from": "TodoRoom",
+					"to": "UserRoom"
+				}
 			]
 		}
 	],

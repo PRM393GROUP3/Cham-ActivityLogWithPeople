@@ -23,3 +23,21 @@ export class ValidationError extends AppError {
     super(400, "VALIDATION_ERROR", "Request validation failed", details);
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = "Missing or invalid access token") {
+    super(401, "UNAUTHORIZED", message);
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message: string) {
+    super(403, "FORBIDDEN", message);
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message: string) {
+    super(409, "CONFLICT", message);
+  }
+}
