@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/config/env.dart';
-import 'features/todos/presentation/pages/todo_page.dart';
+import 'features/social/presentation/pages/feed_page.dart';
 
 class ChamApp extends StatelessWidget {
   const ChamApp({super.key});
@@ -11,16 +11,18 @@ class ChamApp extends StatelessWidget {
     return MaterialApp(
       title: 'Cham',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.teal),
-      darkTheme: ThemeData(colorSchemeSeed: Colors.teal, brightness: Brightness.dark),
+      theme: ThemeData(
+        colorSchemeSeed: const Color(0xFF5B58EB),
+        useMaterial3: true,
+      ),
       builder: (context, child) => Env.isProd
-          ? child!
+          ? (child ?? const SizedBox.shrink())
           : Banner(
               message: Env.appEnv.name.toUpperCase(),
               location: BannerLocation.topEnd,
-              child: child,
+              child: child ?? const SizedBox.shrink(),
             ),
-      home: const TodoPage(),
+      home: const FeedPage(),
     );
   }
 }
