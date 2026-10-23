@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/config/env.dart';
-import 'features/todos/presentation/pages/todo_page.dart';
+import 'features/widgets/presentation/pages/widget_selection_page.dart';
 
 class ChamApp extends StatelessWidget {
   const ChamApp({super.key});
@@ -9,10 +9,17 @@ class ChamApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Cham',
+      title: 'Chăm',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.teal),
-      darkTheme: ThemeData(colorSchemeSeed: Colors.teal, brightness: Brightness.dark),
+      theme: ThemeData(
+        colorSchemeSeed: const Color(0xFFB53216),
+        scaffoldBackgroundColor: const Color(0xFFFAF7F2),
+        fontFamily: null,
+      ),
+      darkTheme: ThemeData(
+        colorSchemeSeed: const Color(0xFFB53216),
+        brightness: Brightness.dark,
+      ),
       builder: (context, child) => Env.isProd
           ? child!
           : Banner(
@@ -20,7 +27,7 @@ class ChamApp extends StatelessWidget {
               location: BannerLocation.topEnd,
               child: child,
             ),
-      home: const TodoPage(),
+      home: const WidgetSelectionPage(),
     );
   }
 }
