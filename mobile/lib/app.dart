@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/config/env.dart';
-import 'features/widgets/presentation/pages/widget_selection_page.dart';
+import 'features/activity_dial/presentation/pages/activity_dial_page.dart';
 
 class ChamApp extends StatelessWidget {
   const ChamApp({super.key});
@@ -9,16 +9,13 @@ class ChamApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Chăm',
+      title: 'Chấm',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorSchemeSeed: const Color(0xFFB53216),
-        scaffoldBackgroundColor: const Color(0xFFFAF7F2),
+        useMaterial3: true,
+        colorSchemeSeed: const Color(0xFFFF694A),
+        scaffoldBackgroundColor: const Color(0xFFFAF6F0),
         fontFamily: null,
-      ),
-      darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFFB53216),
-        brightness: Brightness.dark,
       ),
       builder: (context, child) => Env.isProd
           ? child!
@@ -27,7 +24,8 @@ class ChamApp extends StatelessWidget {
               location: BannerLocation.topEnd,
               child: child,
             ),
-      home: const WidgetSelectionPage(),
+      home: const ActivityDialPage(),
     );
   }
 }
+
