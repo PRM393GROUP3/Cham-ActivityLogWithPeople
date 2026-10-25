@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/config/env.dart';
 import 'features/activity_dial/presentation/pages/activity_dial_page.dart';
+import 'features/friends/presentation/pages/add_qr_page.dart';
 import 'features/social/presentation/pages/feed_page.dart';
 import 'features/widgets/presentation/pages/widget_selection_page.dart';
 
@@ -31,6 +32,7 @@ class ChamApp extends StatelessWidget {
         '/': (context) => const ActivityDialPage(),
         '/feed': (context) => const FeedPage(),
         '/widgets': (context) => const WidgetSelectionPage(),
+        '/add-qr': (context) => const AddQrPage(),
       },
     );
   }
