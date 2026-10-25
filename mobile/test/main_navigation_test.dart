@@ -63,3 +63,4 @@ void main() {
     expect(find.text('Mã QR của tôi'), findsOneWidget);
   });
 }
+
