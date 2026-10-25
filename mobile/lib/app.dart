@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/config/env.dart';
-import 'features/widgets/presentation/pages/widget_selection_page.dart';
+import 'features/friends/presentation/pages/add_qr_page.dart';
 
 class ChamApp extends StatelessWidget {
   const ChamApp({super.key});
@@ -27,7 +27,7 @@ class ChamApp extends StatelessWidget {
               location: BannerLocation.topEnd,
               child: child,
             ),
-      home: const WidgetSelectionPage(),
+      home: const AddQrPage(),
     );
   }
 }
