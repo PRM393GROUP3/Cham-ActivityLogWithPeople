@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../activity_dial_controller.dart';
 
-/// Modal BottomSheet hiển thị thông tin tài khoản ẩn danh, mã mời QR kết bạn (SOC-01)
+/// Bottom Sheet hiển thị hồ sơ người dùng ẩn danh và mã mời kết bạn (SOC-01)
 class UserProfileSheet extends StatelessWidget {
   const UserProfileSheet({
     super.key,
@@ -11,67 +12,89 @@ class UserProfileSheet extends StatelessWidget {
 
   final ActivityDialState state;
 
+  void _copyInviteCode(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: state.inviteCode));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Đã sao chép mã mời: ${state.inviteCode}'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: const BoxDecoration(
         color: Color(0xFFFFFDF9),
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
+          // Drag handle bar
           Container(
-            width: 40,
-            height: 4,
+            width: 44,
+            height: 4.5,
             decoration: BoxDecoration(
-              color: const Color(0xFFD6CBC0),
-              borderRadius: BorderRadius.circular(2),
+              color: const Color(0xFFE2D6C8),
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
           const SizedBox(height: 20),
 
-          // Avatar
+          // Avatar lớn với viền cam
           Container(
-            width: 68,
-            height: 68,
-            decoration: const BoxDecoration(
-              color: Color(0xFFA93B24),
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: const Color(0xFFA93B24),
+              border: Border.all(color: const Color(0xFFFF6F52), width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFA93B24).withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.person_rounded,
-              size: 40,
+              size: 42,
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 12),
+
+          // Tên hiển thị người dùng
           Text(
             state.displayName,
             style: const TextStyle(
-              fontSize: 19,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               color: Color(0xFF261E1A),
             ),
           ),
-          const Text(
-            'Tài khoản ẩn danh trên thiết bị (DAT-01)',
-            style: TextStyle(
+          const SizedBox(height: 2),
+          Text(
+            'Mã mời: ${state.inviteCode}',
+            style: const TextStyle(
               fontSize: 12,
-              color: Color(0xFF887B70),
+              color: Color(0xFF8A7C72),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
-          // Khung mã mời kết bạn (QR Code placeholder & text)
+          // Thẻ mã QR & mã mời kết bạn (SOC-01)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F1E7),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFEADBCE)),
+              color: const Color(0xFFF7F2EC),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE8DFD4)),
             ),
             child: Column(
               children: [
@@ -92,20 +115,34 @@ class UserProfileSheet extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2D6C8)),
-                  ),
-                  child: Text(
-                    state.inviteCode,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2.0,
-                      color: Color(0xFFA93B24),
+                GestureDetector(
+                  onTap: () => _copyInviteCode(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2D6C8)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          state.inviteCode,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2.0,
+                            color: Color(0xFFA93B24),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.copy_rounded,
+                          size: 16,
+                          color: Color(0xFF8A7C72),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -118,24 +155,52 @@ class UserProfileSheet extends StatelessWidget {
                     color: Color(0xFF7E7268),
                   ),
                 ),
+                const SizedBox(height: 14),
+
+                // Button mở màn hình Add QR & Quét QR
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFB53216),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/add-qr');
+                    },
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                    label: const Text(
+                      'Mở Mã QR & Quét Bạn Bè',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
           // Nút đóng
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2E241F),
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF2E241F),
+                side: const BorderSide(color: Color(0xFFD6C9BA)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 13),
               ),
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Đóng',
-                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
             ),
           ),

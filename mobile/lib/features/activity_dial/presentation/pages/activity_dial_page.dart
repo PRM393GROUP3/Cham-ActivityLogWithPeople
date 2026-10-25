@@ -11,7 +11,12 @@ import '../widgets/user_profile_sheet.dart';
 /// Màn hình chính "Chấm — Màn hình chính (Wear OS Dial)"
 /// Chuẩn xác 100% theo bản thiết kế mẫu và yêu cầu SRS (LOG-01 → 05, DAT-01).
 class ActivityDialPage extends ConsumerWidget {
-  const ActivityDialPage({super.key});
+  const ActivityDialPage({
+    super.key,
+    this.onNavigateToFeed,
+  });
+
+  final VoidCallback? onNavigateToFeed;
 
   void _showFeedbackToast(BuildContext context, ActivityEventType type) {
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -93,17 +98,44 @@ class ActivityDialPage extends ConsumerWidget {
           'Cài đặt ứng dụng',
           style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF261E1A)),
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('• Chế độ: Local-First (DAT-01)'),
-            SizedBox(height: 6),
-            Text('• Ghi 1-chạm: Bật tức thì (LOG-03)'),
-            SizedBox(height: 6),
-            Text('• Đồng bộ Server: Tự động khi có mạng (DAT-03)'),
-            SizedBox(height: 6),
-            Text('• Phiên bản: v1.0.0 (PRM393)'),
+            const Text('• Chế độ: Local-First (DAT-01)'),
+            const SizedBox(height: 6),
+            const Text('• Ghi 1-chạm: Bật tức thì (LOG-03)'),
+            const SizedBox(height: 6),
+            const Text('• Đồng bộ Server: Tự động khi có mạng (DAT-03)'),
+            const SizedBox(height: 6),
+            const Text('• Phiên bản: v1.0.0 (PRM393)'),
+            const SizedBox(height: 14),
+            const Divider(color: Color(0xFFE5DDD5)),
+            const SizedBox(height: 6),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2ECE4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.widgets_outlined, color: Color(0xFFB53216)),
+              ),
+              title: const Text(
+                'Cài đặt Widget (2×2, 4×2)',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+              ),
+              subtitle: const Text(
+                'Tùy chỉnh widget trên màn hình chính',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF7E7268)),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/widgets');
+              },
+            ),
           ],
         ),
         actions: [
@@ -134,7 +166,7 @@ class ActivityDialPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- 1. APP HEADER: "Chấm •" + Settings & Avatar ---
+                    // --- 1. APP HEADER: "Chấm •" + Feed, Settings & Avatar ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -169,12 +201,28 @@ class ActivityDialPage extends ConsumerWidget {
                         // Action icons góc phải
                         Row(
                           children: [
+                            // Nút Bảng tin bạn bè (Feed)
+                            IconButton(
+                              onPressed: () {
+                                if (onNavigateToFeed != null) {
+                                  onNavigateToFeed!();
+                                } else {
+                                  Navigator.pushNamed(context, '/feed');
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.people_alt_outlined,
+                                color: Color(0xFF4A403A),
+                                size: 23,
+                              ),
+                              tooltip: 'Bảng tin bạn bè (Vuốt sang trái)',
+                            ),
                             IconButton(
                               onPressed: () => _openSettingsDialog(context),
                               icon: const Icon(
                                 Icons.settings_outlined,
                                 color: Color(0xFF4A403A),
-                                size: 24,
+                                size: 23,
                               ),
                               tooltip: 'Cài đặt',
                             ),
