@@ -3,7 +3,7 @@ import type { Database } from "../../infrastructure/db/client";
 import { friendships, reactions, shares, users } from "../../infrastructure/db/schema";
 import type { Cursor, NewShareRow, ShareRow } from "./share.types";
 
-export type FeedRow = { share: ShareRow; owner: { id: string; displayName: string } };
+export type FeedRow = { share: ShareRow; owner: { id: string; displayName: string; avatarEmoji: string | null } };
 
 export class ShareRepository {
   constructor(private readonly db: Database) {}
@@ -60,7 +60,7 @@ export class ShareRepository {
 
   private feedQuery() {
     return this.db
-      .select({ share: shares, owner: { id: users.id, displayName: users.displayName } })
+      .select({ share: shares, owner: { id: users.id, displayName: users.displayName, avatarEmoji: users.avatarEmoji } })
       .from(shares)
       .innerJoin(users, eq(users.id, shares.ownerId));
   }
@@ -118,7 +118,7 @@ export class ShareRepository {
         shareId: reactions.shareId,
         emoji: reactions.emoji,
         reactedAt: reactions.updatedAt,
-        user: { id: users.id, displayName: users.displayName },
+        user: { id: users.id, displayName: users.displayName, avatarEmoji: users.avatarEmoji },
       })
       .from(reactions)
       .innerJoin(users, eq(users.id, reactions.userId))

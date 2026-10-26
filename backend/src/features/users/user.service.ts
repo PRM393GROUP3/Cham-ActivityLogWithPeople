@@ -7,6 +7,7 @@ import type { MeDto, UserRow } from "./user.types";
 const toMeDto = (row: UserRow): MeDto => ({
   id: row.id,
   displayName: row.displayName,
+  avatarEmoji: row.avatarEmoji,
   inviteCode: row.inviteCode,
   createdAt: row.createdAt.toISOString(),
 });
@@ -21,6 +22,7 @@ export class UserService {
     const row = await this.repo.create({
       id: crypto.randomUUID(),
       displayName: input.displayName,
+      avatarEmoji: input.avatarEmoji ?? null,
       tokenHash: await hashToken(token),
       inviteCode: generateInviteCode(),
       createdAt: now,
@@ -36,7 +38,10 @@ export class UserService {
   }
 
   async update(id: string, input: UpdateMeInput): Promise<MeDto> {
-    return this.save(id, { displayName: input.displayName });
+    return this.save(id, {
+      ...(input.displayName !== undefined && { displayName: input.displayName }),
+      ...(input.avatarEmoji !== undefined && { avatarEmoji: input.avatarEmoji }),
+    });
   }
 
   /** Invalidates the old QR: anyone holding the previous code can no longer add you. */

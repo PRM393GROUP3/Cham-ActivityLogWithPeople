@@ -1,6 +1,6 @@
 # SRS ứng dụng ghi nhật ký sinh hoạt
 
-Phiên bản 0.7  |  Ngày 26 tháng 10 năm 2026
+Phiên bản 0.10  |  Ngày 26 tháng 10 năm 2026
 
 ## 1 Mục đích và phạm vi
 
@@ -37,11 +37,12 @@ Người dùng quản lý nhật ký của mình; bạn bè chỉ xem các bản
 
 | Mã | Yêu cầu chức năng |
 | --- | --- |
-| SOC-01 | Hiển thị QR cá nhân và cho phép quét QR của người khác để kết bạn. **Kết bạn trực tiếp**: quét QR hợp lệ là hai người trở thành bạn bè ngay, không cần người kia xác nhận. |
-| SOC-02 | Hiển thị danh sách bạn bè và cho phép xóa bạn bè khỏi danh sách. |
+| SOC-01 | Hiển thị **mã QR cá nhân chuẩn** (nội dung `CHAM:<mã mời 10 ký tự>`, chỉ chứa mã mời) và cho phép kết bạn bằng: quét QR bằng camera, quét QR từ ảnh (chọn từ thư viện trên Android, hoặc chọn file ảnh trên Web), hoặc nhập mã mời. Mã quét được không phải của Chấm hoặc là mã của chính mình → báo lỗi, không gọi server. **Kết bạn trực tiếp**: sau khi xác nhận, hai người trở thành bạn bè ngay, không cần người kia đồng ý. Người dùng được **đổi mã mời** (mã / QR cũ hết hiệu lực, bạn bè hiện có giữ nguyên) sao chép mã, hoặc **lưu ảnh mã QR** (kèm mã mời) về máy để gửi cho bạn bè. |
+| SOC-06 | Người dùng đặt **tên hiển thị** (1–50 ký tự) và **avatar là một emoji** (chọn từ gợi ý hoặc nhập emoji bất kỳ; có thể bỏ để hiện chữ cái đầu của tên) trong màn **Hồ sơ của bạn**. Bạn bè thấy tên và avatar này ở danh sách bạn bè, feed và reaction. Lưu lên server nên cần mạng. |
+| SOC-02 | Màn **Bạn bè** (từ hồ sơ hoặc màn QR) hiển thị danh sách bạn bè kèm ngày kết bạn và cho phép **huỷ kết bạn** sau khi xác nhận. Huỷ kết bạn: hai bên không còn thấy bản Công khai của nhau, reaction giữa hai người bị xoá. |
 | SOC-03 | Chia sẻ **theo từng bản ghi**, chỉ có 2 chế độ: **Private** (mặc định) và **Public** (tất cả bạn bè). Người dùng đổi chế độ trên bản ghi trong lịch sử. Không hỗ trợ chọn từng người nhận. |
 | SOC-04 | Chuyển bản ghi từ Public về Private, hoặc xóa bản ghi Public, phải **thu hồi** sự kiện chia sẻ: không bạn bè nào còn xem được, reaction trên đó bị xóa. |
-| SOC-05 | Người dùng xem các sự kiện Public của bạn bè và thả reaction. Bộ reaction giống Facebook: 👍 Thích, ❤️ Yêu thích, 🥰 Thương thương, 😆 Haha, 😮 Wow, 😢 Buồn, 😡 Phẫn nộ. Mỗi người tối đa **1 reaction** trên mỗi sự kiện, được đổi hoặc gỡ. |
+| SOC-05 | Feed gồm sự kiện Public của bạn bè **và của chính mình**, mới nhất trước. Người dùng thả reaction vào sự kiện của bạn bè; trên sự kiện của mình thì không tự thả được, nhưng xem được số đếm và **danh sách ai đã thả cảm xúc gì** (avatar, tên, emoji, thời gian). Bộ reaction giống Facebook: 👍 Thích, ❤️ Yêu thích, 🥰 Thương thương, 😆 Haha, 😮 Wow, 😢 Buồn, 😡 Phẫn nộ. Mỗi người tối đa **1 reaction** trên mỗi sự kiện, được đổi hoặc gỡ. |
 | WID-01 | Cho phép chọn các nút sự kiện đưa lên widget. Chạm nút trên widget tạo bản ghi Private với thời điểm hiện tại, theo cùng quy tắc ghi nhanh trong app. |
 | DAT-01 | Nhật ký cá nhân phải lưu local và dùng được offline. Chỉ bản ghi Public mới gửi online; không tự tải toàn bộ nhật ký lên máy chủ. |
 | DAT-02 | Thời gian hiển thị, lịch sử theo ngày và thống kê dùng **múi giờ Việt Nam (UTC+7)**. Máy chủ lưu thời điểm dạng ISO 8601 có offset. |
@@ -107,6 +108,12 @@ AC-08 — Lịch sử theo ngày và thống kê theo khung giờ tính theo mú
 AC-09 — Mở ghi chú của một bản ghi, viết nhiều dòng rồi quay lại: lịch sử hiện dòng đầu ghi chú; mở lại app vẫn còn. Bản ghi Công khai có ghi chú: bạn bè không thấy ghi chú.
 
 AC-10 — Trang Lịch sử & thống kê: chế độ Tuần bắt đầu Thứ Hai; một bản ghi lúc 23:30 Chủ Nhật giờ VN thuộc tuần đó, bản ghi 00:00 Thứ Hai thuộc tuần sau; số theo loại, theo ngày, theo giờ khớp danh sách bản ghi; xoá một bản ghi tại đây thì các số liệu cập nhật ngay.
+
+AC-11 — Quét bằng camera mã QR cá nhân của người khác → hộp xác nhận → kết bạn ngay; quét mã QR không phải của Chấm hoặc mã của chính mình → báo lỗi. Đổi mã mời → mã cũ không kết bạn được nữa. Huỷ kết bạn trong màn Bạn bè → người đó biến khỏi danh sách và feed.
+
+AC-12 — Đổi tên và chọn avatar emoji trong Hồ sơ → sau khi lưu, trang chủ, hồ sơ và màn QR hiện avatar mới; bạn bè thấy tên và avatar mới trong danh sách bạn bè và feed. Avatar không phải đúng một emoji (vd. chữ, nhiều emoji) bị từ chối. Bỏ avatar → hiện chữ cái đầu của tên.
+
+AC-13 — Chuyển một bản ghi sang Công khai → bản ghi xuất hiện trong feed của chính mình với nhãn "Bạn". Khi bạn bè thả cảm xúc, bài đó hiện số đếm và "N người đã thả cảm xúc · Xem"; mở ra thấy đúng người và emoji. Không thả được cảm xúc cho bài của mình.
 
 ## 9 Quyết định sản phẩm
 

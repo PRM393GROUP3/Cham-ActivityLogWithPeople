@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../activity_dial_controller.dart';
+import '../../../account/presentation/account_controller.dart';
+import '../../../account/presentation/widgets/user_avatar.dart';
 import '../../domain/activity_event_type.dart';
 import '../widgets/orbital_dial_widget.dart';
 import '../widgets/today_logs_sheet.dart';
@@ -177,6 +179,7 @@ class ActivityDialPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(activityDialControllerProvider);
+    final account = ref.watch(accountControllerProvider).value;
     final controller = ref.read(activityDialControllerProvider.notifier);
 
     return Scaffold(
@@ -266,19 +269,28 @@ class ActivityDialPage extends ConsumerWidget {
                             InkWell(
                               onTap: () => _openProfileSheet(context),
                               borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                width: 34,
-                                height: 34,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFA93B24),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.person_rounded,
-                                  size: 21,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              child: account?.avatarEmoji != null
+                                  ? Tooltip(
+                                      message: 'Hồ sơ',
+                                      child: UserAvatar(
+                                        name: account!.displayName,
+                                        emoji: account.avatarEmoji,
+                                        radius: 17,
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFA93B24),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.person_rounded,
+                                        size: 21,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                           ],
                         ),

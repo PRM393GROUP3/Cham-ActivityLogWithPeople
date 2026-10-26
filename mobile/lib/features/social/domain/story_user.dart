@@ -3,12 +3,12 @@ class StoryUser {
   const StoryUser({
     required this.id,
     required this.name,
-    this.avatarUrl,
+    this.avatarEmoji,
   });
 
   final String id;
   final String name;
 
-  /// Chưa có ảnh đại diện thì hiển thị chữ cái đầu của tên.
-  final String? avatarUrl;
+  /// Avatar emoji; chưa có thì hiển thị chữ cái đầu của tên.
+  final String? avatarEmoji;
 }

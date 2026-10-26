@@ -27,9 +27,10 @@ flowchart TD
     %% Flow 3: Kết nối bạn bè QR
     Home & Feed -->|Chạm Avatar Profile| ProfileModal[👤 Hồ Sơ Ẩn Danh]
     ProfileModal -->|Bấm 'Mở Mã QR & Quét'| QRPage[📱 Màn Hình QR & Quét Bạn Bè]
-    QRPage -->|Tab 1: Mã QR của tôi| MyQR[Xem mã QR cá nhân & Chia sẻ ảnh]
+    QRPage -->|Tab 1: Mã QR của tôi| MyQR[Xem mã QR cá nhân, sao chép / đổi mã mời]
     QRPage -->|Tab 2: Quét mã QR| Scanner[Quét mã bạn bè / Nhập mã thủ công]
     Scanner -->|Nhập mã hợp lệ + xác nhận| AddFriendSuccess[Kết bạn ngay — SnackBar "Đã kết bạn với …"]
+    QRPage -->|Nút 👥| FriendsList[👥 Danh sách bạn bè · Huỷ kết bạn]
     QRPage -->|Nút Back ←| ProfileModal
 
     %% Flow 4: Cài đặt Widget
@@ -67,6 +68,7 @@ flowchart TD
 | 2.1 | Tại màn hình chính, đặt ngón tay và vuốt từ phải sang trái (Swipe Left). | Màn hình trượt mượt mà sang `FeedPage` (Bảng tin hoạt động xã hội). | Đạt |
 | 2.2 | Quan sát thanh lọc trên đầu Bảng tin và chạm vào một người bạn (vd. `Minh Thư`). | Thanh lọc lấy từ danh sách bạn bè thật; bảng tin chỉ hiển thị bản ghi Công khai của người đó. | Đạt (test tự động) |
 | 2.3 | Chạm `❤️` trên thẻ hoạt động, rồi chạm `😆`, rồi chạm lại `😆`. | Lần 1 thả ❤️ (nền hồng `#FADCD9`, số đếm +1); lần 2 đổi sang 😆 (❤️ −1); lần 3 gỡ reaction. Mỗi người tối đa 1 reaction (AC-07). | Đạt (test tự động + API) |
+| 2.3c | Chuyển một bản ghi sang Công khai, bạn bè thả 🥰 / 😆 rồi mở feed. | Bài *"Bạn đã chấm …"* có số đếm và *"2 người đã thả cảm xúc · Xem"*; mở ra thấy đúng tên, avatar, emoji. Chạm emoji trên bài của mình không thả cảm xúc. | Đạt (test tự động + chạy thật trên Web với backend local) |
 | 2.3b | Thả reaction khi server từ chối (vd. mất mạng). | Reaction tự hoàn tác, hiện SnackBar báo lỗi. | Đạt (test tự động) |
 | 2.4 | Vuốt từ trái sang phải (Swipe Right) hoặc chạm nút `←` trên Header. | Trượt mượt mà quay trở lại màn hình chính `ActivityDialPage`. | Đạt |
 
@@ -79,11 +81,15 @@ flowchart TD
 | :---: | :--- | :--- | :---: |
 | 3.1 | Tại màn hình chính hoặc bảng tin, chạm vào icon Avatar tròn màu nâu đỏ. | Mở `UserProfileSheet` hiển thị tên và mã mời (10 ký tự); hiện *"Chưa có"* nếu chưa dùng tính năng xã hội lần nào. | Đạt |
 | 3.2 | Chạm vào nút **"Mở Mã QR & Quét Bạn Bè"**. | Điều hướng vào màn hình `AddQrPage` với tab mặc định là **"Mã QR của tôi"**. | Đạt |
-| 3.3 | Kiểm tra các thành phần trên thẻ QR. | Thấy tên, dòng `Mã mời: …` của tài khoản thật, hình QR dot-matrix kèm logo Chấm ở tâm, nút `Chia sẻ ảnh` và `Lưu vào máy`. Lần đầu mở khi mất mạng: thông báo cần mạng + nút **Thử lại**. | Đạt (test tự động) |
-| 3.4 | Chạm tab **"Quét mã QR"**. | Chuyển sang giao diện máy quét với khung nhắm góc bo tròn và tia laser quét chuyển động lên xuống. | Đạt |
-| 3.5 | Nhấn nút **"Bật đèn"**. | Nút đổi trạng thái thành **"Tắt đèn"** với màu nhấn cam sáng. | Đạt |
+| 3.3 | Kiểm tra các thành phần trên thẻ QR. | Thấy tên, dòng `Mã mời: …`, **QR chuẩn** chứa `CHAM:<mã>` (logo Chấm ở tâm), nút `Sao chép mã` và `Đổi mã mời`. Lần đầu mở khi mất mạng: thông báo cần mạng + nút **Thử lại**. | Đạt (test tự động; ảnh QR giải mã được bằng OpenCV) |
+| 3.4 | Chạm tab **"Quét mã QR"**, đưa QR của bạn bè vào khung. | Camera mở (xin quyền lần đầu), đọc được mã → hộp **"Kết bạn?"**. QR không phải của Chấm → *"Đây không phải mã QR kết bạn của Chấm."* | Chưa chạy trên thiết bị thật (logic giải mã có test tự động) |
+| 3.5 | Nhấn nút **"Bật đèn"**. | Đèn flash bật, nút đổi thành **"Tắt đèn"**. | Chưa chạy trên thiết bị thật |
 | 3.6 | Nhấn nút **"Nhập mã"**, gõ mã mời của một người khác và bấm **"Kết nối bạn bè"**. | Hộp thoại **"Kết bạn?"**; bấm **"Kết bạn"** → thành bạn ngay, SnackBar *"Đã kết bạn với …"*; feed hiện cả các bản Công khai cũ của người đó. Mã sai → SnackBar lỗi. | Đạt (test tự động + API) |
-| 3.7 | Bấm nút `←` ở góc trên bên trái. | Quay lại màn hình trước đó. | Đạt |
+| 3.6b | Bấm **"Lưu ảnh QR"**. | Web: tải file `cham-ma-moi-<mã>.png`; Android: ảnh vào album "Chấm". Ảnh quét ra đúng `CHAM:<mã>`. | Đạt (Web: tải và giải mã thật; Android: chưa chạy trên thiết bị) |
+| 3.6c | Tab **Quét mã QR** → **"Chọn ảnh"** → chọn ảnh có QR của bạn bè. | Đọc được mã → hộp **"Kết bạn?"** → kết bạn ngay. Ảnh không có QR → *"Không tìm thấy mã QR trong ảnh."* | Đạt (Web: chạy thật trên Chrome; test tự động gồm ảnh JPEG 4000px, đảo màu, chạy cả trong Chrome) |
+| 3.7 | Bấm **"Đổi mã mời"** → **Đổi mã**. | Mã và QR đổi sang mã mới; mã cũ không kết bạn được nữa. | Đạt (test tự động) |
+| 3.8 | Hồ sơ → **"Danh sách bạn bè"** → bấm 👤✕ trên một người → **Huỷ kết bạn**. | Người đó biến khỏi danh sách; hai bên không còn thấy bản Công khai của nhau. | Đạt (test tự động) |
+| 3.9 | Bấm nút `←` ở góc trên bên trái. | Quay lại màn hình trước đó. | Đạt |
 
 ---
 
@@ -97,6 +103,19 @@ flowchart TD
 | 4.3 | Chạm tab **"Nhỏ (2×2)"** và **"Vừa (4×2)"**. | Chuyển đổi mượt mà giữa bản xem trước widget 2x2 (chấm log nhanh 1 nút) và 4x2 (thống kê danh sách thói quen & chuỗi streak). | Đạt |
 | 4.4 | Chạm nút **"Thêm Widget"**. | Hiển thị bảng hướng dẫn từng bước ghim widget ra màn hình chính Android. | Đạt |
 | 4.5 | Bấm nút `←`. | Quay lại màn hình chính. | Đạt |
+
+---
+
+### Kịch Bản 8: Tên & Avatar (Profile Flow)
+* **Mục tiêu:** SOC-06, AC-12.
+
+| Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
+| :---: | :--- | :--- | :---: |
+| 8.1 | Hồ sơ → **"Sửa tên & avatar"**. | Mở **Hồ sơ của bạn**: tên hiện tại, lưới emoji, ô nhập emoji khác. | Đạt (test tự động + xem trên Web) |
+| 8.2 | Đổi tên, chọn 🦊, bấm **Lưu**. | *"Đã lưu hồ sơ"*; nút góc phải trang chủ và sheet hồ sơ hiện 🦊 và tên mới, còn sau khi tải lại. | Đạt (test tự động + xem trên Web) |
+| 8.3 | Nhập *"hi"* vào ô emoji rồi Lưu. | *"Avatar phải là đúng một emoji."*, không gửi lên server. | Đạt (test tự động) |
+| 8.4 | Bạn bè mở danh sách bạn bè / feed. | Thấy tên và avatar mới (bản ghi cũ của bạn trong feed cũng hiện avatar mới). | Đạt (test tự động + API) |
+| 8.5 | **"Bỏ avatar"** rồi Lưu. | Avatar về chữ cái đầu của tên. | Đạt (test tự động + API) |
 
 ---
 
@@ -168,10 +187,13 @@ flutter test
 | [`activity_dial_test.dart`](../mobile/test/activity_dial_test.dart) | 19 loại sự kiện trên 3 quỹ đạo; serialization bản ghi; bản ghi mới / bản cũ đều Riêng tư |
 | [`today_logs_sheet_test.dart`](../mobile/test/today_logs_sheet_test.dart) | Công tắc Riêng tư ⇄ Công khai, trạng thái gửi, nút Thử lại (NFR-03) |
 | [`sharing_test.dart`](../mobile/test/sharing_test.dart) | Hàng đợi gửi: gộp theo bản ghi, còn sau khi mở lại app, gửi lại khi có mạng, thu hồi khi xoá (DAT-03, BR-02, BR-03, AC-05) |
-| [`feed_test.dart`](../mobile/test/feed_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã |
+| [`feed_test.dart`](../mobile/test/feed_test.dart), [`own_posts_widget_test.dart`](../mobile/test/own_posts_widget_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã; bài của mình trong feed (gộp + sắp xếp, không tự thả, danh sách ai đã thả gì) |
 | [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
 | [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Loại sự kiện: 19 mặc định, thêm / sửa / xoá / kéo thả, xếp mọi loại lên 3 vòng theo thứ tự (`layoutDial`, `dialRingSizes`, tối đa 36), lịch sử cũ giữ nguyên, lưu bền; ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
 | [`stats_test.dart`](../mobile/test/stats_test.dart) | Kỳ Ngày / Tuần (từ Thứ Hai) / Tháng theo giờ VN, đếm theo loại / ngày / giờ, lần gần nhất, trang thống kê (chuyển kỳ, xoá cập nhật số liệu, kỳ trống) |
+| [`qr_friends_test.dart`](../mobile/test/qr_friends_test.dart) | `InviteQr` encode / decode, QR thật mức H, mã không phải Chấm / mã của mình bị chặn, đổi mã mời, lưu ảnh QR (PNG đúng tên file), danh sách bạn bè, huỷ kết bạn có xác nhận, offline |
+| [`qr_image_test.dart`](../mobile/test/qr_image_test.dart), [`qr_image_web_test.dart`](../mobile/test/qr_image_web_test.dart) | Đọc QR từ ảnh: QR của app, ảnh chụp JPEG lớn, QR đảo màu, ảnh không có QR; nút "Chọn ảnh". `qr_image_web_test` chạy được trong Chrome: `flutter test --platform chrome test/qr_image_web_test.dart` |
+| [`profile_test.dart`](../mobile/test/profile_test.dart) | Kiểm tra "đúng một emoji", lưu tên + avatar (tự đăng ký lần đầu, bỏ avatar), màn Hồ sơ (chọn / nhập emoji, lỗi, offline), avatar ở danh sách bạn bè |
 | [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
 | [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
 
@@ -181,7 +203,7 @@ Chạy riêng một tệp: `flutter test test/<tên_tệp>.dart`
 
 | Tệp kiểm thử | Phạm vi kiểm tra |
 | :--- | :--- |
-| [`users.test.ts`](../backend/test/users.test.ts) | Đăng ký ẩn danh và xác thực bằng token, từ chối token sai, tên trống |
+| [`users.test.ts`](../backend/test/users.test.ts) | Đăng ký ẩn danh và xác thực bằng token, từ chối token sai, tên trống; tên + avatar emoji (👩‍💻 👍🏽 🇻🇳 hợp lệ; chữ, nhiều emoji bị từ chối), avatar hiện ở bạn bè và feed |
 | [`friends.test.ts`](../backend/test/friends.test.ts) | Kết bạn trực tiếp bằng mã (idempotent, không phân biệt hoa thường), từ chối mã của mình / mã sai / mã đã đổi, huỷ kết bạn 2 chiều |
 | [`shares.test.ts`](../backend/test/shares.test.ts) | Công khai cho tất cả bạn bè, chặn chọn người nhận, gửi lại không trùng, thu hồi, bạn mới thấy bản cũ, phân trang, 7 reaction |
 

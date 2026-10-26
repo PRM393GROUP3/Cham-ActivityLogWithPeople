@@ -22,6 +22,23 @@ class FakeAccountApi implements AccountApi {
     if (!online) throw offline;
     return testAccount;
   }
+
+  String nextInviteCode = 'B3T8WQ2N6M';
+
+  final profileUpdates = <({String? displayName, String? avatarEmoji, bool clearAvatar})>[];
+
+  @override
+  Future<Profile> updateProfile({String? displayName, String? avatarEmoji, bool clearAvatar = false}) async {
+    if (!online) throw offline;
+    profileUpdates.add((displayName: displayName, avatarEmoji: avatarEmoji, clearAvatar: clearAvatar));
+    return (displayName: displayName ?? testAccount.displayName, avatarEmoji: clearAvatar ? null : avatarEmoji);
+  }
+
+  @override
+  Future<String> rotateInviteCode() async {
+    if (!online) throw offline;
+    return nextInviteCode;
+  }
 }
 
 class FakeShareApi implements ShareApi {
@@ -36,9 +53,15 @@ class FakeShareApi implements ShareApi {
 }
 
 class FakeFeedApi implements FeedApi {
-  FakeFeedApi(this.shares);
+  FakeFeedApi(this.shares, {this.own = const []});
 
   List<FeedShare> shares;
+
+  /// Phần tử dạng JSON của `GET /api/shares` (bài của chính mình).
+  List<Map<String, dynamic>> own;
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchOwn({int limit = 50}) async => own;
   bool failReact = false;
   final reacted = <(String, String?)>[];
 

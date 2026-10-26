@@ -264,9 +264,9 @@ mobile/
 │       │                     # tờ giấy ghi chú cho bản ghi, Cài đặt → Loại sự kiện (thêm/sửa/xoá/sắp xếp icon)
 │       ├── stats/            # Lịch sử & thống kê: Ngày / Tuần / Tháng, theo loại, theo ngày, theo giờ (giờ VN)
 │       ├── sharing/          # hàng đợi gửi (ShareOutbox) + ShareApi: PUT/DELETE /api/shares/:id
-│       ├── account/          # tài khoản ẩn danh, tự đăng ký ở lần đầu dùng tính năng xã hội
-│       ├── social/           # feed bạn bè từ API, 7 reaction
-│       ├── friends/          # mã QR (mã mời), quét / nhập mã → kết bạn ngay, danh sách bạn bè
+│       ├── account/          # tài khoản ẩn danh (tự đăng ký lần đầu dùng tính năng xã hội), Hồ sơ: tên + avatar emoji
+│       ├── social/           # feed: bài Công khai của bạn bè + của mình (xem ai đã thả gì), 7 reaction
+│       ├── friends/          # QR chuẩn `CHAM:<mã>`, quét camera / ảnh / nhập mã → kết bạn ngay, đổi mã, danh sách bạn bè + huỷ kết bạn
 │       └── widgets/          # chọn và xem trước widget màn hình chính
 │
 │       # mỗi feature chia: domain/ (model) · data/ (lưu trữ, gọi API) · presentation/ (controller, pages, widgets)
@@ -310,9 +310,9 @@ không cần tài khoản (DAT-01).
 | Method | Path                     | Body                         | Response                                   |
 | ------ | ------------------------ | ---------------------------- | ------------------------------------------ |
 | GET    | `/health`                |                              | `{ status: "ok" }`                         |
-| POST   | `/api/auth/register`     | `{ displayName }` (1–50)     | `201 { data: { user: Me, token } }`        |
+| POST   | `/api/auth/register`     | `{ displayName, avatarEmoji? }` | `201 { data: { user: Me, token } }`        |
 | GET    | `/api/me`                |                              | `{ data: Me }`                             |
-| PATCH  | `/api/me`                | `{ displayName }`            | `{ data: Me }`                             |
+| PATCH  | `/api/me`                | `{ displayName?, avatarEmoji? }` (ít nhất 1; `avatarEmoji: null` = bỏ) | `{ data: Me }`         |
 | POST   | `/api/me/invite-code`    |                              | `{ data: Me }` — mã mới, QR cũ hết hiệu lực |
 | WS     | `/api/me/ws?token=…`     | gửi `"ping"` → nhận `"pong"` | sự kiện JSON (bên dưới)                    |
 
@@ -346,11 +346,11 @@ Công khai = **tất cả bạn bè hiện tại** xem được; không có ch�
 | DELETE | `/api/feed/:id/reaction`  |                                         | `204`                              |
 
 ```ts
-Me        = { id, displayName, inviteCode, createdAt }
-Friend    = { id, displayName, since }
+Me        = { id, displayName, avatarEmoji, inviteCode, createdAt }   // avatarEmoji: đúng 1 emoji hoặc null
+Friend    = { id, displayName, avatarEmoji, since }
 OwnShare  = { id, emoji, name, occurredAt,
-              reactions: { user: { id, displayName }, emoji, reactedAt }[], createdAt, updatedAt }
-FeedShare = { id, owner: { id, displayName }, emoji, name, occurredAt,
+              reactions: { user: { id, displayName, avatarEmoji }, emoji, reactedAt }[], createdAt, updatedAt }
+FeedShare = { id, owner: { id, displayName, avatarEmoji }, emoji, name, occurredAt,
               reactions: { emoji, count }[], myReaction: string | null }
 ```
 

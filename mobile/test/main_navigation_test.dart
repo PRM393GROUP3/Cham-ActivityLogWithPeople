@@ -45,7 +45,7 @@ void main() {
         child: MaterialApp(
           routes: {
             '/widgets': (context) => const WidgetSelectionPage(),
-            '/add-qr': (context) => const AddQrPage(animateLaser: false),
+            '/add-qr': (context) => const AddQrPage(animateLaser: false, enableCamera: false),
           },
           home: const MainShellPage(),
         ),

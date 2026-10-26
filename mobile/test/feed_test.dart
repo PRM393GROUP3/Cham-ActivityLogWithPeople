@@ -99,4 +99,53 @@ void main() {
       expect((await container.read(friendsControllerProvider.future)).single.id, 'f-ABC123');
     });
   });
+
+  group('own Public posts in the feed (who reacted to me)', () {
+    Map<String, dynamic> ownJson({required String id, required String at, List<Map<String, dynamic>> reactions = const []}) => {
+          'id': id,
+          'emoji': '☕',
+          'name': 'Cà phê',
+          'occurredAt': at,
+          'reactions': reactions,
+          'createdAt': at,
+          'updatedAt': at,
+        };
+    Map<String, dynamic> reaction(String name, String emoji, {String? avatar}) => {
+          'user': {'id': 'id-$name', 'displayName': name, 'avatarEmoji': avatar},
+          'emoji': emoji,
+          'reactedAt': '2026-10-01T02:00:00.000Z',
+        };
+
+    test('FeedShare.fromOwnJson counts reactions and keeps who reacted', () {
+      final share = FeedShare.fromOwnJson(
+        ownJson(id: 'm1', at: '2026-10-01T01:00:00Z', reactions: [reaction('Thư', '🥰', avatar: '🦊'), reaction('An', '🥰'), reaction('Bình', '😆')]),
+        ownerId: 'me',
+        ownerName: 'Bạn',
+      );
+      expect(share.isMine, isTrue);
+      expect(share.reactionCounts, {'🥰': 2, '😆': 1});
+      expect(share.reactors.map((r) => (r.displayName, r.emoji, r.avatarEmoji)).first, ('Thư', '🥰', '🦊'));
+      expect(share.myReaction, isNull);
+    });
+
+    test('the feed mixes my posts with friends\' posts, newest first, and I cannot react to mine', () async {
+      final api = FakeFeedApi([sample()], own: [
+        ownJson(id: 'mine-new', at: '2026-10-01T03:00:00Z', reactions: [reaction('Thư', '❤️')]),
+        ownJson(id: 'mine-old', at: '2026-09-30T03:00:00Z'),
+      ]);
+      final c = ProviderContainer(overrides: [
+        feedApiProvider.overrideWithValue(api),
+        accountApiProvider.overrideWithValue(FakeAccountApi()),
+      ]);
+      addTearDown(c.dispose);
+
+      final feed = await c.read(feedControllerProvider.future);
+      expect(feed.map((s) => s.id), ['mine-new', 's1', 'mine-old']); // s1 lúc 01:00 ngày 1/10
+      expect(feed.first.isMine, isTrue);
+      expect(feed.first.ownerId, 'me');
+
+      await c.read(feedControllerProvider.notifier).toggleReaction('mine-new', '👍');
+      expect(api.reacted, isEmpty);
+    });
+  });
 }

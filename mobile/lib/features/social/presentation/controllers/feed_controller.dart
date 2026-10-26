@@ -4,7 +4,8 @@ import '../../../account/presentation/account_controller.dart';
 import '../../data/feed_api.dart';
 import '../../domain/feed_share.dart';
 
-/// Feed các bản ghi Public của bạn bè (SOC-05). Tự tạo tài khoản ẩn danh ở lần đầu (cần mạng).
+/// Feed: bản ghi Công khai của bạn bè (SOC-05) lẫn của chính mình — để xem bạn bè đã thả cảm xúc
+/// gì — mới nhất trước. Tự tạo tài khoản ẩn danh ở lần đầu (cần mạng).
 final feedControllerProvider = AsyncNotifierProvider<FeedController, List<FeedShare>>(FeedController.new);
 
 class FeedController extends AsyncNotifier<List<FeedShare>> {
@@ -12,8 +13,13 @@ class FeedController extends AsyncNotifier<List<FeedShare>> {
 
   @override
   Future<List<FeedShare>> build() async {
-    await ref.read(accountControllerProvider.notifier).ensure();
-    return _api.fetch();
+    final me = await ref.read(accountControllerProvider.notifier).ensure();
+    final (friends, own) = await (_api.fetch(), _api.fetchOwn()).wait;
+    return [
+      ...friends,
+      for (final json in own)
+        FeedShare.fromOwnJson(json, ownerId: me.id, ownerName: me.displayName, ownerAvatarEmoji: me.avatarEmoji),
+    ]..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
   }
 
   Future<void> refresh() async {
@@ -25,7 +31,7 @@ class FeedController extends AsyncNotifier<List<FeedShare>> {
   Future<void> toggleReaction(String shareId, String emoji) async {
     final current = state.value;
     final share = current?.where((s) => s.id == shareId).firstOrNull;
-    if (current == null || share == null) return;
+    if (current == null || share == null || share.isMine) return;
 
     final next = share.myReaction == emoji ? null : emoji;
     _replace(share.withMyReaction(next));

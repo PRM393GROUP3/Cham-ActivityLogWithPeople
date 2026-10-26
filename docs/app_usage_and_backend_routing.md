@@ -62,9 +62,10 @@ flowchart TD
 
 ### 2.2. Bảng Tin Xã Hội & Tương Tác Bạn Bè (Social Feed Screen)
 * **Cách mở:** Vuốt từ phải sang trái (Swipe Left) trên màn hình chính, hoặc chạm vào icon Bảng tin (`Icons.people_alt_outlined`) trên thanh Header.
-* **Dữ liệu:** lấy từ `GET /api/feed` — chỉ các bản ghi **Công khai** của bạn bè hiện tại. Kéo xuống để tải lại. Mất mạng thì hiện thông báo kèm nút **Thử lại**; chưa có bạn bè thì có nút **Mở mã QR**.
+* **Dữ liệu:** bản ghi **Công khai** của bạn bè hiện tại (`GET /api/feed`) **và của chính bạn** (`GET /api/shares`), gộp lại, mới nhất trước. Bài vừa chuyển Công khai / thu hồi được cập nhật ngay sau khi gửi xong. Kéo xuống để tải lại. Mất mạng thì hiện thông báo kèm nút **Thử lại**; chưa có bạn bè thì có nút **Mở mã QR**.
 * **Thanh lọc bạn bè:** Nằm ở đầu trang, lấy từ `GET /api/friends` (chữ cái đầu của tên làm avatar). Chạm vào ai sẽ lọc bảng tin chỉ hiển thị hoạt động của người đó; chọn `Tất cả` để xem feed chung.
 * **Thẻ hoạt động (Feed Card):** tên người đăng, emoji hoạt động ở góc avatar, câu *"Minh Thư đã chấm 🏃 Chạy bộ"*, thời gian tương đối theo giờ Việt Nam (*vừa xong, 15 phút trước, Hôm qua 21:30*).
+* **Bài của bạn:** ghi *"Bạn đã chấm …"*; thanh cảm xúc chỉ hiện số đếm (không tự thả được). Dòng **"N người đã thả cảm xúc · Xem"** (hoặc chạm vào emoji) mở danh sách **ai đã thả gì**: avatar, tên, emoji, thời gian. Mục **"Bạn"** trên thanh lọc chỉ hiện bài của bạn.
 * **Thả reaction (SOC-05):** 7 reaction giống Facebook — 👍 Thích · ❤️ Yêu thích · 🥰 Thương thương · 😆 Haha · 😮 Wow · 😢 Buồn · 😡 Phẫn nộ, kèm số người đã thả. Mỗi người 1 reaction: chạm để thả, chạm emoji khác để đổi, chạm lại để gỡ. Nếu server từ chối, reaction tự hoàn tác và hiện thông báo.
 
 ---
@@ -74,12 +75,30 @@ flowchart TD
 * **Tab "Mã QR của tôi":**
   * Hiển thị mã QR dạng **dot-matrix** thẩm mỹ với các chấm tròn nghệ thuật và logo Chăm ở trung tâm.
   * Hiển thị tên hiển thị và **mã mời thật** của tài khoản (`Mã mời: …`). Lần đầu mở, app tự tạo tài khoản ẩn danh (cần mạng; mất mạng thì có nút **Thử lại**).
-  * ⚠️ Hình QR hiện là hình minh hoạ (dot-matrix) sinh từ mã mời, **chưa phải mã QR quét được bằng camera**.
-  * Nút **"Chia sẻ ảnh"** / **"Lưu vào máy"**: hiện mới là giao diện (chỉ hiện thông báo), chưa xuất ảnh.
+  * **Mã QR chuẩn** (chấm tròn, logo Chấm ở giữa, mức sửa lỗi H) chứa `CHAM:<mã mời>` — quét được bằng camera của app Chấm (và đọc được bằng máy quét QR thông thường). QR không chứa nhật ký.
+  * Nút **"Sao chép mã"** (hoặc chạm vào QR): sao chép mã mời để gửi qua tin nhắn.
+  * Nút **"Lưu ảnh QR"**: lưu ảnh PNG gồm mã QR và dòng *"Chấm · Mã mời …"* — Android: vào thư viện ảnh, album **"Chấm"**; Web: tải file `cham-ma-moi-<mã>.png`.
+  * Nút **"Đổi mã mời"**: xác nhận → tạo mã mới; mã / QR cũ không kết bạn được nữa, bạn bè hiện có giữ nguyên.
+  * Nút 👥 góc phải: mở **danh sách bạn bè**.
 * **Tab "Quét mã QR":**
   * Giao diện ống ngắm máy quét với 4 góc bo sáng và tia laser quét lên xuống.
-  * Nút **"Bật đèn" / "Tắt đèn"**, **"Chọn ảnh"**: hiện mới là giao diện, chưa dùng camera / thư viện ảnh.
-  * Nút **"Nhập mã"**: nhập mã mời của bạn bè → xác nhận **"Kết bạn"** → gọi `POST /api/friends` → **thành bạn bè ngay** (không cần người kia đồng ý, SOC-01). Feed và danh sách bạn được tải lại; bạn mới thấy được cả các bản Công khai trước đó.
+  * **Camera:** đưa QR của bạn bè vào khung → app đọc ngay (xin quyền camera ở lần đầu; trên Web cần `localhost` hoặc `https`). Không phải mã Chấm → *"Đây không phải mã QR kết bạn của Chấm."*; mã của chính mình → báo lỗi.
+  * Nút **"Bật đèn" / "Tắt đèn"**: bật đèn flash (thiết bị không có đèn → thông báo).
+  * Nút **"Chọn ảnh"**: chọn một ảnh có mã QR (ảnh chụp, ảnh chụp màn hình, ảnh QR đã lưu) → app đọc mã trong ảnh. Chạy cả trên **Android** (thư viện ảnh) và **Web** (chọn file). Ảnh không có mã → *"Không tìm thấy mã QR trong ảnh."*
+  * Nút **"Nhập mã"**: nhập mã mời của bạn bè (không phân biệt hoa thường, bỏ qua khoảng trắng) → xác nhận **"Kết bạn"** → gọi `POST /api/friends` → **thành bạn bè ngay** (không cần người kia đồng ý, SOC-01). Feed và danh sách bạn được tải lại; bạn mới thấy được cả các bản Công khai trước đó.
+
+---
+
+### 2.3a. Hồ Sơ: Tên & Avatar (Profile Screen)
+* **Cách mở:** sheet hồ sơ (nút avatar góc phải trang chủ) → **"Sửa tên & avatar"**, hoặc dòng **"Sửa tên & avatar"** trên màn QR.
+* **Tên hiển thị:** 1–50 ký tự (mặc định *"Bạn"*).
+* **Avatar:** chọn một emoji trong lưới gợi ý, hoặc gõ emoji bất kỳ vào ô *"Hoặc nhập emoji khác"* (vd. 👩‍💻, 👍🏽, 🇻🇳). **"Bỏ avatar"** → hiện chữ cái đầu của tên. Không phải đúng một emoji → báo lỗi.
+* **Lưu** gửi `PATCH /api/me` (cần mạng; lần đầu tự tạo tài khoản). Avatar hiện ở nút góc phải trang chủ, sheet hồ sơ, màn QR; bạn bè thấy ở danh sách bạn bè, thanh lọc feed và thẻ hoạt động.
+
+### 2.3b. Danh Sách Bạn Bè (Friends Screen)
+* **Cách mở:** hồ sơ → **"Danh sách bạn bè"**, hoặc nút 👥 trên màn QR.
+* Danh sách bạn bè kèm ngày kết bạn (giờ Việt Nam); kéo xuống để tải lại; nút **"Thêm bạn"** mở màn QR.
+* **Huỷ kết bạn:** bấm 👤✕ → xác nhận → hai bên không còn thấy bản Công khai của nhau, reaction giữa hai người bị xoá. Muốn kết bạn lại thì quét QR của nhau.
 
 ---
 
@@ -188,6 +207,7 @@ Authorization: Bearer <user_access_token>
       "user": {
         "id": "e9a8f3b2-7c1d-4e5f-8a0b-1c2d3e4f5a6b",
         "displayName": "Bạn",
+        "avatarEmoji": null,
         "inviteCode": "K7M2P9XQ4R",
         "createdAt": "2026-10-25T07:00:00.000Z"
       },

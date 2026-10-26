@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../account/presentation/account_controller.dart';
+import '../../../account/presentation/widgets/user_avatar.dart';
 
 /// Bottom Sheet hiển thị hồ sơ người dùng ẩn danh và mã mời kết bạn (SOC-01).
 /// Tài khoản chỉ được tạo khi dùng tính năng xã hội lần đầu, nên có thể chưa có mã mời.
@@ -49,13 +50,10 @@ class UserProfileSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          // Avatar lớn với viền cam
+          // Avatar lớn với viền cam (emoji người dùng chọn, hoặc chữ cái đầu)
           Container(
-            width: 72,
-            height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFA93B24),
               border: Border.all(color: const Color(0xFFFF6F52), width: 3),
               boxShadow: [
                 BoxShadow(
@@ -65,13 +63,16 @@ class UserProfileSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 42,
-              color: Colors.white,
-            ),
+            child: UserAvatar(name: displayName, emoji: account?.avatarEmoji, radius: 33),
           ),
-          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/profile');
+            },
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: const Text('Sửa tên & avatar'),
+          ),
 
           // Tên hiển thị người dùng
           Text(
@@ -179,6 +180,33 @@ class UserProfileSheet extends ConsumerWidget {
                     icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
                     label: const Text(
                       'Mở Mã QR & Quét Bạn Bè',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Danh sách bạn bè / huỷ kết bạn (SOC-02)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFB53216),
+                      side: const BorderSide(color: Color(0xFFE5C9BE)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/friends');
+                    },
+                    icon: const Icon(Icons.people_alt_outlined, size: 18),
+                    label: const Text(
+                      'Danh sách bạn bè',
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,

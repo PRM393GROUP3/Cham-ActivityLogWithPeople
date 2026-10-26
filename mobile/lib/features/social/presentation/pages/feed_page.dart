@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../account/presentation/account_controller.dart';
 import '../../../friends/presentation/controllers/friends_controller.dart';
 import '../../domain/feed_share.dart';
 import '../../domain/story_user.dart';
@@ -46,7 +47,12 @@ class _FeedPageState extends ConsumerState<FeedPage> {
   Widget build(BuildContext context) {
     final feed = ref.watch(feedControllerProvider);
     final friends = ref.watch(friendsControllerProvider).value ?? const [];
-    final storyUsers = [for (final f in friends) StoryUser(id: f.id, name: f.displayName)];
+    final me = ref.watch(accountControllerProvider).value;
+    final storyUsers = [
+      // "Bạn": lọc bài Công khai của chính mình để xem bạn bè đã thả cảm xúc gì.
+      if (me != null) StoryUser(id: me.id, name: 'Bạn', avatarEmoji: me.avatarEmoji),
+      for (final f in friends) StoryUser(id: f.id, name: f.displayName, avatarEmoji: f.avatarEmoji),
+    ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),

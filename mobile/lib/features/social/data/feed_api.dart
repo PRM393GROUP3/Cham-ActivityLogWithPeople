@@ -17,6 +17,12 @@ class FeedApi {
         return (res.data!['data'] as List).map((e) => FeedShare.fromJson(e as Map<String, dynamic>)).toList();
       });
 
+  /// Bài Công khai của chính mình, kèm ai đã thả cảm xúc gì (`GET /api/shares`).
+  Future<List<Map<String, dynamic>>> fetchOwn({int limit = 50}) => guardApi(() async {
+        final res = await _dio.get<Map<String, dynamic>>('/shares', queryParameters: {'limit': limit});
+        return (res.data!['data'] as List).cast<Map<String, dynamic>>();
+      });
+
   Future<FeedShare> react(String shareId, String emoji) => guardApi(() async {
         final res = await _dio.put<Map<String, dynamic>>('/feed/$shareId/reaction', data: {'emoji': emoji});
         return FeedShare.fromJson(res.data!['data'] as Map<String, dynamic>);

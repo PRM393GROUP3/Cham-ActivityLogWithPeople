@@ -42,6 +42,8 @@ Một bản ghi **Công khai** của bạn bè (SOC-05). Parse từ phần tử 
 | `occurredAt` | `DateTime` | thời điểm chạm nút gốc |
 | `reactionCounts` | `Map<String, int>` | số người đã thả từng emoji |
 | `myReaction` | `String?` | reaction của chính mình (tối đa 1) |
+| `isMine` | `bool` | bài của chính mình (từ `GET /api/shares`): không tự thả cảm xúc được |
+| `reactors` | `List<Reactor>` | (bài của mình) ai đã thả gì: `userId, displayName, avatarEmoji, emoji, reactedAt` |
 
 - `withMyReaction(String? emoji)`: trả bản sao với reaction của mình đổi sang `emoji` (hoặc gỡ khi `null`), cập nhật số đếm — dùng cho cập nhật lạc quan (optimistic).
 
@@ -59,7 +61,8 @@ enum Reaction { like('👍','Thích'), love('❤️','Yêu thích'), care('🥰'
 ## 2. State (`presentation/controllers/feed_controller.dart`)
 
 `feedControllerProvider` — `AsyncNotifier<List<FeedShare>>`:
-- `build()`: đảm bảo có tài khoản ẩn danh (tự đăng ký lần đầu, cần mạng) rồi `GET /api/feed`.
+- `build()`: đảm bảo có tài khoản ẩn danh (tự đăng ký lần đầu, cần mạng), tải song song `GET /api/feed` (bạn bè) và `GET /api/shares` (của mình → `FeedShare.fromOwnJson`), gộp và xếp mới nhất trước.
+- Tự tải lại khi `ActivityDialController` gửi xong một thay đổi chia sẻ.
 - `refresh()`: tải lại (kéo xuống để làm mới).
 - `toggleReaction(shareId, emoji)`: chạm emoji chưa chọn → thả / đổi; chạm lại emoji đang chọn → gỡ. Cập nhật UI ngay, **hoàn tác** nếu server từ chối và ném lỗi để UI hiện SnackBar.
 

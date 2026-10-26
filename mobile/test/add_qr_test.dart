@@ -22,7 +22,7 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
-          home: AddQrPage(animateLaser: false, qrData: _demoQr),
+          home: AddQrPage(animateLaser: false, enableCamera: false, qrData: _demoQr),
         ),
       ),
     );
@@ -37,14 +37,14 @@ void main() {
       find.text('Đưa mã này để bạn bè quét kết nối một chạm.'),
       findsOneWidget,
     );
-    expect(find.text('Chia sẻ ảnh'), findsOneWidget);
-    expect(find.text('Lưu vào máy'), findsOneWidget);
+    expect(find.text('Sao chép mã'), findsOneWidget);
+    expect(find.text('Đổi mã mời'), findsNothing, reason: 'fixed demo data has no account to rotate');
 
-    // Tap "Lưu vào máy"
-    await tester.ensureVisible(find.text('Lưu vào máy'));
-    await tester.tap(find.text('Lưu vào máy'));
+    // Tap "Sao chép mã"
+    await tester.ensureVisible(find.text('Sao chép mã'));
+    await tester.tap(find.text('Sao chép mã'));
     await tester.pumpAndSettle();
-    expect(find.text('Đã lưu ảnh mã QR vào thư viện ảnh!'), findsOneWidget);
+    expect(find.text('Đã sao chép mã mời: CHAM-8F3K9M'), findsOneWidget);
 
     // Switch to "Quét mã QR" tab
     await tester.tap(find.text('Quét mã QR'));
@@ -88,7 +88,10 @@ void main() {
             accountApiProvider.overrideWithValue(FakeAccountApi()..online = online),
             friendsApiProvider.overrideWithValue(friendsApi),
           ],
-          child: const MaterialApp(home: AddQrPage(animateLaser: false)),
+          child: MaterialApp(
+            routes: {'/friends': (_) => const Scaffold(body: Text('friends-route'))},
+            home: const AddQrPage(animateLaser: false, enableCamera: false),
+          ),
         );
 
     testWidgets('shows the invite code of the anonymous account', (tester) async {
@@ -120,14 +123,14 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Nhập mã'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'ABC123');
+      await tester.enterText(find.byType(TextField), 'h4r7 n2q8zk');
       await tester.tap(find.text('Kết nối bạn bè'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Kết bạn'));
       await tester.pumpAndSettle();
-      expect(find.text('Đã kết bạn với Bạn ABC123!'), findsOneWidget);
-      expect(friendsApi.friends.single.id, 'f-ABC123');
+      expect(find.text('Đã kết bạn với Bạn H4R7N2Q8ZK!'), findsOneWidget);
+      expect(friendsApi.friends.single.id, 'f-H4R7N2Q8ZK', reason: 'manual entry is normalised');
     });
   });
 }

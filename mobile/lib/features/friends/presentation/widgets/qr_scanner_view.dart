@@ -1,15 +1,36 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
-/// Interactive QR scanner screen mockup with laser animation and manual code entry.
+import '../../data/qr_image_decoder.dart';
+import '../../domain/invite_qr.dart';
+
+/// Chọn một ảnh và trả về file (Web: ảnh chọn từ máy tính / điện thoại; Android: thư viện ảnh).
+typedef QrImagePicker = Future<XFile?> Function();
+
+Future<XFile?> _pickFromGallery() => ImagePicker().pickImage(source: ImageSource.gallery);
+
+/// Quét mã QR kết bạn bằng camera (SOC-01), kèm bật đèn, quét từ ảnh (Android và Web) và nhập mã tay.
+/// Mỗi lần chỉ xử lý một mã: trong lúc [onCodeScanned] chưa xong, các lần đọc tiếp bị bỏ qua.
 class QrScannerView extends StatefulWidget {
   const QrScannerView({
     super.key,
     required this.onCodeScanned,
     this.animateLaser = true,
+    this.enableCamera = true,
+    this.pickImage = _pickFromGallery,
   });
 
-  final ValueChanged<String> onCodeScanned;
+  /// Nhận nội dung thô (QR hoặc mã gõ tay); bên gọi giải mã bằng [InviteQr.decode].
+  final Future<void> Function(String raw) onCodeScanned;
   final bool animateLaser;
+
+  /// Tắt trong test / preview (không có camera).
+  final bool enableCamera;
+
+  /// Nguồn ảnh cho nút "Chọn ảnh" (thay được trong test).
+  final QrImagePicker pickImage;
 
   @override
   State<QrScannerView> createState() => _QrScannerViewState();
@@ -18,7 +39,11 @@ class QrScannerView extends StatefulWidget {
 class _QrScannerViewState extends State<QrScannerView>
     with SingleTickerProviderStateMixin {
   late final AnimationController _laserController;
+  MobileScannerController? _camera;
   bool _isFlashOn = false;
+
+  /// Đang xử lý một mã (hộp xác nhận / gọi API): bỏ qua các lần đọc khác.
+  bool _busy = false;
 
   @override
   void initState() {
@@ -30,12 +55,90 @@ class _QrScannerViewState extends State<QrScannerView>
     if (widget.animateLaser) {
       _laserController.repeat(reverse: true);
     }
+    if (widget.enableCamera) {
+      _camera = MobileScannerController(formats: const [BarcodeFormat.qrCode]);
+    }
   }
 
   @override
   void dispose() {
     _laserController.dispose();
+    _camera?.dispose();
     super.dispose();
+  }
+
+  Future<void> _handle(String raw) async {
+    if (_busy) return;
+    _busy = true;
+    try {
+      await widget.onCodeScanned(raw);
+    } finally {
+      _busy = false;
+    }
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    for (final barcode in capture.barcodes) {
+      final raw = barcode.rawValue;
+      if (raw != null && raw.isNotEmpty) {
+        _handle(raw);
+        return;
+      }
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  Future<void> _toggleFlash() async {
+    final camera = _camera;
+    if (camera == null) {
+      setState(() => _isFlashOn = !_isFlashOn);
+      return;
+    }
+    try {
+      await camera.toggleTorch();
+      setState(() => _isFlashOn = camera.value.torchState == TorchState.on);
+    } catch (_) {
+      _toast('Thiết bị này không bật được đèn.');
+    }
+  }
+
+  /// "Chọn ảnh": đọc QR trong một ảnh. Android dùng ML Kit (đọc ảnh chụp tốt), không thấy thì thử
+  /// ZXing; Web chỉ có ZXing (mobile_scanner không quét ảnh trên Web).
+  Future<void> _pickImage() async {
+    if (_busy) return;
+    final XFile? file;
+    try {
+      file = await widget.pickImage();
+    } catch (_) {
+      _toast('Không mở được thư viện ảnh.');
+      return;
+    }
+    if (file == null || !mounted) return;
+
+    _toast('Đang đọc mã QR trong ảnh…');
+    String? raw;
+    final camera = _camera;
+    if (!kIsWeb && camera != null) {
+      try {
+        final capture = await camera.analyzeImage(file.path, formats: const [BarcodeFormat.qrCode]);
+        raw = capture?.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
+      } catch (_) {
+        // ML Kit lỗi: thử ZXing bên dưới.
+      }
+    }
+    raw ??= await decodeQrFromImage(await file.readAsBytes());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    if (raw == null) {
+      _toast('Không tìm thấy mã QR trong ảnh.');
+      return;
+    }
+    await _handle(raw);
   }
 
   void _openManualCodeDialog() {
@@ -121,7 +224,7 @@ class _QrScannerViewState extends State<QrScannerView>
                   final String code = textController.text.trim();
                   if (code.isNotEmpty) {
                     Navigator.of(context).pop();
-                    widget.onCodeScanned(code);
+                    _handle(code);
                   }
                 },
                 child: const Text(
@@ -142,6 +245,7 @@ class _QrScannerViewState extends State<QrScannerView>
 
   @override
   Widget build(BuildContext context) {
+    final camera = _camera;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.all(24),
@@ -159,10 +263,11 @@ class _QrScannerViewState extends State<QrScannerView>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Viewfinder Container
+          // Viewfinder: hình camera + khung góc + tia laser
           Container(
             width: double.infinity,
             height: 250,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: const Color(0xFF1F1A18),
               borderRadius: BorderRadius.circular(24),
@@ -170,6 +275,27 @@ class _QrScannerViewState extends State<QrScannerView>
             child: Stack(
               alignment: Alignment.center,
               children: [
+                if (camera != null)
+                  Positioned.fill(
+                    child: MobileScanner(
+                      controller: camera,
+                      onDetect: _onDetect,
+                      errorBuilder: (context, error) => _CameraMessage(
+                        error.errorCode == MobileScannerErrorCode.permissionDenied
+                            ? 'Chưa được cấp quyền camera.\nHãy cho phép trong cài đặt, hoặc dùng "Nhập mã".'
+                            : 'Không mở được camera.\nHãy dùng "Nhập mã".',
+                      ),
+                    ),
+                  )
+                else
+                  Center(
+                    child: Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 48,
+                      color: Colors.white.withValues(alpha: 0.15),
+                    ),
+                  ),
+
                 // Corner guides
                 CustomPaint(
                   size: const Size(200, 200),
@@ -204,15 +330,6 @@ class _QrScannerViewState extends State<QrScannerView>
                     );
                   },
                 ),
-
-                // Center camera icon indicator
-                Center(
-                  child: Icon(
-                    Icons.qr_code_scanner_rounded,
-                    size: 48,
-                    color: Colors.white.withValues(alpha: 0.15),
-                  ),
-                ),
               ],
             ),
           ),
@@ -242,11 +359,7 @@ class _QrScannerViewState extends State<QrScannerView>
                       : Icons.flash_off_rounded,
                   label: _isFlashOn ? 'Tắt đèn' : 'Bật đèn',
                   isActive: _isFlashOn,
-                  onTap: () {
-                    setState(() {
-                      _isFlashOn = !_isFlashOn;
-                    });
-                  },
+                  onTap: _toggleFlash,
                 ),
               ),
               const SizedBox(width: 8),
@@ -254,15 +367,7 @@ class _QrScannerViewState extends State<QrScannerView>
                 child: _ScannerOptionButton(
                   icon: Icons.photo_library_outlined,
                   label: 'Chọn ảnh',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Tính năng quét ảnh từ thư viện'),
-                        duration: Duration(milliseconds: 1200),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
+                  onTap: _pickImage,
                 ),
               ),
               const SizedBox(width: 8),
@@ -276,6 +381,27 @@ class _QrScannerViewState extends State<QrScannerView>
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Thông báo hiện trong khung camera khi không mở được camera.
+class _CameraMessage extends StatelessWidget {
+  const _CameraMessage(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+        ),
       ),
     );
   }

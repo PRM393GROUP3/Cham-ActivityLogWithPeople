@@ -2,14 +2,14 @@ import { and, desc, eq, inArray, or } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
 import { friendships, reactions, shares, users } from "../../infrastructure/db/schema";
 
-export type FriendRow = { id: string; displayName: string; since: Date };
+export type FriendRow = { id: string; displayName: string; avatarEmoji: string | null; since: Date };
 
 export class FriendRepository {
   constructor(private readonly db: Database) {}
 
   list(userId: string): Promise<FriendRow[]> {
     return this.db
-      .select({ id: users.id, displayName: users.displayName, since: friendships.createdAt })
+      .select({ id: users.id, displayName: users.displayName, avatarEmoji: users.avatarEmoji, since: friendships.createdAt })
       .from(friendships)
       .innerJoin(users, eq(users.id, friendships.friendId))
       .where(eq(friendships.userId, userId))
@@ -18,7 +18,7 @@ export class FriendRepository {
 
   find(userId: string, friendId: string): Promise<FriendRow | undefined> {
     return this.db
-      .select({ id: users.id, displayName: users.displayName, since: friendships.createdAt })
+      .select({ id: users.id, displayName: users.displayName, avatarEmoji: users.avatarEmoji, since: friendships.createdAt })
       .from(friendships)
       .innerJoin(users, eq(users.id, friendships.friendId))
       .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)))
