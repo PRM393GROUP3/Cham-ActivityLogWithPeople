@@ -17,6 +17,13 @@ class Account {
   /// Bearer token do server cấp khi đăng ký.
   final String token;
 
+  Account copyWith({String? inviteCode}) => Account(
+        id: id,
+        displayName: displayName,
+        inviteCode: inviteCode ?? this.inviteCode,
+        token: token,
+      );
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'displayName': displayName,

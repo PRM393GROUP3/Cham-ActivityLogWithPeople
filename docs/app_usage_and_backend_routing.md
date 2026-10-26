@@ -74,12 +74,23 @@ flowchart TD
 * **Tab "Mã QR của tôi":**
   * Hiển thị mã QR dạng **dot-matrix** thẩm mỹ với các chấm tròn nghệ thuật và logo Chăm ở trung tâm.
   * Hiển thị tên hiển thị và **mã mời thật** của tài khoản (`Mã mời: …`). Lần đầu mở, app tự tạo tài khoản ẩn danh (cần mạng; mất mạng thì có nút **Thử lại**).
-  * ⚠️ Hình QR hiện là hình minh hoạ (dot-matrix) sinh từ mã mời, **chưa phải mã QR quét được bằng camera**.
-  * Nút **"Chia sẻ ảnh"** / **"Lưu vào máy"**: hiện mới là giao diện (chỉ hiện thông báo), chưa xuất ảnh.
+  * **Mã QR chuẩn** (chấm tròn, logo Chấm ở giữa, mức sửa lỗi H) chứa `CHAM:<mã mời>` — quét được bằng camera của app Chấm (và đọc được bằng máy quét QR thông thường). QR không chứa nhật ký.
+  * Nút **"Sao chép mã"** (hoặc chạm vào QR): sao chép mã mời để gửi qua tin nhắn.
+  * Nút **"Đổi mã mời"**: xác nhận → tạo mã mới; mã / QR cũ không kết bạn được nữa, bạn bè hiện có giữ nguyên.
+  * Nút 👥 góc phải: mở **danh sách bạn bè**.
 * **Tab "Quét mã QR":**
   * Giao diện ống ngắm máy quét với 4 góc bo sáng và tia laser quét lên xuống.
-  * Nút **"Bật đèn" / "Tắt đèn"**, **"Chọn ảnh"**: hiện mới là giao diện, chưa dùng camera / thư viện ảnh.
-  * Nút **"Nhập mã"**: nhập mã mời của bạn bè → xác nhận **"Kết bạn"** → gọi `POST /api/friends` → **thành bạn bè ngay** (không cần người kia đồng ý, SOC-01). Feed và danh sách bạn được tải lại; bạn mới thấy được cả các bản Công khai trước đó.
+  * **Camera:** đưa QR của bạn bè vào khung → app đọc ngay (xin quyền camera ở lần đầu; trên Web cần `localhost` hoặc `https`). Không phải mã Chấm → *"Đây không phải mã QR kết bạn của Chấm."*; mã của chính mình → báo lỗi.
+  * Nút **"Bật đèn" / "Tắt đèn"**: bật đèn flash (thiết bị không có đèn → thông báo).
+  * Nút **"Chọn ảnh"**: quét QR từ ảnh trong thư viện (chỉ ứng dụng Android; trên Web báo dùng camera hoặc nhập mã).
+  * Nút **"Nhập mã"**: nhập mã mời của bạn bè (không phân biệt hoa thường, bỏ qua khoảng trắng) → xác nhận **"Kết bạn"** → gọi `POST /api/friends` → **thành bạn bè ngay** (không cần người kia đồng ý, SOC-01). Feed và danh sách bạn được tải lại; bạn mới thấy được cả các bản Công khai trước đó.
+
+---
+
+### 2.3b. Danh Sách Bạn Bè (Friends Screen)
+* **Cách mở:** hồ sơ → **"Danh sách bạn bè"**, hoặc nút 👥 trên màn QR.
+* Danh sách bạn bè kèm ngày kết bạn (giờ Việt Nam); kéo xuống để tải lại; nút **"Thêm bạn"** mở màn QR.
+* **Huỷ kết bạn:** bấm 👤✕ → xác nhận → hai bên không còn thấy bản Công khai của nhau, reaction giữa hai người bị xoá. Muốn kết bạn lại thì quét QR của nhau.
 
 ---
 

@@ -23,4 +23,10 @@ class AccountApi {
           token: data['token'] as String,
         );
       });
+
+  /// POST /api/me/invite-code → mã mời mới; mã cũ (và QR cũ) hết hiệu lực.
+  Future<String> rotateInviteCode() => guardApi(() async {
+        final res = await _dio.post<Map<String, dynamic>>('/me/invite-code');
+        return (res.data!['data'] as Map<String, dynamic>)['inviteCode'] as String;
+      });
 }

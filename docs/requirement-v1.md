@@ -1,6 +1,6 @@
 # SRS ứng dụng ghi nhật ký sinh hoạt
 
-Phiên bản 0.7  |  Ngày 26 tháng 10 năm 2026
+Phiên bản 0.8  |  Ngày 26 tháng 10 năm 2026
 
 ## 1 Mục đích và phạm vi
 
@@ -37,8 +37,8 @@ Người dùng quản lý nhật ký của mình; bạn bè chỉ xem các bản
 
 | Mã | Yêu cầu chức năng |
 | --- | --- |
-| SOC-01 | Hiển thị QR cá nhân và cho phép quét QR của người khác để kết bạn. **Kết bạn trực tiếp**: quét QR hợp lệ là hai người trở thành bạn bè ngay, không cần người kia xác nhận. |
-| SOC-02 | Hiển thị danh sách bạn bè và cho phép xóa bạn bè khỏi danh sách. |
+| SOC-01 | Hiển thị **mã QR cá nhân chuẩn** (nội dung `CHAM:<mã mời 10 ký tự>`, chỉ chứa mã mời) và cho phép kết bạn bằng: quét QR bằng camera, quét QR từ ảnh trong thư viện (ứng dụng Android), hoặc nhập mã mời. Mã quét được không phải của Chấm hoặc là mã của chính mình → báo lỗi, không gọi server. **Kết bạn trực tiếp**: sau khi xác nhận, hai người trở thành bạn bè ngay, không cần người kia đồng ý. Người dùng được **đổi mã mời** (mã / QR cũ hết hiệu lực, bạn bè hiện có giữ nguyên) và sao chép mã để gửi qua tin nhắn. |
+| SOC-02 | Màn **Bạn bè** (từ hồ sơ hoặc màn QR) hiển thị danh sách bạn bè kèm ngày kết bạn và cho phép **huỷ kết bạn** sau khi xác nhận. Huỷ kết bạn: hai bên không còn thấy bản Công khai của nhau, reaction giữa hai người bị xoá. |
 | SOC-03 | Chia sẻ **theo từng bản ghi**, chỉ có 2 chế độ: **Private** (mặc định) và **Public** (tất cả bạn bè). Người dùng đổi chế độ trên bản ghi trong lịch sử. Không hỗ trợ chọn từng người nhận. |
 | SOC-04 | Chuyển bản ghi từ Public về Private, hoặc xóa bản ghi Public, phải **thu hồi** sự kiện chia sẻ: không bạn bè nào còn xem được, reaction trên đó bị xóa. |
 | SOC-05 | Người dùng xem các sự kiện Public của bạn bè và thả reaction. Bộ reaction giống Facebook: 👍 Thích, ❤️ Yêu thích, 🥰 Thương thương, 😆 Haha, 😮 Wow, 😢 Buồn, 😡 Phẫn nộ. Mỗi người tối đa **1 reaction** trên mỗi sự kiện, được đổi hoặc gỡ. |
@@ -107,6 +107,8 @@ AC-08 — Lịch sử theo ngày và thống kê theo khung giờ tính theo mú
 AC-09 — Mở ghi chú của một bản ghi, viết nhiều dòng rồi quay lại: lịch sử hiện dòng đầu ghi chú; mở lại app vẫn còn. Bản ghi Công khai có ghi chú: bạn bè không thấy ghi chú.
 
 AC-10 — Trang Lịch sử & thống kê: chế độ Tuần bắt đầu Thứ Hai; một bản ghi lúc 23:30 Chủ Nhật giờ VN thuộc tuần đó, bản ghi 00:00 Thứ Hai thuộc tuần sau; số theo loại, theo ngày, theo giờ khớp danh sách bản ghi; xoá một bản ghi tại đây thì các số liệu cập nhật ngay.
+
+AC-11 — Quét bằng camera mã QR cá nhân của người khác → hộp xác nhận → kết bạn ngay; quét mã QR không phải của Chấm hoặc mã của chính mình → báo lỗi. Đổi mã mời → mã cũ không kết bạn được nữa. Huỷ kết bạn trong màn Bạn bè → người đó biến khỏi danh sách và feed.
 
 ## 9 Quyết định sản phẩm
 

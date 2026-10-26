@@ -22,6 +22,14 @@ class FakeAccountApi implements AccountApi {
     if (!online) throw offline;
     return testAccount;
   }
+
+  String nextInviteCode = 'B3T8WQ2N6M';
+
+  @override
+  Future<String> rotateInviteCode() async {
+    if (!online) throw offline;
+    return nextInviteCode;
+  }
 }
 
 class FakeShareApi implements ShareApi {

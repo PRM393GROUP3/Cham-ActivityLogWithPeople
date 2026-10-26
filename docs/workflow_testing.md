@@ -27,9 +27,10 @@ flowchart TD
     %% Flow 3: Kết nối bạn bè QR
     Home & Feed -->|Chạm Avatar Profile| ProfileModal[👤 Hồ Sơ Ẩn Danh]
     ProfileModal -->|Bấm 'Mở Mã QR & Quét'| QRPage[📱 Màn Hình QR & Quét Bạn Bè]
-    QRPage -->|Tab 1: Mã QR của tôi| MyQR[Xem mã QR cá nhân & Chia sẻ ảnh]
+    QRPage -->|Tab 1: Mã QR của tôi| MyQR[Xem mã QR cá nhân, sao chép / đổi mã mời]
     QRPage -->|Tab 2: Quét mã QR| Scanner[Quét mã bạn bè / Nhập mã thủ công]
     Scanner -->|Nhập mã hợp lệ + xác nhận| AddFriendSuccess[Kết bạn ngay — SnackBar "Đã kết bạn với …"]
+    QRPage -->|Nút 👥| FriendsList[👥 Danh sách bạn bè · Huỷ kết bạn]
     QRPage -->|Nút Back ←| ProfileModal
 
     %% Flow 4: Cài đặt Widget
@@ -79,11 +80,13 @@ flowchart TD
 | :---: | :--- | :--- | :---: |
 | 3.1 | Tại màn hình chính hoặc bảng tin, chạm vào icon Avatar tròn màu nâu đỏ. | Mở `UserProfileSheet` hiển thị tên và mã mời (10 ký tự); hiện *"Chưa có"* nếu chưa dùng tính năng xã hội lần nào. | Đạt |
 | 3.2 | Chạm vào nút **"Mở Mã QR & Quét Bạn Bè"**. | Điều hướng vào màn hình `AddQrPage` với tab mặc định là **"Mã QR của tôi"**. | Đạt |
-| 3.3 | Kiểm tra các thành phần trên thẻ QR. | Thấy tên, dòng `Mã mời: …` của tài khoản thật, hình QR dot-matrix kèm logo Chấm ở tâm, nút `Chia sẻ ảnh` và `Lưu vào máy`. Lần đầu mở khi mất mạng: thông báo cần mạng + nút **Thử lại**. | Đạt (test tự động) |
-| 3.4 | Chạm tab **"Quét mã QR"**. | Chuyển sang giao diện máy quét với khung nhắm góc bo tròn và tia laser quét chuyển động lên xuống. | Đạt |
-| 3.5 | Nhấn nút **"Bật đèn"**. | Nút đổi trạng thái thành **"Tắt đèn"** với màu nhấn cam sáng. | Đạt |
+| 3.3 | Kiểm tra các thành phần trên thẻ QR. | Thấy tên, dòng `Mã mời: …`, **QR chuẩn** chứa `CHAM:<mã>` (logo Chấm ở tâm), nút `Sao chép mã` và `Đổi mã mời`. Lần đầu mở khi mất mạng: thông báo cần mạng + nút **Thử lại**. | Đạt (test tự động; ảnh QR giải mã được bằng OpenCV) |
+| 3.4 | Chạm tab **"Quét mã QR"**, đưa QR của bạn bè vào khung. | Camera mở (xin quyền lần đầu), đọc được mã → hộp **"Kết bạn?"**. QR không phải của Chấm → *"Đây không phải mã QR kết bạn của Chấm."* | Chưa chạy trên thiết bị thật (logic giải mã có test tự động) |
+| 3.5 | Nhấn nút **"Bật đèn"**. | Đèn flash bật, nút đổi thành **"Tắt đèn"**. | Chưa chạy trên thiết bị thật |
 | 3.6 | Nhấn nút **"Nhập mã"**, gõ mã mời của một người khác và bấm **"Kết nối bạn bè"**. | Hộp thoại **"Kết bạn?"**; bấm **"Kết bạn"** → thành bạn ngay, SnackBar *"Đã kết bạn với …"*; feed hiện cả các bản Công khai cũ của người đó. Mã sai → SnackBar lỗi. | Đạt (test tự động + API) |
-| 3.7 | Bấm nút `←` ở góc trên bên trái. | Quay lại màn hình trước đó. | Đạt |
+| 3.7 | Bấm **"Đổi mã mời"** → **Đổi mã**. | Mã và QR đổi sang mã mới; mã cũ không kết bạn được nữa. | Đạt (test tự động) |
+| 3.8 | Hồ sơ → **"Danh sách bạn bè"** → bấm 👤✕ trên một người → **Huỷ kết bạn**. | Người đó biến khỏi danh sách; hai bên không còn thấy bản Công khai của nhau. | Đạt (test tự động) |
+| 3.9 | Bấm nút `←` ở góc trên bên trái. | Quay lại màn hình trước đó. | Đạt |
 
 ---
 
@@ -172,6 +175,7 @@ flutter test
 | [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
 | [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Loại sự kiện: 19 mặc định, thêm / sửa / xoá / kéo thả, xếp mọi loại lên 3 vòng theo thứ tự (`layoutDial`, `dialRingSizes`, tối đa 36), lịch sử cũ giữ nguyên, lưu bền; ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
 | [`stats_test.dart`](../mobile/test/stats_test.dart) | Kỳ Ngày / Tuần (từ Thứ Hai) / Tháng theo giờ VN, đếm theo loại / ngày / giờ, lần gần nhất, trang thống kê (chuyển kỳ, xoá cập nhật số liệu, kỳ trống) |
+| [`qr_friends_test.dart`](../mobile/test/qr_friends_test.dart) | `InviteQr` encode / decode, QR thật mức H, mã không phải Chấm / mã của mình bị chặn, đổi mã mời, danh sách bạn bè, huỷ kết bạn có xác nhận, offline |
 | [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
 | [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
 

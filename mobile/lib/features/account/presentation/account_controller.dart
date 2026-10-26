@@ -28,6 +28,15 @@ class AccountController extends AsyncNotifier<Account?> {
     return _registering ??= _register().whenComplete(() => _registering = null);
   }
 
+  /// Đổi mã mời: người đã có mã cũ / ảnh QR cũ không kết bạn được nữa (bạn bè hiện có giữ nguyên).
+  Future<Account> rotateInviteCode() async {
+    final account = await ensure();
+    final updated = account.copyWith(inviteCode: await ref.read(accountApiProvider).rotateInviteCode());
+    await ref.read(accountStorageProvider).save(updated);
+    state = AsyncData(updated);
+    return updated;
+  }
+
   Future<Account> _register() async {
     state = const AsyncLoading();
     try {

@@ -266,7 +266,7 @@ mobile/
 │       ├── sharing/          # hàng đợi gửi (ShareOutbox) + ShareApi: PUT/DELETE /api/shares/:id
 │       ├── account/          # tài khoản ẩn danh, tự đăng ký ở lần đầu dùng tính năng xã hội
 │       ├── social/           # feed bạn bè từ API, 7 reaction
-│       ├── friends/          # mã QR (mã mời), quét / nhập mã → kết bạn ngay, danh sách bạn bè
+│       ├── friends/          # QR chuẩn `CHAM:<mã>`, quét camera / ảnh / nhập mã → kết bạn ngay, đổi mã, danh sách bạn bè + huỷ kết bạn
 │       └── widgets/          # chọn và xem trước widget màn hình chính
 │
 │       # mỗi feature chia: domain/ (model) · data/ (lưu trữ, gọi API) · presentation/ (controller, pages, widgets)

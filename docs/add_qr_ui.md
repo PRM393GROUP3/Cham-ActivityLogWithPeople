@@ -10,6 +10,7 @@ This document describes the architecture, reusable components, data models, and 
 mobile/lib/features/friends/
 ├── domain/
 │   ├── friend.dart                    # Friend { id, displayName, since }
+│   ├── invite_qr.dart                 # InviteQr: nội dung QR `CHAM:<mã>`, encode / decode
 │   └── qr_code_data.dart              # QrCodeData: dữ liệu hiển thị trên thẻ QR
 ├── data/
 │   └── friends_api.dart               # GET/POST /api/friends, DELETE /api/friends/:userId
@@ -17,10 +18,11 @@ mobile/lib/features/friends/
     ├── controllers/
     │   └── friends_controller.dart    # FriendsController (AsyncNotifier): danh sách, add(code), remove(id)
     ├── pages/
-    │   └── add_qr_page.dart           # Màn hình QR của tôi + quét / nhập mã
+    │   ├── add_qr_page.dart           # Màn hình QR của tôi + quét / nhập mã
+    │   └── friends_page.dart          # Danh sách bạn bè, huỷ kết bạn
     └── widgets/
-        ├── custom_qr_view.dart        # Hình QR dot-matrix (minh hoạ)
-        └── qr_scanner_view.dart       # Giao diện máy quét + nhập mã thủ công
+        ├── custom_qr_view.dart        # QR chuẩn (qr_flutter), chấm tròn + logo, mức sửa lỗi H
+        └── qr_scanner_view.dart       # Camera (mobile_scanner), đèn, quét từ ảnh, nhập mã
 ```
 
 ---
@@ -118,11 +120,11 @@ The main container screen integrating the top app bar, segmented tab switch, and
 #### Features
 1. **App Bar:** Back navigation arrow, screen title *"Chi Tiết Khoảnh Khắc"*, and user avatar action button.
 2. **Segmented Tabs:**
-   - `Mã QR của tôi`: thẻ hồ sơ với tên, **mã mời thật** của tài khoản ẩn danh (`Mã mời: …`), hình QR minh hoạ và hai nút `Chia sẻ ảnh` / `Lưu vào máy`.
+   - `Mã QR của tôi`: thẻ hồ sơ với tên, **mã mời thật** của tài khoản ẩn danh (`Mã mời: …`), **QR chuẩn** chứa `CHAM:<mã>`, nút `Sao chép mã` và `Đổi mã mời`.
      Lần đầu mở, trang tự đăng ký tài khoản (cần mạng); khi đang đăng ký hiện vòng xoay, lỗi mạng hiện thông báo + nút **Thử lại**.
    - `Quét mã QR`: giao diện máy quét. Nhập hoặc quét mã → hộp xác nhận **"Kết bạn"** → `POST /api/friends` → thành bạn ngay (SOC-01), SnackBar *"Đã kết bạn với …"* hoặc lỗi.
 
-> ⚠️ Hiện trạng: hình QR là hình minh hoạ sinh từ mã mời (chưa phải QR chuẩn quét được), camera / đèn / chọn ảnh / chia sẻ / lưu ảnh mới là giao diện. Kết bạn hoạt động qua **Nhập mã**.
+> Quét bằng camera dùng `mobile_scanner` (Android: quyền CAMERA do plugin khai báo và tự xin lúc chạy; Web: cần `localhost` / `https`). Quét từ ảnh chỉ có trên Android (`analyzeImage` không hỗ trợ Web). Mọi nội dung quét / nhập đều qua `InviteQr.decode` trước khi gọi API. Ô định vị của QR giữ hình **vuông** — kiểu tròn khiến máy quét không nhận ra mã.
 3. **Smooth Transitions:** AnimatedSwitcher handles switching between tabs.
 
 #### Parameters
@@ -131,6 +133,7 @@ The main container screen integrating the top app bar, segmented tab switch, and
 | `initialTab` | `QrTab` | `QrTab.myQr` | Tab open on initial render (`myQr` or `scanQr`). |
 | `qrData` | `QrCodeData?` | `null` | `null` = lấy tên và mã mời từ tài khoản (`accountControllerProvider`). Truyền giá trị cố định chỉ để test / preview. |
 | `animateLaser` | `bool` | `true` | Flag controlling laser animation. |
+| `enableCamera` | `bool` | `true` | Tắt camera trong test / preview. |
 
 ---
 
@@ -179,7 +182,8 @@ class ChamApp extends StatelessWidget {
 | Lấy mã mời của mình | `accountControllerProvider` → `ensure()` | `POST /api/auth/register` ở lần đầu (trả `user.inviteCode` + `token`) |
 | Kết bạn từ mã quét / nhập | `friendsControllerProvider.notifier.add(code)` | `POST /api/friends { inviteCode }` → `201` mới / `200` đã là bạn / `404 INVITE_NOT_FOUND` / `400 CANNOT_FRIEND_SELF` |
 | Danh sách bạn bè | `friendsControllerProvider` | `GET /api/friends` → `[{ id, displayName, since }]` |
-| Đổi mã mời (chưa có UI) | — | `POST /api/me/invite-code` — mã cũ hết hiệu lực |
+| Đổi mã mời | `accountControllerProvider.notifier.rotateInviteCode()` | `POST /api/me/invite-code` — mã cũ hết hiệu lực |
+| Huỷ kết bạn | `friendsControllerProvider.notifier.remove(id)` (màn `FriendsPage`) | `DELETE /api/friends/:userId` |
 
 Sau khi kết bạn, `FriendsController` tải lại danh sách bạn và làm mới feed (bạn mới thấy được cả các bản Công khai cũ).
 Mã mời gồm 10 ký tự, vd. `H4R7N2Q8ZK`.
@@ -198,5 +202,5 @@ Mã mời gồm 10 ký tự, vd. `H4R7N2Q8ZK`.
 | **Coral Accent** | `#E85835` | Central QR logo, laser scanner line |
 | **Primary Text** | `#2C2523` | Title, user name, action labels |
 | **Secondary Text** | `#8A827B` | Dòng `Mã mời: …`, muted captions |
-| **Button Pill Fill** | `#F2ECE4` | `Chia sẻ ảnh`, `Lưu vào máy` buttons |
+| **Button Pill Fill** | `#F2ECE4` | `Sao chép mã`, `Đổi mã mời` buttons |
 

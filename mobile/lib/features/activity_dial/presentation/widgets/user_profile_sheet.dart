@@ -186,6 +186,33 @@ class UserProfileSheet extends ConsumerWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                // Danh sách bạn bè / huỷ kết bạn (SOC-02)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFB53216),
+                      side: const BorderSide(color: Color(0xFFE5C9BE)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/friends');
+                    },
+                    icon: const Icon(Icons.people_alt_outlined, size: 18),
+                    label: const Text(
+                      'Danh sách bạn bè',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
