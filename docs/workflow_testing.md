@@ -100,6 +100,20 @@ flowchart TD
 
 ---
 
+### Kịch Bản 7: Lịch Sử & Thống Kê (Stats Flow)
+* **Mục tiêu:** HIS-01, HIS-02, STA-01, AC-08, AC-10.
+
+| Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
+| :---: | :--- | :--- | :---: |
+| 7.1 | Chạm icon 📊 trên trang chủ. | Mở **Lịch sử & thống kê**, chế độ **Ngày** — *"Hôm nay, dd/MM/yyyy"*, nút `›` bị mờ. | Đạt (test tự động + xem trên Web) |
+| 7.2 | Quan sát các khối. | Tổng số lần, **Theo loại sự kiện** (kèm *Gần nhất*), **Theo khung giờ** (24 cột), **Các lần chấm**. | Đạt (test tự động + xem trên Web) |
+| 7.3 | Chọn **Tuần**, bấm `‹`. | Tuần trước (T2 → CN), thêm khối **Theo ngày trong tuần**. | Đạt (test tự động + xem trên Web) |
+| 7.4 | Chọn **Tháng**. | *"Tháng này · Tháng m/yyyy"*, cột theo từng ngày trong tháng. | Đạt (test tự động) |
+| 7.5 | Xoá một bản ghi trong **Các lần chấm**. | Tổng và các biểu đồ cập nhật ngay. | Đạt (test tự động) |
+| 7.6 | Kỳ không có bản ghi. | *"Chưa có lần chấm nào"*, không hiện biểu đồ. | Đạt (test tự động) |
+
+---
+
 ### Kịch Bản 6: Quản Lý Loại Sự Kiện & Ghi Chú (Event Types & Notes)
 * **Mục tiêu:** LOG-01, LOG-02, LOG-05, NOTE-01.
 
@@ -157,6 +171,7 @@ flutter test
 | [`feed_test.dart`](../mobile/test/feed_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã |
 | [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
 | [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Loại sự kiện: 19 mặc định, thêm / sửa / xoá / kéo thả, xếp mọi loại lên 3 vòng theo thứ tự (`layoutDial`, `dialRingSizes`, tối đa 36), lịch sử cũ giữ nguyên, lưu bền; ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
+| [`stats_test.dart`](../mobile/test/stats_test.dart) | Kỳ Ngày / Tuần (từ Thứ Hai) / Tháng theo giờ VN, đếm theo loại / ngày / giờ, lần gần nhất, trang thống kê (chuyển kỳ, xoá cập nhật số liệu, kỳ trống) |
 | [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
 | [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
 

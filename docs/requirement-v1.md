@@ -1,6 +1,6 @@
 # SRS ứng dụng ghi nhật ký sinh hoạt
 
-Phiên bản 0.6  |  Ngày 26 tháng 10 năm 2026
+Phiên bản 0.7  |  Ngày 26 tháng 10 năm 2026
 
 ## 1 Mục đích và phạm vi
 
@@ -31,7 +31,7 @@ Người dùng quản lý nhật ký của mình; bạn bè chỉ xem các bản
 | NOTE-01 | Mỗi bản ghi có thể có một **ghi chú** dạng văn bản nhiều dòng. Chạm icon ghi chú trên bản ghi trong lịch sử để mở **tờ giấy ghi chú**; ghi chú được lưu khi rời trang hoặc bấm Lưu, được sửa hay xoá (để trống) bất cứ lúc nào. Ghi chú **chỉ lưu trên máy**, không gửi lên server kể cả khi bản ghi Công khai. Ghi chú không thay đổi thời điểm hay loại sự kiện của bản ghi (LOG-04). |
 | HIS-01 | Hiển thị lịch sử theo ngày và lần ghi gần nhất của từng loại sự kiện. Mỗi bản ghi hiển thị chế độ chia sẻ (Private / Public), trạng thái gửi và dòng đầu của ghi chú (nếu có). |
 | HIS-02 | Cho phép xóa bản ghi trong lịch sử; lịch sử, lần ghi gần nhất và thống kê phải được cập nhật tương ứng. |
-| STA-01 | Hiển thị số lần ghi theo tuần, tháng và phân bố bản ghi theo khung giờ để người dùng quan sát quy luật sinh hoạt. |
+| STA-01 | Trang **Lịch sử & thống kê** (nút 📊 trên trang chủ, hoặc "Xem lịch sử & thống kê" trong Nhật ký hôm nay) có 3 chế độ **Ngày / Tuần / Tháng**, lùi / tiến từng kỳ (không tiến quá kỳ hiện tại). Mỗi kỳ hiển thị: tổng số lần ghi; số lần theo từng loại sự kiện kèm lần ghi gần nhất của loại đó; số lần theo từng ngày (chế độ Tuần, Tháng); phân bố theo **khung 1 giờ**; danh sách các lần ghi (xoá / ghi chú / đổi chế độ chia sẻ ngay tại đây). Tuần bắt đầu **Thứ Hai**; mọi mốc ngày giờ theo giờ Việt Nam. Chỉ thống kê những gì đã ghi, hoạt động offline. |
 
 ## 4 Yêu cầu chia sẻ và dữ liệu
 
@@ -106,6 +106,8 @@ AC-08 — Lịch sử theo ngày và thống kê theo khung giờ tính theo mú
 
 AC-09 — Mở ghi chú của một bản ghi, viết nhiều dòng rồi quay lại: lịch sử hiện dòng đầu ghi chú; mở lại app vẫn còn. Bản ghi Công khai có ghi chú: bạn bè không thấy ghi chú.
 
+AC-10 — Trang Lịch sử & thống kê: chế độ Tuần bắt đầu Thứ Hai; một bản ghi lúc 23:30 Chủ Nhật giờ VN thuộc tuần đó, bản ghi 00:00 Thứ Hai thuộc tuần sau; số theo loại, theo ngày, theo giờ khớp danh sách bản ghi; xoá một bản ghi tại đây thì các số liệu cập nhật ngay.
+
 ## 9 Quyết định sản phẩm
 
 ### 9.1 Đã chốt
@@ -125,5 +127,5 @@ AC-09 — Mở ghi chú của một bản ghi, viết nhiều dòng rồi quay l
 
 ### 9.2 Còn mở
 
-1. Ngày bắt đầu tuần cho thống kê (đề xuất: Thứ Hai) và độ rộng khung giờ thống kê (đề xuất: 1 giờ).
+1. Ngày bắt đầu tuần cho thống kê và độ rộng khung giờ — **đang áp dụng đề xuất: Thứ Hai, khung 1 giờ**; cần chủ sản phẩm xác nhận.
 2. Phương thức định danh cho tính năng bạn bè (backend hiện dùng tài khoản ẩn danh: `POST /api/auth/register` cấp token, không cần email hay mật khẩu).

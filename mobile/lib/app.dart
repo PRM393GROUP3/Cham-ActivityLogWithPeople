@@ -6,6 +6,7 @@ import 'features/activity_dial/presentation/pages/event_types_page.dart';
 import 'features/friends/presentation/pages/add_qr_page.dart';
 import 'features/shell/presentation/pages/main_shell_page.dart';
 import 'features/social/presentation/pages/feed_page.dart';
+import 'features/stats/presentation/pages/stats_page.dart';
 import 'features/widgets/presentation/pages/widget_selection_page.dart';
 
 class ChamApp extends StatelessWidget {
@@ -37,6 +38,7 @@ class ChamApp extends StatelessWidget {
         '/widgets': (context) => const WidgetSelectionPage(),
         '/add-qr': (context) => const AddQrPage(),
         '/event-types': (context) => const EventTypesPage(),
+        '/stats': (context) => const StatsPage(),
       },
     );
   }

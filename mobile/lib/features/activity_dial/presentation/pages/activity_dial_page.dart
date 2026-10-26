@@ -243,6 +243,16 @@ class ActivityDialPage extends ConsumerWidget {
                               ),
                               tooltip: 'Bảng tin bạn bè (Vuốt sang trái)',
                             ),
+                            // Lịch sử & thống kê (HIS-01, STA-01)
+                            IconButton(
+                              onPressed: () => Navigator.pushNamed(context, '/stats'),
+                              icon: const Icon(
+                                Icons.bar_chart_rounded,
+                                color: Color(0xFF4A403A),
+                                size: 24,
+                              ),
+                              tooltip: 'Lịch sử & thống kê',
+                            ),
                             IconButton(
                               onPressed: () => _openSettingsDialog(context),
                               icon: const Icon(

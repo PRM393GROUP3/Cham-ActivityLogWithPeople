@@ -74,6 +74,10 @@ Các thói quen được phân bổ trên 3 quỹ đạo đồng tâm xoay quanh
   - **Ghi chú:** chạm icon 📝 để mở tờ giấy ghi chú của bản ghi; dòng đầu ghi chú hiện dưới bản ghi. Ghi chú chỉ lưu trên máy.
   - **Riêng tư / Công khai:** mỗi bản ghi mới là **🔒 Riêng tư** (chỉ trên máy). Chạm công tắc để chuyển **🌐 Công khai** (tất cả bạn bè thấy), chạm lại để thu hồi. Dòng trạng thái cho biết *đang chờ gửi / bạn bè đã thấy / chưa gửi được*; có nút **Thử lại** khi gửi lỗi.
 
+### 3b. Lịch Sử & Thống Kê
+- **Cách mở:** chạm icon 📊 trên thanh tiêu đề, hoặc nút **"Xem lịch sử & thống kê"** cuối bảng Nhật ký hôm nay.
+- Xem theo **Ngày / Tuần / Tháng** (tuần từ Thứ Hai, giờ Việt Nam): tổng số lần, số lần theo loại kèm lần ghi gần nhất, biểu đồ theo ngày và theo khung giờ, danh sách bản ghi (xoá / ghi chú / chia sẻ ngay tại đây).
+
 ### 4. Xem Mã Mời Kết Bạn & Hồ Sơ Cá Nhân
 - **Cách mở:** Chạm vào biểu tượng **Avatar tròn màu nâu đỏ** ở góc trên bên phải thanh tiêu đề.
 - **Chức năng:**

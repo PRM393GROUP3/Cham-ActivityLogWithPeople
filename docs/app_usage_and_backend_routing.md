@@ -91,6 +91,17 @@ flowchart TD
 
 ---
 
+### 2.6. Lịch Sử & Thống Kê (Stats Screen)
+* **Cách mở:** chạm icon 📊 trên thanh tiêu đề trang chủ, hoặc nút **"Xem lịch sử & thống kê"** cuối bảng Nhật ký hôm nay.
+* **Ngày / Tuần / Tháng:** chọn ở thanh trên cùng; dùng `‹` `›` để lùi / tiến từng kỳ (không tiến quá hôm nay). Tuần tính từ **Thứ Hai**, mọi mốc theo **giờ Việt Nam**.
+* **Nội dung mỗi kỳ:**
+  * Tổng số lần chấm và số loại sự kiện.
+  * **Theo loại sự kiện:** số lần mỗi loại (thanh ngang, nhiều nhất trước) kèm *"Gần nhất: …"* — lần ghi gần nhất của loại đó.
+  * **Theo ngày** (Tuần: T2 → CN; Tháng: từng ngày), cột của hôm nay tô đậm.
+  * **Theo khung giờ:** 24 cột, mỗi cột 1 giờ — để thấy quy luật sinh hoạt (vd. hay uống cà phê lúc 8–9h).
+  * **Các lần chấm:** danh sách bản ghi trong kỳ; xoá, viết ghi chú, đổi Riêng tư / Công khai ngay tại đây — số liệu cập nhật tức thì.
+* Hoạt động offline, chỉ dựa trên dữ liệu trên máy.
+
 ### 2.5. Cài Đặt → Loại Sự Kiện (Thêm / Sửa / Xoá / Sắp xếp)
 * **Cách mở:** Chạm icon Bánh răng `⚙️` trên trang chủ → **"Loại sự kiện"**.
 * Danh sách **mọi** loại sự kiện theo thứ tự, gồm cả 19 loại mặc định; mỗi dòng ghi vị trí trên trang chủ (*Vòng trong / Vòng giữa / Vòng ngoài*).
