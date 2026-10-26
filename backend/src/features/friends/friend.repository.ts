@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
-import { friendships, reactions, shares, shareTargets, users } from "../../infrastructure/db/schema";
+import { friendships, reactions, shares, users } from "../../infrastructure/db/schema";
 
 export type FriendRow = { id: string; displayName: string; since: Date };
 
@@ -38,8 +38,8 @@ export class FriendRepository {
   }
 
   /**
-   * Removes the friendship in both directions and revokes everything it granted: each side is
-   * dropped from the other's share targets, and their reactions on each other's shares are deleted.
+   * Removes the friendship in both directions and revokes everything it granted: they stop seeing
+   * each other's shares (visibility is checked live) and their reactions on those shares are deleted.
    * Runs as one D1 batch (atomic). Returns false if they weren't friends.
    */
   async remove(a: string, b: string): Promise<boolean> {
@@ -55,14 +55,6 @@ export class FriendRepository {
           ),
         )
         .returning({ userId: friendships.userId }),
-      this.db
-        .delete(shareTargets)
-        .where(
-          or(
-            and(eq(shareTargets.userId, b), inArray(shareTargets.shareId, sharesOf(a))),
-            and(eq(shareTargets.userId, a), inArray(shareTargets.shareId, sharesOf(b))),
-          ),
-        ),
       this.db
         .delete(reactions)
         .where(

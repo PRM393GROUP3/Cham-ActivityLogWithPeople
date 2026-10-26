@@ -28,7 +28,7 @@ export const befriend = (a: TestUser, b: TestUser) =>
 export const share = (
   owner: TestUser,
   id: string,
-  body: { targetIds?: string[] | null; occurredAt?: string; emoji?: string; name?: string } = {},
+  body: { occurredAt?: string; emoji?: string; name?: string } = {},
 ) =>
   api(`/shares/${id}`, {
     method: "PUT",
