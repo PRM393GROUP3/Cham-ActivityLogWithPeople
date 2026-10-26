@@ -83,7 +83,7 @@ flowchart TD
   * Giao diện ống ngắm máy quét với 4 góc bo sáng và tia laser quét lên xuống.
   * **Camera:** đưa QR của bạn bè vào khung → app đọc ngay (xin quyền camera ở lần đầu; trên Web cần `localhost` hoặc `https`). Không phải mã Chấm → *"Đây không phải mã QR kết bạn của Chấm."*; mã của chính mình → báo lỗi.
   * Nút **"Bật đèn" / "Tắt đèn"**: bật đèn flash (thiết bị không có đèn → thông báo).
-  * Nút **"Chọn ảnh"**: quét QR từ ảnh trong thư viện (chỉ ứng dụng Android; trên Web báo dùng camera hoặc nhập mã).
+  * Nút **"Chọn ảnh"**: chọn một ảnh có mã QR (ảnh chụp, ảnh chụp màn hình, ảnh QR đã lưu) → app đọc mã trong ảnh. Chạy cả trên **Android** (thư viện ảnh) và **Web** (chọn file). Ảnh không có mã → *"Không tìm thấy mã QR trong ảnh."*
   * Nút **"Nhập mã"**: nhập mã mời của bạn bè (không phân biệt hoa thường, bỏ qua khoảng trắng) → xác nhận **"Kết bạn"** → gọi `POST /api/friends` → **thành bạn bè ngay** (không cần người kia đồng ý, SOC-01). Feed và danh sách bạn được tải lại; bạn mới thấy được cả các bản Công khai trước đó.
 
 ---

@@ -13,7 +13,8 @@ mobile/lib/features/friends/
 │   ├── invite_qr.dart                 # InviteQr: nội dung QR `CHAM:<mã>`, encode / decode
 │   └── qr_code_data.dart              # QrCodeData: dữ liệu hiển thị trên thẻ QR
 ├── data/
-│   └── friends_api.dart               # GET/POST /api/friends, DELETE /api/friends/:userId
+│   ├── friends_api.dart               # GET/POST /api/friends, DELETE /api/friends/:userId
+│   └── qr_image_decoder.dart          # Đọc QR trong ảnh: engine giải nén + thu nhỏ, ZXing (Dart) giải mã
 └── presentation/
     ├── controllers/
     │   └── friends_controller.dart    # FriendsController (AsyncNotifier): danh sách, add(code), remove(id)
@@ -124,7 +125,7 @@ The main container screen integrating the top app bar, segmented tab switch, and
      Lần đầu mở, trang tự đăng ký tài khoản (cần mạng); khi đang đăng ký hiện vòng xoay, lỗi mạng hiện thông báo + nút **Thử lại**.
    - `Quét mã QR`: giao diện máy quét. Nhập hoặc quét mã → hộp xác nhận **"Kết bạn"** → `POST /api/friends` → thành bạn ngay (SOC-01), SnackBar *"Đã kết bạn với …"* hoặc lỗi.
 
-> Quét bằng camera dùng `mobile_scanner` (Android: quyền CAMERA do plugin khai báo và tự xin lúc chạy; Web: cần `localhost` / `https`). Quét từ ảnh chỉ có trên Android (`analyzeImage` không hỗ trợ Web). Mọi nội dung quét / nhập đều qua `InviteQr.decode` trước khi gọi API. Ô định vị của QR giữ hình **vuông** — kiểu tròn khiến máy quét không nhận ra mã.
+> Quét bằng camera dùng `mobile_scanner` (Android: quyền CAMERA do plugin khai báo và tự xin lúc chạy; Web: cần `localhost` / `https`). Quét từ ảnh: Android thử ML Kit (`analyzeImage`) trước rồi tới ZXing; Web dùng ZXing (`zxing2`, Dart thuần) vì `analyzeImage` không có trên Web. Ảnh được engine Flutter / trình duyệt giải nén và thu nhỏ (≤1600px) trước khi giải mã — ảnh 4000px mất ~0,1 s trên máy, ~1 s trên Web. Mọi nội dung quét / nhập đều qua `InviteQr.decode` trước khi gọi API. Ô định vị của QR giữ hình **vuông** — kiểu tròn khiến máy quét không nhận ra mã.
 3. **Smooth Transitions:** AnimatedSwitcher handles switching between tabs.
 
 #### Parameters

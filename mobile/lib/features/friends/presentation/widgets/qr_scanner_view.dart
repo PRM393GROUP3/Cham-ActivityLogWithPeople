@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../data/qr_image_decoder.dart';
 import '../../domain/invite_qr.dart';
 
-/// Quét mã QR kết bạn bằng camera (SOC-01), kèm bật đèn, quét từ ảnh (Android) và nhập mã tay.
+/// Chọn một ảnh và trả về file (Web: ảnh chọn từ máy tính / điện thoại; Android: thư viện ảnh).
+typedef QrImagePicker = Future<XFile?> Function();
+
+Future<XFile?> _pickFromGallery() => ImagePicker().pickImage(source: ImageSource.gallery);
+
+/// Quét mã QR kết bạn bằng camera (SOC-01), kèm bật đèn, quét từ ảnh (Android và Web) và nhập mã tay.
 /// Mỗi lần chỉ xử lý một mã: trong lúc [onCodeScanned] chưa xong, các lần đọc tiếp bị bỏ qua.
 class QrScannerView extends StatefulWidget {
   const QrScannerView({
@@ -13,6 +19,7 @@ class QrScannerView extends StatefulWidget {
     required this.onCodeScanned,
     this.animateLaser = true,
     this.enableCamera = true,
+    this.pickImage = _pickFromGallery,
   });
 
   /// Nhận nội dung thô (QR hoặc mã gõ tay); bên gọi giải mã bằng [InviteQr.decode].
@@ -21,6 +28,9 @@ class QrScannerView extends StatefulWidget {
 
   /// Tắt trong test / preview (không có camera).
   final bool enableCamera;
+
+  /// Nguồn ảnh cho nút "Chọn ảnh" (thay được trong test).
+  final QrImagePicker pickImage;
 
   @override
   State<QrScannerView> createState() => _QrScannerViewState();
@@ -97,18 +107,35 @@ class _QrScannerViewState extends State<QrScannerView>
     }
   }
 
+  /// "Chọn ảnh": đọc QR trong một ảnh. Android dùng ML Kit (đọc ảnh chụp tốt), không thấy thì thử
+  /// ZXing; Web chỉ có ZXing (mobile_scanner không quét ảnh trên Web).
   Future<void> _pickImage() async {
-    final camera = _camera;
-    if (kIsWeb || camera == null) {
-      _toast('Quét từ ảnh chỉ hỗ trợ trên ứng dụng Android. Hãy dùng camera hoặc "Nhập mã".');
+    if (_busy) return;
+    final XFile? file;
+    try {
+      file = await widget.pickImage();
+    } catch (_) {
+      _toast('Không mở được thư viện ảnh.');
       return;
     }
-    final file = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (file == null) return;
-    final capture = await camera.analyzeImage(file.path, formats: const [BarcodeFormat.qrCode]);
-    final raw = capture?.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
+    if (file == null || !mounted) return;
+
+    _toast('Đang đọc mã QR trong ảnh…');
+    String? raw;
+    final camera = _camera;
+    if (!kIsWeb && camera != null) {
+      try {
+        final capture = await camera.analyzeImage(file.path, formats: const [BarcodeFormat.qrCode]);
+        raw = capture?.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
+      } catch (_) {
+        // ML Kit lỗi: thử ZXing bên dưới.
+      }
+    }
+    raw ??= await decodeQrFromImage(await file.readAsBytes());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     if (raw == null) {
-      if (mounted) _toast('Không tìm thấy mã QR trong ảnh.');
+      _toast('Không tìm thấy mã QR trong ảnh.');
       return;
     }
     await _handle(raw);
