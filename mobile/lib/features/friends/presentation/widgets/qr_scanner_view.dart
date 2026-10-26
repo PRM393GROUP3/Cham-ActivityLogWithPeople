@@ -81,7 +81,7 @@ class _QrScannerViewState extends State<QrScannerView>
               ),
               const SizedBox(height: 8),
               const Text(
-                'Nhập mã mời 6-8 ký tự từ mã QR của bạn bè.',
+                'Nhập mã mời 10 ký tự từ mã QR của bạn bè.',
                 style: TextStyle(
                   fontSize: 13,
                   color: Color(0xFF756E68),
@@ -94,7 +94,7 @@ class _QrScannerViewState extends State<QrScannerView>
                 autofocus: true,
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
-                  hintText: 'VD: CHAM-7K9M2P',
+                  hintText: 'VD: K7M2P9XQ4R',
                   hintStyle: const TextStyle(color: Color(0xFFAAA29B)),
                   filled: true,
                   fillColor: const Color(0xFFFAF7F2),

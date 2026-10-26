@@ -9,13 +9,13 @@ const setup = async () => {
 };
 
 describe("sharing & visibility", () => {
-  it("broadcasts to all friends by default and keeps the original occurredAt (AC-05, AC-06)", async () => {
+  it("a Public share is seen by all friends only, with the original occurredAt (AC-05, AC-06)", async () => {
     const { owner, b, c, stranger } = await setup();
     const id = crypto.randomUUID();
 
     const res = await share(owner, id, { occurredAt: "2026-09-30T23:15:00+07:00" });
     expect(res.status).toBe(201);
-    expect(await json(res)).toMatchObject({ audience: "all", occurredAt: "2026-09-30T16:15:00.000Z" });
+    expect(await json(res)).toMatchObject({ occurredAt: "2026-09-30T16:15:00.000Z" });
 
     expect(await feedIds(b)).toEqual([id]);
     expect(await feedIds(c)).toEqual([id]);
@@ -36,32 +36,24 @@ describe("sharing & visibility", () => {
     expect(await json(await api("/shares", { token: owner.token }))).toHaveLength(1);
   });
 
-  it("multicasts to targets only, follows target changes, and falls back to broadcast (AC-06)", async () => {
-    const { owner, b, c, d } = await setup();
+  it("rejects per-recipient targeting: shares are Public to all friends (SOC-03)", async () => {
+    const { owner, b, c } = await setup();
     const id = crypto.randomUUID();
 
-    await share(owner, id, { targetIds: [b.id] });
-    expect(await feedIds(b)).toEqual([id]);
-    expect(await feedIds(c)).toEqual([]);
-
-    const changed = await json(await share(owner, id, { targetIds: [c.id, d.id] }));
-    expect(changed.audience).toBe("targets");
-    expect([...changed.targetIds].sort()).toEqual([c.id, d.id].sort());
+    const res = await share(owner, id, { targetIds: [b.id] } as never);
+    expect(res.status).toBe(400);
     expect(await feedIds(b)).toEqual([]);
-    expect(await feedIds(c)).toEqual([id]);
-
-    await share(owner, id, { targetIds: [] });
-    for (const v of [b, c, d]) expect(await feedIds(v)).toEqual([id]);
+    expect(await feedIds(c)).toEqual([]);
   });
 
-  it("ignores non-friend targets without falling back to broadcast", async () => {
-    const { owner, b, stranger } = await setup();
+  it("new friends also see shares made Public before they became friends (section 6)", async () => {
+    const { owner } = await setup();
     const id = crypto.randomUUID();
+    await share(owner, id);
 
-    const created = await json(await share(owner, id, { targetIds: [stranger.id] }));
-    expect(created).toMatchObject({ audience: "targets", targetIds: [] });
-    expect(await feedIds(b)).toEqual([]);
-    expect(await feedIds(stranger)).toEqual([]);
+    const late = await register("Late");
+    await befriend(late, owner);
+    expect(await feedIds(late)).toEqual([id]);
   });
 
   it("refuses to overwrite another user's share id", async () => {
@@ -72,7 +64,7 @@ describe("sharing & visibility", () => {
     expect((await api(`/shares/${id}`, { method: "DELETE", token: b.token })).status).toBe(404);
   });
 
-  it("deleting revokes the share for everyone and is safe to retry (BR-03)", async () => {
+  it("going back to Private (DELETE) revokes the share for everyone and is safe to retry (SOC-04, BR-03)", async () => {
     const { owner, b } = await setup();
     const id = crypto.randomUUID();
     await share(owner, id);
@@ -83,11 +75,10 @@ describe("sharing & visibility", () => {
     expect((await api(`/shares/${id}`, { token: owner.token })).status).toBe(404);
   });
 
-  it("unfriending revokes access both ways, and re-friending doesn't restore old targets", async () => {
+  it("unfriending revokes access both ways; re-friending restores visibility of Public shares", async () => {
     const { owner, b } = await setup();
-    const [broadcast, targeted, fromB] = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
-    await share(owner, broadcast);
-    await share(owner, targeted, { targetIds: [b.id] });
+    const [fromOwner, fromB] = [crypto.randomUUID(), crypto.randomUUID()];
+    await share(owner, fromOwner);
     await share(b, fromB);
 
     await api(`/friends/${owner.id}`, { method: "DELETE", token: b.token });
@@ -95,7 +86,7 @@ describe("sharing & visibility", () => {
     expect(await feedIds(owner)).toEqual([]);
 
     await befriend(owner, b);
-    expect(await feedIds(b)).toEqual([broadcast]);
+    expect(await feedIds(b)).toEqual([fromOwner]);
     expect(await feedIds(owner)).toEqual([fromB]);
   });
 
@@ -124,7 +115,7 @@ describe("sharing & visibility", () => {
 });
 
 describe("reactions", () => {
-  it("lets viewers react once (replaceable) and shows details to the owner (AC-04)", async () => {
+  it("lets viewers react once (replaceable) and shows details to the owner (AC-07)", async () => {
     const { owner, b, c } = await setup();
     const id = crypto.randomUUID();
     await share(owner, id);
@@ -132,7 +123,7 @@ describe("reactions", () => {
     const react = (u: typeof b, emoji: string) =>
       api(`/feed/${id}/reaction`, { method: "PUT", token: u.token, body: JSON.stringify({ emoji }) });
 
-    expect((await json(await react(b, "😂"))).myReaction).toBe("😂");
+    expect((await json(await react(b, "😆"))).myReaction).toBe("😆");
     await react(b, "❤️");
     const item = await json(await react(c, "❤️"));
     expect(item.reactions).toEqual([{ emoji: "❤️", count: 2 }]);
@@ -142,6 +133,21 @@ describe("reactions", () => {
 
     expect((await api(`/feed/${id}/reaction`, { method: "DELETE", token: b.token })).status).toBe(204);
     expect((await json(await api(`/feed/${id}`, { token: c.token }))).reactions).toEqual([{ emoji: "❤️", count: 1 }]);
+  });
+
+  it("accepts exactly the 7 Facebook-style reactions (SOC-05)", async () => {
+    const { owner, b } = await setup();
+    const id = crypto.randomUUID();
+    await share(owner, id);
+
+    for (const emoji of ["👍", "❤️", "🥰", "😆", "😮", "😢", "😡"]) {
+      const res = await api(`/feed/${id}/reaction`, { method: "PUT", token: b.token, body: JSON.stringify({ emoji }) });
+      expect(res.status, emoji).toBe(200);
+    }
+    for (const emoji of ["😂", "🔥", "🍕"]) {
+      const res = await api(`/feed/${id}/reaction`, { method: "PUT", token: b.token, body: JSON.stringify({ emoji }) });
+      expect(res.status, emoji).toBe(400);
+    }
   });
 
   it("rejects unsupported emoji, non-viewers and the owner", async () => {
@@ -156,13 +162,13 @@ describe("reactions", () => {
     expect((await react(owner.token)).status).toBe(403);
   });
 
-  it("drops reactions of viewers who lose access via target change", async () => {
-    const { owner, b, c } = await setup();
+  it("unfriending drops the ex-friend's reactions on your shares", async () => {
+    const { owner, b } = await setup();
     const id = crypto.randomUUID();
     await share(owner, id);
-    await api(`/feed/${id}/reaction`, { method: "PUT", token: b.token, body: '{"emoji":"🔥"}' });
+    await api(`/feed/${id}/reaction`, { method: "PUT", token: b.token, body: '{"emoji":"😡"}' });
 
-    await share(owner, id, { targetIds: [c.id] });
+    await api(`/friends/${b.id}`, { method: "DELETE", token: owner.token });
     expect((await json(await api(`/shares/${id}`, { token: owner.token }))).reactions).toEqual([]);
   });
 });

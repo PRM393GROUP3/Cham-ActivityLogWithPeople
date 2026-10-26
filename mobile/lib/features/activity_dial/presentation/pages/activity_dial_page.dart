@@ -11,10 +11,7 @@ import '../widgets/user_profile_sheet.dart';
 /// Màn hình chính "Chấm — Màn hình chính (Wear OS Dial)"
 /// Chuẩn xác 100% theo bản thiết kế mẫu và yêu cầu SRS (LOG-01 → 05, DAT-01).
 class ActivityDialPage extends ConsumerWidget {
-  const ActivityDialPage({
-    super.key,
-    this.onNavigateToFeed,
-  });
+  const ActivityDialPage({super.key, this.onNavigateToFeed});
 
   final VoidCallback? onNavigateToFeed;
 
@@ -63,28 +60,21 @@ class ActivityDialPage extends ConsumerWidget {
     );
   }
 
-  void _openTodayLogsSheet(
-    BuildContext context,
-    ActivityDialState state,
-    ActivityDialController controller,
-  ) {
+  void _openTodayLogsSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => TodayLogsSheet(
-        state: state,
-        controller: controller,
-      ),
+      builder: (_) => const TodayLogsSheet(),
     );
   }
 
-  void _openProfileSheet(BuildContext context, ActivityDialState state) {
+  void _openProfileSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => UserProfileSheet(state: state),
+      builder: (_) => const UserProfileSheet(),
     );
   }
 
@@ -96,7 +86,10 @@ class ActivityDialPage extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Cài đặt ứng dụng',
-          style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF261E1A)),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF261E1A),
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -120,7 +113,37 @@ class ActivityDialPage extends ConsumerWidget {
                   color: const Color(0xFFF2ECE4),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.widgets_outlined, color: Color(0xFFB53216)),
+                child: const Icon(
+                  Icons.add_reaction_outlined,
+                  color: Color(0xFFB53216),
+                ),
+              ),
+              title: const Text(
+                'Loại sự kiện',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+              ),
+              subtitle: const Text(
+                'Thêm, sửa, xoá, sắp xếp icon trên trang chủ',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF7E7268)),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/event-types');
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2ECE4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.widgets_outlined,
+                  color: Color(0xFFB53216),
+                ),
               ),
               title: const Text(
                 'Cài đặt Widget (2×2, 4×2)',
@@ -141,7 +164,10 @@ class ActivityDialPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Đóng',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -217,6 +243,16 @@ class ActivityDialPage extends ConsumerWidget {
                               ),
                               tooltip: 'Bảng tin bạn bè (Vuốt sang trái)',
                             ),
+                            // Lịch sử & thống kê (HIS-01, STA-01)
+                            IconButton(
+                              onPressed: () => Navigator.pushNamed(context, '/stats'),
+                              icon: const Icon(
+                                Icons.bar_chart_rounded,
+                                color: Color(0xFF4A403A),
+                                size: 24,
+                              ),
+                              tooltip: 'Lịch sử & thống kê',
+                            ),
                             IconButton(
                               onPressed: () => _openSettingsDialog(context),
                               icon: const Icon(
@@ -228,7 +264,7 @@ class ActivityDialPage extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             InkWell(
-                              onTap: () => _openProfileSheet(context, state),
+                              onTap: () => _openProfileSheet(context),
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
                                 width: 34,
@@ -254,21 +290,21 @@ class ActivityDialPage extends ConsumerWidget {
                     // --- 2. BANNER CARD: HÔM NAY + "4 chấm" badge ---
                     TodaySummaryCard(
                       todayCount: state.todayCount,
-                      onTap: () => _openTodayLogsSheet(context, state, controller),
+                      onTap: () => _openTodayLogsSheet(context),
                     ),
 
                     const SizedBox(height: 20),
 
                     // --- 3. RADIAL ORBITAL DIAL (Wear OS Dial) ---
                     OrbitalDialWidget(
-                      eventTypes: state.eventTypes,
+                      eventTypes: state.dialTypes,
                       onTapNode: (type) async {
                         await controller.quickLog(type);
                         if (context.mounted) {
                           _showFeedbackToast(context, type);
                         }
                       },
-                      onTapCenter: () => _openTodayLogsSheet(context, state, controller),
+                      onTapCenter: () => _openTodayLogsSheet(context),
                     ),
                   ],
                 ),
@@ -280,7 +316,7 @@ class ActivityDialPage extends ConsumerWidget {
         elevation: 4,
         backgroundColor: const Color(0xFF221C18),
         shape: const CircleBorder(),
-        onPressed: () => _openTodayLogsSheet(context, state, controller),
+        onPressed: () => _openTodayLogsSheet(context),
         child: const Icon(
           Icons.auto_awesome_rounded,
           color: Colors.white,

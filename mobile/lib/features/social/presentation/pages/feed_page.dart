@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/feed_item.dart';
+import '../../../friends/presentation/controllers/friends_controller.dart';
+import '../../domain/feed_share.dart';
+import '../../domain/story_user.dart';
+import '../controllers/feed_controller.dart';
 import '../widgets/feed_card.dart';
 import '../widgets/header_bar.dart';
 import '../widgets/stories_bar.dart';
 
-class FeedPage extends StatefulWidget {
+/// Feed các bản ghi Public của bạn bè (SOC-05). Lọc theo từng người bằng thanh phía trên.
+class FeedPage extends ConsumerStatefulWidget {
   const FeedPage({
     super.key,
     this.onNavigateToHome,
@@ -14,147 +19,40 @@ class FeedPage extends StatefulWidget {
   final VoidCallback? onNavigateToHome;
 
   @override
-  State<FeedPage> createState() => _FeedPageState();
+  ConsumerState<FeedPage> createState() => _FeedPageState();
 }
 
-class _FeedPageState extends State<FeedPage> {
-  // Selected user filter ('Tất cả' shows all posts)
-  String _selectedUser = 'Tất cả';
+class _FeedPageState extends ConsumerState<FeedPage> {
+  /// `null` = "Tất cả".
+  String? _selectedUserId;
 
-  // Story bar users list
-  final List<StoryUser> _storyUsers = const [
-    StoryUser(
-      id: 'u1',
-      name: 'Bạn',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-    ),
-    StoryUser(
-      id: 'u2',
-      name: 'Minh Thư',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
-    ),
-    StoryUser(
-      id: 'u3',
-      name: 'Hoàng Long',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    ),
-    StoryUser(
-      id: 'u4',
-      name: 'An Nhiên',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    ),
-    StoryUser(
-      id: 'u5',
-      name: 'Đức',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-    ),
-  ];
+  Future<void> _refresh() => Future.wait([
+        ref.read(feedControllerProvider.notifier).refresh(),
+        ref.read(friendsControllerProvider.notifier).refresh(),
+      ]);
 
-  // Initial feed data array
-  late List<FeedItem> _feedItems;
-
-  @override
-  void initState() {
-    super.initState();
-    _feedItems = [
-      const FeedItem(
-        id: '1',
-        userName: 'Bạn',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        actionText: 'đã uống cà phê sáng',
-        isHighlightedAction: true,
-        timestamp: 'vừa xong',
-        badgeIcon: Icons.local_cafe_rounded,
-        badgeColor: Color(0xFFE65100),
-        selectedReaction: '❤️',
-      ),
-      const FeedItem(
-        id: '2',
-        userName: 'Minh Thư',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
-        actionText: 'đã hoàn thành chạy bộ 5km',
-        isHighlightedAction: false,
-        timestamp: '15 phút trước',
-        badgeIcon: Icons.directions_run_rounded,
-        badgeColor: Color(0xFF2E7D32),
-        selectedReaction: null,
-      ),
-      const FeedItem(
-        id: '3',
-        userName: 'Hoàng Long',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        actionText: 'đã đọc sách 30 phút',
-        isHighlightedAction: false,
-        timestamp: '42 phút trước',
-        badgeIcon: Icons.menu_book_rounded,
-        badgeColor: Color(0xFF1565C0),
-        selectedReaction: '👍',
-      ),
-      const FeedItem(
-        id: '4',
-        userName: 'An Nhiên',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-        actionText: 'đã uống 500ml nước',
-        isHighlightedAction: false,
-        timestamp: '1 giờ trước',
-        badgeIcon: Icons.water_drop_rounded,
-        badgeColor: Color(0xFF0288D1),
-        selectedReaction: null,
-      ),
-      const FeedItem(
-        id: '5',
-        userName: 'Đức',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-        actionText: 'đã đi ngủ sớm',
-        isHighlightedAction: false,
-        timestamp: 'Hôm qua',
-        badgeIcon: Icons.bedtime_rounded,
-        badgeColor: Color(0xFF512DA8),
-        selectedReaction: '😊',
-      ),
-    ];
-  }
-
-  // Filter feed items based on selected user
-  List<FeedItem> get _filteredFeedItems {
-    if (_selectedUser == 'Tất cả') {
-      return _feedItems;
+  Future<void> _onReactionTap(FeedShare share, String emoji) async {
+    try {
+      await ref.read(feedControllerProvider.notifier).toggleReaction(share.id, emoji);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thả được reaction: $e'), behavior: SnackBarBehavior.floating),
+      );
     }
-    return _feedItems.where((item) => item.userName == _selectedUser).toList();
-  }
-
-  void _onReactionTap(FeedItem item, String emoji) {
-    setState(() {
-      _feedItems = _feedItems.map((feed) {
-        if (feed.id == item.id) {
-          final isSameReaction = feed.selectedReaction == emoji;
-          return feed.copyWith(
-            selectedReaction: () => isSameReaction ? null : emoji,
-          );
-        }
-        return feed;
-      }).toList();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final feed = ref.watch(feedControllerProvider);
+    final friends = ref.watch(friendsControllerProvider).value ?? const [];
+    final storyUsers = [for (final f in friends) StoryUser(id: f.id, name: f.displayName)];
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
       body: SafeArea(
         child: Column(
           children: [
-            // 1. Header Bar
             HeaderBar(
               onBackPressed: widget.onNavigateToHome ??
                   (Navigator.of(context).canPop()
@@ -164,60 +62,97 @@ class _FeedPageState extends State<FeedPage> {
               onProfilePressed: () => Navigator.pushNamed(context, '/add-qr'),
             ),
 
-            // 2. Horizontal Filter / Stories Bar
             StoriesBar(
-              users: _storyUsers,
-              selectedUser: _selectedUser,
-              onSelectUser: (user) {
-                setState(() {
-                  _selectedUser = user;
-                });
-              },
+              users: storyUsers,
+              selectedUserId: _selectedUserId,
+              onSelectUser: (id) => setState(() => _selectedUserId = id),
             ),
 
-            // 3. Feed Cards List
             Expanded(
-              child: _filteredFeedItems.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.inbox_outlined,
-                              size: 48,
-                              color: Color(0xFF6E655F),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Chưa có hoạt động nào từ "$_selectedUser"',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF6E655F),
-                                fontWeight: FontWeight.w500,
+              child: feed.when(
+                skipLoadingOnRefresh: true,
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => _Message(
+                  icon: Icons.cloud_off_rounded,
+                  text: '$error',
+                  actionLabel: 'Thử lại',
+                  onAction: _refresh,
+                ),
+                data: (shares) {
+                  final visible = _selectedUserId == null
+                      ? shares
+                      : shares.where((s) => s.ownerId == _selectedUserId).toList();
+                  return RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: visible.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              _Message(
+                                icon: Icons.inbox_outlined,
+                                text: friends.isEmpty
+                                    ? 'Chưa có bạn bè nào.\nKết bạn qua mã QR để xem hoạt động của nhau.'
+                                    : 'Chưa có hoạt động công khai nào.',
+                                actionLabel: friends.isEmpty ? 'Mở mã QR' : null,
+                                onAction: friends.isEmpty ? () => Navigator.pushNamed(context, '/add-qr') : null,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.only(top: 8.0, bottom: 24.0),
-                      itemCount: _filteredFeedItems.length,
-                      itemBuilder: (context, index) {
-                        final item = _filteredFeedItems[index];
-                        return FeedCard(
-                          item: item,
-                          onReactionTap: (emoji) =>
-                              _onReactionTap(item, emoji),
-                        );
-                      },
-                    ),
+                            ],
+                          )
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                            itemCount: visible.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final share = visible[index];
+                              return FeedCard(
+                                share: share,
+                                onReactionTap: (emoji) => _onReactionTap(share, emoji),
+                              );
+                            },
+                          ),
+                  );
+                },
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message({required this.icon, required this.text, this.actionLabel, this.onAction});
+
+  final IconData icon;
+  final String text;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48, color: const Color(0xFF6E655F)),
+          const SizedBox(height: 12),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, color: Color(0xFF6E655F), fontWeight: FontWeight.w500),
+          ),
+          if (actionLabel != null) ...[
+            const SizedBox(height: 16),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB53216)),
+              onPressed: onAction,
+              child: Text(actionLabel!),
+            ),
+          ],
+        ],
       ),
     );
   }

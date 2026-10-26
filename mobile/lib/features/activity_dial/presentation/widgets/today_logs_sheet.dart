@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/time/vn_time.dart';
 import '../activity_dial_controller.dart';
+import 'log_tile.dart';
 import '../../domain/activity_log.dart';
 
 /// Modal BottomSheet xem chi tiết các lần chấm trong ngày hôm nay (HIS-01).
-/// Cho phép xoá bản ghi (HIS-02, LOG-04: không Undo, chỉ Delete).
-class TodayLogsSheet extends StatelessWidget {
-  const TodayLogsSheet({
-    super.key,
-    required this.state,
-    required this.controller,
-  });
-
-  final ActivityDialState state;
-  final ActivityDialController controller;
+/// Cho phép xoá bản ghi (HIS-02, LOG-04: không Undo, chỉ Delete) và đổi chế độ chia sẻ
+/// Riêng tư / Công khai trên từng bản ghi (SOC-03, SOC-04).
+class TodayLogsSheet extends ConsumerWidget {
+  const TodayLogsSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(activityDialControllerProvider);
+    final controller = ref.read(activityDialControllerProvider.notifier);
     final logs = state.todayLogs;
-    final timeFormat = DateFormat('HH:mm');
+    final hasUnsent = logs.any((l) => l.syncStatus == ShareSyncStatus.failed);
 
     return Container(
       decoration: const BoxDecoration(
@@ -46,39 +44,61 @@ class TodayLogsSheet extends StatelessWidget {
 
           // Header
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Text(
-                    'Nhật ký hôm nay',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF261E1A),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFDEEE8),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${logs.length} chấm',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFFF5733),
+              Expanded(
+                child: Row(
+                  children: [
+                    const Flexible(
+                      child: Text(
+                        'Nhật ký hôm nay',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF261E1A),
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDEEE8),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${logs.length} chấm',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFFF5733),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasUnsent)
+                    TextButton.icon(
+                      onPressed: controller.syncShares,
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('Thử lại'),
+                    ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF6E6259),
                     ),
                   ),
                 ],
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded, color: Color(0xFF6E6259)),
               ),
             ],
           ),
@@ -86,7 +106,7 @@ class TodayLogsSheet extends StatelessWidget {
           if (state.latestLog != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Lần chấm gần nhất: ${state.latestLog!.name} (${timeFormat.format(state.latestLog!.occurredAt)})',
+              'Lần chấm gần nhất: ${state.latestLog!.name} (${VnTime.hm(state.latestLog!.occurredAt)})',
               style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,
@@ -121,78 +141,20 @@ class TodayLogsSheet extends StatelessWidget {
                 separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final log = logs[index];
-                  return _LogItemTile(
-                    log: log,
-                    timeStr: timeFormat.format(log.occurredAt),
-                    onDelete: () async {
-                      await controller.deleteLog(log.id);
-                      if (context.mounted && state.todayCount <= 1) {
-                        Navigator.pop(context);
-                      }
-                    },
-                  );
+                  return LogTile(log: log);
                 },
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LogItemTile extends StatelessWidget {
-  const _LogItemTile({
-    required this.log,
-    required this.timeStr,
-    required this.onDelete,
-  });
-
-  final ActivityLog log;
-  final String timeStr;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9F4EB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDE4D6)),
-      ),
-      child: Row(
-        children: [
-          Text(
-            log.emoji,
-            style: const TextStyle(fontSize: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  log.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2E241F),
-                  ),
-                ),
-                Text(
-                  'Lúc $timeStr • Đã lưu thiết bị (DAT-01)',
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: Color(0xFF8A7E74),
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/stats');
+              },
+              icon: const Icon(Icons.bar_chart_rounded, size: 18),
+              label: const Text('Xem lịch sử & thống kê'),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFD34E2F), size: 20),
-            tooltip: 'Xóa bản ghi (LOG-04)',
-            onPressed: onDelete,
           ),
         ],
       ),

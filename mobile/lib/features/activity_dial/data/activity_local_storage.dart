@@ -12,7 +12,8 @@ final activityLocalStorageProvider = Provider<ActivityLocalStorage>((ref) {
 /// Đảm bảo hoạt động hoàn toàn offline, không mất dữ liệu khi tắt mở lại app (BR-02).
 class ActivityLocalStorage {
   static const _keyLogs = 'cham_activity_logs_v1';
-  static const _keyUser = 'cham_user_profile_v1';
+
+  static final _legacyHexId = RegExp(r'^[0-9a-f]{32}$');
 
   Future<List<ActivityLog>> loadLogs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -21,9 +22,7 @@ class ActivityLocalStorage {
 
     try {
       final list = jsonDecode(raw) as List<dynamic>;
-      return list
-          .map((item) => ActivityLog.fromJson(item as Map<String, dynamic>))
-          .toList()
+      return list.map((item) => ActivityLog.fromJson(_upgrade(item as Map<String, dynamic>))).toList()
         ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
     } catch (_) {
       return [];
@@ -36,34 +35,15 @@ class ActivityLocalStorage {
     await prefs.setString(_keyLogs, raw);
   }
 
-  Future<void> appendLog(ActivityLog log) async {
-    final current = await loadLogs();
-    final updated = [log, ...current];
-    await saveLogs(updated);
-  }
-
-  Future<void> deleteLog(String id) async {
-    final current = await loadLogs();
-    final updated = current.where((l) => l.id != id).toList();
-    await saveLogs(updated);
-  }
-
-  Future<Map<String, String>?> loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyUser);
-    if (raw == null) return null;
-    return Map<String, String>.from(jsonDecode(raw) as Map);
-  }
-
-  Future<void> saveProfile(String displayName, String inviteCode, String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _keyUser,
-      jsonEncode({
-        'displayName': displayName,
-        'inviteCode': inviteCode,
-        'token': token,
-      }),
-    );
+  /// Bản cũ sinh id 32 ký tự hex không có dấu gạch; server chỉ nhận UUID chuẩn.
+  /// Chèn dấu gạch giữ nguyên danh tính bản ghi (chưa bản nào từng được gửi lên server).
+  Map<String, dynamic> _upgrade(Map<String, dynamic> json) {
+    final id = json['id'] as String;
+    if (!_legacyHexId.hasMatch(id)) return json;
+    return {
+      ...json,
+      'id': '${id.substring(0, 8)}-${id.substring(8, 12)}-${id.substring(12, 16)}-'
+          '${id.substring(16, 20)}-${id.substring(20)}',
+    };
   }
 }

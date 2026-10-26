@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../activity_dial_controller.dart';
+import '../../../account/presentation/account_controller.dart';
 
-/// Bottom Sheet hiển thị hồ sơ người dùng ẩn danh và mã mời kết bạn (SOC-01)
-class UserProfileSheet extends StatelessWidget {
-  const UserProfileSheet({
-    super.key,
-    required this.state,
-  });
+/// Bottom Sheet hiển thị hồ sơ người dùng ẩn danh và mã mời kết bạn (SOC-01).
+/// Tài khoản chỉ được tạo khi dùng tính năng xã hội lần đầu, nên có thể chưa có mã mời.
+class UserProfileSheet extends ConsumerWidget {
+  const UserProfileSheet({super.key});
 
-  final ActivityDialState state;
+  static const _noCode = 'Chưa có';
 
-  void _copyInviteCode(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: state.inviteCode));
+  void _copyInviteCode(BuildContext context, String inviteCode) {
+    if (inviteCode == _noCode) return;
+    Clipboard.setData(ClipboardData(text: inviteCode));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Đã sao chép mã mời: ${state.inviteCode}'),
+        content: Text('Đã sao chép mã mời: $inviteCode'),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -24,7 +24,11 @@ class UserProfileSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final account = ref.watch(accountControllerProvider).value;
+    final displayName = account?.displayName ?? AccountController.defaultDisplayName;
+    final inviteCode = account?.inviteCode ?? _noCode;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: const BoxDecoration(
@@ -71,7 +75,7 @@ class UserProfileSheet extends StatelessWidget {
 
           // Tên hiển thị người dùng
           Text(
-            state.displayName,
+            displayName,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -80,7 +84,7 @@ class UserProfileSheet extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Mã mời: ${state.inviteCode}',
+            'Mã mời: $inviteCode',
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF8A7C72),
@@ -116,7 +120,7 @@ class UserProfileSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: () => _copyInviteCode(context),
+                  onTap: () => _copyInviteCode(context, inviteCode),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
@@ -128,7 +132,7 @@ class UserProfileSheet extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          state.inviteCode,
+                          inviteCode,
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,

@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cham/features/account/data/account_api.dart';
+import 'package:cham/features/friends/data/friends_api.dart';
+import 'package:cham/features/friends/domain/qr_code_data.dart';
 import 'package:cham/features/friends/presentation/pages/add_qr_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'helpers/fakes.dart';
+
+const _demoQr = QrCodeData(displayName: 'Hà My (Tôi)', username: '@hamy_cham', inviteCode: 'CHAM-8F3K9M');
 
 void main() {
   testWidgets('AddQrPage renders My QR tab and switches to Scan QR tab correctly',
@@ -11,8 +20,10 @@ void main() {
     addTearDown(() => tester.view.resetPhysicalSize());
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: AddQrPage(animateLaser: false),
+      const ProviderScope(
+        child: MaterialApp(
+          home: AddQrPage(animateLaser: false, qrData: _demoQr),
+        ),
       ),
     );
 
@@ -68,5 +79,55 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Hà My (Tôi)'), findsOneWidget);
   });
-}
 
+  group('with the real account (SOC-01)', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    Widget app(FakeFriendsApi friendsApi, {bool online = true}) => ProviderScope(
+          overrides: [
+            accountApiProvider.overrideWithValue(FakeAccountApi()..online = online),
+            friendsApiProvider.overrideWithValue(friendsApi),
+          ],
+          child: const MaterialApp(home: AddQrPage(animateLaser: false)),
+        );
+
+    testWidgets('shows the invite code of the anonymous account', (tester) async {
+      tester.view.physicalSize = const Size(420, 920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(app(FakeFriendsApi()));
+      await tester.pumpAndSettle();
+      expect(find.text('Mã mời: MYCODE'), findsOneWidget);
+    });
+
+    testWidgets('asks to retry when offline on first use', (tester) async {
+      await tester.pumpWidget(app(FakeFriendsApi(), online: false));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Cần kết nối mạng'), findsOneWidget);
+      expect(find.text('Thử lại'), findsOneWidget);
+    });
+
+    testWidgets('entering an invite code makes friends immediately', (tester) async {
+      tester.view.physicalSize = const Size(420, 920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+      final friendsApi = FakeFriendsApi();
+
+      await tester.pumpWidget(app(friendsApi));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Quét mã QR'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nhập mã'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'ABC123');
+      await tester.tap(find.text('Kết nối bạn bè'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Kết bạn'));
+      await tester.pumpAndSettle();
+      expect(find.text('Đã kết bạn với Bạn ABC123!'), findsOneWidget);
+      expect(friendsApi.friends.single.id, 'f-ABC123');
+    });
+  });
+}

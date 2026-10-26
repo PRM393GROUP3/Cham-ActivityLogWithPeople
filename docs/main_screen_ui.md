@@ -68,20 +68,28 @@ Các thói quen được phân bổ trên 3 quỹ đạo đồng tâm xoay quanh
   - Cách 2: Chạm vào nút tròn màu đen **FAB (Floating Action Button)** ở góc dưới bên phải.
   - Cách 3: Chạm vào nút tâm `+ CHẤM`.
 - **Thao tác trong bảng lịch sử:**
-  - Xem danh sách từng lần chấm kèm thời gian cụ thể (ví dụ: `14:25`).
+  - Xem danh sách từng lần chấm kèm thời gian theo giờ Việt Nam (ví dụ: `14:25`).
   - Xem thống kê số lần của từng thói quen trong ngày.
-  - **Xóa bản ghi:** Nhấn vào biểu tượng thùng rác màu đỏ cạnh bản ghi để xóa (hệ thống sẽ cập nhật lại số lượng ngay lập tức).
+  - **Xóa bản ghi:** Nhấn vào biểu tượng thùng rác màu đỏ cạnh bản ghi để xóa (hệ thống sẽ cập nhật lại số lượng ngay lập tức). Xoá bản ghi Công khai sẽ thu hồi nó khỏi feed bạn bè.
+  - **Ghi chú:** chạm icon 📝 để mở tờ giấy ghi chú của bản ghi; dòng đầu ghi chú hiện dưới bản ghi. Ghi chú chỉ lưu trên máy.
+  - **Riêng tư / Công khai:** mỗi bản ghi mới là **🔒 Riêng tư** (chỉ trên máy). Chạm công tắc để chuyển **🌐 Công khai** (tất cả bạn bè thấy), chạm lại để thu hồi. Dòng trạng thái cho biết *đang chờ gửi / bạn bè đã thấy / chưa gửi được*; có nút **Thử lại** khi gửi lỗi.
+
+### 3b. Lịch Sử & Thống Kê
+- **Cách mở:** chạm icon 📊 trên thanh tiêu đề, hoặc nút **"Xem lịch sử & thống kê"** cuối bảng Nhật ký hôm nay.
+- Xem theo **Ngày / Tuần / Tháng** (tuần từ Thứ Hai, giờ Việt Nam): tổng số lần, số lần theo loại kèm lần ghi gần nhất, biểu đồ theo ngày và theo khung giờ, danh sách bản ghi (xoá / ghi chú / chia sẻ ngay tại đây).
 
 ### 4. Xem Mã Mời Kết Bạn & Hồ Sơ Cá Nhân
 - **Cách mở:** Chạm vào biểu tượng **Avatar tròn màu nâu đỏ** ở góc trên bên phải thanh tiêu đề.
 - **Chức năng:**
-  - Hiển thị tên hiển thị (`Tôi`), mã người dùng ẩn danh (UUID).
-  - Hiển thị **Mã mời kết bạn** cá nhân (ví dụ: `CHAM-7K9M2P`).
+  - Hiển thị tên hiển thị của tài khoản ẩn danh (mặc định `Bạn`).
+  - Hiển thị **Mã mời kết bạn** cá nhân (10 ký tự, ví dụ: `K7M2P9XQ4R`). Tài khoản chỉ được tạo ở lần đầu dùng tính năng xã hội, nên trước đó hiện *"Chưa có"*.
   - Nút **"Sao chép mã"**: Copy mã vào clipboard để gửi cho bạn bè.
 
 ### 5. Cài Đặt Hệ Thống
 - **Cách mở:** Chạm vào biểu tượng **Bánh răng cài đặt (⚙️)** ở góc trên bên phải.
 - **Thông tin:** Hiển thị trạng thái hoạt động offline (`Local-First`), cơ chế ghi 1-chạm và tự động đồng bộ khi có Internet.
+- **Loại sự kiện:** thêm, sửa, xoá và kéo thả sắp xếp mọi icon sự kiện (kể cả 19 loại mặc định). Thứ tự quyết định vị trí: **mọi loại đều nằm trên vòng Dial**: các loại đầu danh sách ở vòng trong, rồi vòng giữa, rồi vòng ngoài (6 / 6 / 7 với 19 loại; từ loại thứ 20, loại mới vào vòng đang thưa nhất so với chu vi — thường là vòng ngoài rồi vòng giữa), các nút trên mỗi vòng chia đều; tối đa 36 loại. Lịch sử cũ không bị đổi.
+- **Cài đặt Widget (2×2, 4×2).**
 
 ---
 

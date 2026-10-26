@@ -9,13 +9,18 @@ This document describes the architecture, reusable components, data models, and 
 ```text
 mobile/lib/features/friends/
 ├── domain/
-│   └── qr_code_data.dart      # QrCodeData model
+│   ├── friend.dart                    # Friend { id, displayName, since }
+│   └── qr_code_data.dart              # QrCodeData: dữ liệu hiển thị trên thẻ QR
+├── data/
+│   └── friends_api.dart               # GET/POST /api/friends, DELETE /api/friends/:userId
 └── presentation/
+    ├── controllers/
+    │   └── friends_controller.dart    # FriendsController (AsyncNotifier): danh sách, add(code), remove(id)
     ├── pages/
-    │   └── add_qr_page.dart   # Main screen with Tab controller & layout
+    │   └── add_qr_page.dart           # Màn hình QR của tôi + quét / nhập mã
     └── widgets/
-        ├── custom_qr_view.dart  # Custom dot-matrix QR painter with brand logo
-        └── qr_scanner_view.dart # Viewfinder, laser animation & manual code entry
+        ├── custom_qr_view.dart        # Hình QR dot-matrix (minh hoạ)
+        └── qr_scanner_view.dart       # Giao diện máy quét + nhập mã thủ công
 ```
 
 ---
@@ -72,7 +77,7 @@ Renders a custom canvas-painted QR code matching Chăm's dot-matrix aesthetic.
 #### Usage
 ```dart
 CustomQrView(
-  data: 'CHAM-8F3K9M',
+  data: 'H4R7N2Q8ZK',
   size: 240,
   onTap: () => print('QR tapped'),
 )
@@ -113,15 +118,18 @@ The main container screen integrating the top app bar, segmented tab switch, and
 #### Features
 1. **App Bar:** Back navigation arrow, screen title *"Chi Tiết Khoảnh Khắc"*, and user avatar action button.
 2. **Segmented Tabs:**
-   - `Mã QR của tôi`: Displays the white rounded profile card with user avatar, heart badge, name, username, QR code, and action buttons (`Chia sẻ ảnh` and `Lưu vào máy`).
-   - `Quét mã QR`: Displays the interactive scanner view.
+   - `Mã QR của tôi`: thẻ hồ sơ với tên, **mã mời thật** của tài khoản ẩn danh (`Mã mời: …`), hình QR minh hoạ và hai nút `Chia sẻ ảnh` / `Lưu vào máy`.
+     Lần đầu mở, trang tự đăng ký tài khoản (cần mạng); khi đang đăng ký hiện vòng xoay, lỗi mạng hiện thông báo + nút **Thử lại**.
+   - `Quét mã QR`: giao diện máy quét. Nhập hoặc quét mã → hộp xác nhận **"Kết bạn"** → `POST /api/friends` → thành bạn ngay (SOC-01), SnackBar *"Đã kết bạn với …"* hoặc lỗi.
+
+> ⚠️ Hiện trạng: hình QR là hình minh hoạ sinh từ mã mời (chưa phải QR chuẩn quét được), camera / đèn / chọn ảnh / chia sẻ / lưu ảnh mới là giao diện. Kết bạn hoạt động qua **Nhập mã**.
 3. **Smooth Transitions:** AnimatedSwitcher handles switching between tabs.
 
 #### Parameters
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `initialTab` | `QrTab` | `QrTab.myQr` | Tab open on initial render (`myQr` or `scanQr`). |
-| `qrData` | `QrCodeData` | Default Hà My profile | Current user profile to display on the card. |
+| `qrData` | `QrCodeData?` | `null` | `null` = lấy tên và mã mời từ tài khoản (`accountControllerProvider`). Truyền giá trị cố định chỉ để test / preview. |
 | `animateLaser` | `bool` | `true` | Flag controlling laser animation. |
 
 ---
@@ -129,26 +137,12 @@ The main container screen integrating the top app bar, segmented tab switch, and
 ## 3. How to Navigate to the Screen
 
 ### Option 1: Direct Navigation (Push)
-From any button or menu in your app:
+Trang cần nằm dưới `ProviderScope` (đã có ở `main.dart`). App dùng route có tên:
 
 ```dart
-import 'package:cham/features/friends/presentation/pages/add_qr_page.dart';
-import 'package:cham/features/friends/domain/qr_code_data.dart';
-
-void openAddQrScreen(BuildContext context) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => const AddQrPage(
-        qrData: QrCodeData(
-          displayName: 'Hà My (Tôi)',
-          username: '@hamy_cham',
-          inviteCode: 'CHAM-8F3K9M',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240',
-        ),
-      ),
-    ),
-  );
-}
+Navigator.pushNamed(context, '/add-qr');
+// hoặc
+Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddQrPage()));
 ```
 
 ### Option 2: Set as Initial Home Route
@@ -178,44 +172,17 @@ class ChamApp extends StatelessWidget {
 
 ---
 
-## 4. Connecting with the Backend API
+## 4. Kết nối với Backend (đã nối)
 
-The backend already provides the following friend and QR invite endpoints:
+| Việc | Code | API |
+| :--- | :--- | :--- |
+| Lấy mã mời của mình | `accountControllerProvider` → `ensure()` | `POST /api/auth/register` ở lần đầu (trả `user.inviteCode` + `token`) |
+| Kết bạn từ mã quét / nhập | `friendsControllerProvider.notifier.add(code)` | `POST /api/friends { inviteCode }` → `201` mới / `200` đã là bạn / `404 INVITE_NOT_FOUND` / `400 CANNOT_FRIEND_SELF` |
+| Danh sách bạn bè | `friendsControllerProvider` | `GET /api/friends` → `[{ id, displayName, since }]` |
+| Đổi mã mời (chưa có UI) | — | `POST /api/me/invite-code` — mã cũ hết hiệu lực |
 
-### A. Fetch Current User's Invite Code
-Call `GET /api/me` with bearer token:
-```json
-{
-  "data": {
-    "id": "user-uuid",
-    "displayName": "Hà My",
-    "inviteCode": "CHAM-8F3K9M",
-    "createdAt": "2026-10-01T00:00:00.000Z"
-  }
-}
-```
-Bind the returned `displayName` and `inviteCode` to `QrCodeData`.
-
-### B. Rotate QR Code
-Call `POST /api/me/invite-code` to invalidate old QR codes and generate a new code.
-
-### C. Connect Friend from Scanned Code
-When `onCodeScanned(code)` fires from the scanner or manual input dialog:
-```dart
-Future<void> connectFriend(String inviteCode) async {
-  try {
-    final response = await apiClient.post(
-      '/api/friends',
-      data: {'inviteCode': inviteCode},
-    );
-    // 201: Successfully added new friend
-    // 200: Already friends
-    print('Friend connected: ${response.data}');
-  } catch (e) {
-    print('Connection error: $e');
-  }
-}
-```
+Sau khi kết bạn, `FriendsController` tải lại danh sách bạn và làm mới feed (bạn mới thấy được cả các bản Công khai cũ).
+Mã mời gồm 10 ký tự, vd. `H4R7N2Q8ZK`.
 
 ---
 
@@ -230,6 +197,6 @@ Future<void> connectFriend(String inviteCode) async {
 | **Brand Terracotta** | `#B53216` | App seed, top right avatar, heart badge |
 | **Coral Accent** | `#E85835` | Central QR logo, laser scanner line |
 | **Primary Text** | `#2C2523` | Title, user name, action labels |
-| **Secondary Text** | `#8A827B` | Username `@hamy_cham`, muted captions |
+| **Secondary Text** | `#8A827B` | Dòng `Mã mời: …`, muted captions |
 | **Button Pill Fill** | `#F2ECE4` | `Chia sẻ ảnh`, `Lưu vào máy` buttons |
 

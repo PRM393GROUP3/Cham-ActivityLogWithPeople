@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/feed_item.dart';
+import '../../../../core/time/vn_time.dart';
+import '../../domain/feed_share.dart';
+import '../../domain/reaction.dart';
 
+/// Thẻ một bản ghi Public của bạn bè, kèm thanh 7 reaction (SOC-05).
 class FeedCard extends StatelessWidget {
   const FeedCard({
     super.key,
-    required this.item,
+    required this.share,
     required this.onReactionTap,
   });
 
-  final FeedItem item;
+  final FeedShare share;
   final ValueChanged<String> onReactionTap;
-
-  static const List<String> availableReactions = ['❤️', '👍', '😊', '😢', '😆'];
 
   @override
   Widget build(BuildContext context) {
@@ -32,48 +33,35 @@ class FeedCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left Column: User Avatar + Overlapping Activity Badge
+          // Left Column: avatar (chữ cái đầu) + emoji hoạt động
           SizedBox(
             width: 56,
             height: 56,
             child: Stack(
               children: [
-                // Avatar
                 Container(
                   width: 56,
                   height: 56,
                   decoration: const BoxDecoration(
+                    color: Color(0xFFE6DFD5),
                     shape: BoxShape.circle,
                   ),
-                  child: ClipOval(
-                    child: Image.network(
-                      item.avatarUrl,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: const Color(0xFFE6DFD5),
-                        alignment: Alignment.center,
-                        child: Text(
-                          item.userName.isNotEmpty ? item.userName[0] : '?',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E1B18),
-                          ),
-                        ),
-                      ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    share.ownerName.isNotEmpty ? share.ownerName.characters.first.toUpperCase() : '?',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E1B18),
                     ),
                   ),
                 ),
-
-                // Activity Badge overlapping bottom-right corner
                 Positioned(
                   right: 0,
                   bottom: 0,
                   child: Container(
-                    width: 24,
-                    height: 24,
+                    width: 26,
+                    height: 26,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -85,13 +73,8 @@ class FeedCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Icon(
-                        item.badgeIcon,
-                        size: 14,
-                        color: item.badgeColor,
-                      ),
-                    ),
+                    alignment: Alignment.center,
+                    child: Text(share.emoji, style: const TextStyle(fontSize: 14)),
                   ),
                 ),
               ],
@@ -105,29 +88,22 @@ class FeedCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Activity Line: Bold userName + actionText
                 Text.rich(
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: item.userName,
+                        text: share.ownerName,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF1E1B18),
                         ),
                       ),
-                      const TextSpan(text: ' '),
                       TextSpan(
-                        text: item.actionText,
-                        style: TextStyle(
+                        text: ' đã chấm ${share.emoji} ${share.name}',
+                        style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: item.isHighlightedAction
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                          color: item.isHighlightedAction
-                              ? const Color(0xFF8C2D19)
-                              : const Color(0xFF1E1B18),
+                          color: Color(0xFF1E1B18),
                         ),
                       ),
                     ],
@@ -136,7 +112,6 @@ class FeedCard extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                // Timestamp: Clock icon + timestamp text
                 Row(
                   children: [
                     const Icon(
@@ -146,11 +121,10 @@ class FeedCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      item.timestamp,
+                      VnTime.relative(share.occurredAt),
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6E655F),
-                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -158,18 +132,17 @@ class FeedCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Interactive Reaction Pill Bar
+                // Thanh reaction: chạm để thả / đổi, chạm lại để gỡ
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAF8F5),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      for (final emoji in availableReactions)
-                        _buildEmojiButton(emoji),
+                      for (final reaction in Reaction.values) _buildReactionButton(reaction),
                     ],
                   ),
                 ),
@@ -181,24 +154,35 @@ class FeedCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEmojiButton(String emoji) {
-    final isSelected = item.selectedReaction == emoji;
+  Widget _buildReactionButton(Reaction reaction) {
+    final isSelected = share.myReaction == reaction.emoji;
+    final count = share.reactionCounts[reaction.emoji] ?? 0;
 
-    return GestureDetector(
-      onTap: () => onReactionTap(emoji),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(6.0),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFADCD9) : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Text(
-          emoji,
-          style: TextStyle(
-            fontSize: isSelected ? 22 : 18,
-            height: 1.1,
+    return Tooltip(
+      message: reaction.label,
+      child: GestureDetector(
+        onTap: () => onReactionTap(reaction.emoji),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFADCD9) : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                reaction.emoji,
+                style: TextStyle(fontSize: isSelected ? 20 : 17, height: 1.1),
+              ),
+              if (count > 0)
+                Text(
+                  '$count',
+                  style: const TextStyle(fontSize: 10, color: Color(0xFF6E655F), fontWeight: FontWeight.w600),
+                ),
+            ],
           ),
         ),
       ),

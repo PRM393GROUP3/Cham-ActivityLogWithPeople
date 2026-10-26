@@ -5,6 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cham/features/shell/presentation/pages/main_shell_page.dart';
 import 'package:cham/features/widgets/presentation/pages/widget_selection_page.dart';
 import 'package:cham/features/friends/presentation/pages/add_qr_page.dart';
+import 'package:cham/features/account/data/account_api.dart';
+import 'package:cham/features/friends/data/friends_api.dart';
+import 'package:cham/features/friends/domain/friend.dart';
+import 'package:cham/features/social/data/feed_api.dart';
+import 'package:cham/features/social/domain/feed_share.dart';
+
+import 'helpers/fakes.dart';
 
 void main() {
   setUp(() {
@@ -19,6 +26,22 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          accountApiProvider.overrideWithValue(FakeAccountApi()),
+          friendsApiProvider.overrideWithValue(
+            FakeFriendsApi([Friend(id: 'u2', displayName: 'Minh Thư', since: DateTime.utc(2026, 10, 1))]),
+          ),
+          feedApiProvider.overrideWithValue(FakeFeedApi([
+            FeedShare(
+              id: 's1',
+              ownerId: 'u2',
+              ownerName: 'Minh Thư',
+              emoji: '🏃',
+              name: 'Chạy bộ',
+              occurredAt: DateTime.now().subtract(const Duration(minutes: 15)),
+            ),
+          ])),
+        ],
         child: MaterialApp(
           routes: {
             '/widgets': (context) => const WidgetSelectionPage(),
@@ -38,9 +61,11 @@ void main() {
     await tester.drag(find.byType(PageView), const Offset(-400, 0));
     await tester.pumpAndSettle();
 
-    // Verify FeedPage elements are now visible
+    // Verify FeedPage shows friends and their Public records from the API
     expect(find.text('Tất cả'), findsOneWidget);
     expect(find.text('Minh Thư'), findsWidgets);
+    expect(find.textContaining('đã chấm 🏃 Chạy bộ'), findsOneWidget);
+    expect(find.text('15 phút trước'), findsOneWidget);
 
     // 3. Swipe Right back to ActivityDialPage
     await tester.drag(find.byType(PageView), const Offset(400, 0));

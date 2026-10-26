@@ -8,20 +8,18 @@ export type Cursor = { occurredAt: Date; id: string };
 
 export type Page<T> = { items: T[]; nextCursor: string | null };
 
-/** A share as its owner sees it: audience settings plus who reacted. */
+/** A share as its owner sees it, including who reacted. */
 export type OwnShareDto = {
   id: string;
   emoji: string;
   name: string;
   occurredAt: string;
-  audience: "all" | "targets";
-  targetIds: string[];
   reactions: { user: PublicUserDto; emoji: string; reactedAt: string }[];
   createdAt: string;
   updatedAt: string;
 };
 
-/** A friend's share as a viewer sees it: no audience details, only reaction counts. */
+/** A friend's share as a viewer sees it: reaction counts plus the viewer's own reaction. */
 export type FeedShareDto = {
   id: string;
   owner: PublicUserDto;

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Đại diện cho một loại sự kiện trên vòng Dial (LOG-01, LOG-02).
-/// Định nghĩa vị trí trên quỹ đạo (orbit 1, 2, 3) và góc radial tương ứng.
+/// Một loại sự kiện (LOG-01, LOG-02): emoji + tên, kèm icon và màu khi là loại mặc định.
+/// Người dùng thêm / sửa / xoá / sắp xếp trong Cài đặt (LOG-05); thứ tự quyết định vị trí
+/// trên vòng Dial (xem `dial_layout.dart`), nên [orbit] và [angleDegree] được tính lại khi hiển thị.
 class ActivityEventType {
   const ActivityEventType({
     required this.id,
@@ -12,24 +13,67 @@ class ActivityEventType {
     required this.accentColor,
     required this.orbit,
     required this.angleDegree,
-    this.shareByDefault = false,
+    this.isCustom = false,
   });
+
+  /// Loại sự kiện người dùng tự tạo trong Cài đặt: hiển thị bằng emoji.
+  const ActivityEventType.custom({
+    required this.id,
+    required this.name,
+    required this.emoji,
+  }) : icon = null,
+       bgColor = const Color(0xFFFFF4EC),
+       accentColor = const Color(0xFFB53216),
+       orbit = 0,
+       angleDegree = 0,
+       isCustom = true;
 
   final String id;
   final String name;
   final String emoji;
-  final IconData icon;
+
+  /// Icon Material của loại mặc định; `null` = hiển thị [emoji] (loại tự tạo, hoặc loại mặc định
+  /// đã bị đổi emoji).
+  final IconData? icon;
   final Color bgColor;
   final Color accentColor;
 
-  /// Quỹ đạo: 1 = vòng trong (Inner), 2 = vòng giữa (Middle), 3 = vòng ngoài (Outer)
+  /// Quỹ đạo: 1 = vòng trong, 2 = vòng giữa, 3 = vòng ngoài, 0 = hàng bên dưới vòng Dial.
   final int orbit;
 
   /// Vị trí góc trên vòng tròn tính bằng độ (-90 độ là đỉnh 12 giờ)
   final double angleDegree;
 
-  /// Cấu hình chia sẻ mặc định (SOC-03, DAT-03)
-  final bool shareByDefault;
+  final bool isCustom;
+
+  /// Đổi emoji thì bỏ icon Material (không còn khớp), hiển thị emoji mới.
+  ActivityEventType copyWith({String? name, String? emoji, int? orbit, double? angleDegree}) {
+    final emojiChanged = emoji != null && emoji != this.emoji;
+    return ActivityEventType(
+      id: id,
+      name: name ?? this.name,
+      emoji: emoji ?? this.emoji,
+      icon: emojiChanged ? null : icon,
+      bgColor: bgColor,
+      accentColor: accentColor,
+      orbit: orbit ?? this.orbit,
+      angleDegree: angleDegree ?? this.angleDegree,
+      isCustom: isCustom,
+    );
+  }
+
+  /// Chỉ lưu id, tên, emoji; icon và màu của loại mặc định được lấy lại theo id.
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'emoji': emoji};
+
+  factory ActivityEventType.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String;
+    final name = json['name'] as String;
+    final emoji = json['emoji'] as String;
+    for (final d in defaultTypes) {
+      if (d.id == id) return d.copyWith(name: name, emoji: emoji);
+    }
+    return ActivityEventType.custom(id: id, name: name, emoji: emoji);
+  }
 
   /// 19 Loại sự kiện chuẩn theo bản thiết kế "Wear OS Dial"
   static const List<ActivityEventType> defaultTypes = [
@@ -43,7 +87,6 @@ class ActivityEventType {
       accentColor: Color(0xFFD97746),
       orbit: 1,
       angleDegree: -90, // Đỉnh 12h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'water',
@@ -64,7 +107,6 @@ class ActivityEventType {
       accentColor: Color(0xFF4C9854),
       orbit: 1,
       angleDegree: 30, // 4h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'eating',
@@ -95,7 +137,6 @@ class ActivityEventType {
       accentColor: Color(0xFF7A52A3),
       orbit: 1,
       angleDegree: 210, // 10h
-      shareByDefault: true,
     ),
 
     // --- VÒNG GIỮA (MIDDLE ORBIT: 6 hoạt động) ---
@@ -118,7 +159,6 @@ class ActivityEventType {
       accentColor: Color(0xFF468F5A),
       orbit: 2,
       angleDegree: -25, // ~2h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'sleep',
@@ -159,7 +199,6 @@ class ActivityEventType {
       accentColor: Color(0xFFD49A24),
       orbit: 2,
       angleDegree: 230, // ~10h
-      shareByDefault: true,
     ),
 
     // --- VÒNG NGOÀI (OUTER ORBIT: 7 hoạt động) ---
@@ -192,7 +231,6 @@ class ActivityEventType {
       accentColor: Color(0xFFC94A4A),
       orbit: 3,
       angleDegree: 20, // ~3h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'movie',
@@ -233,7 +271,6 @@ class ActivityEventType {
       accentColor: Color(0xFF2FA296),
       orbit: 3,
       angleDegree: 215, // ~10h
-      shareByDefault: true,
     ),
   ];
 }
