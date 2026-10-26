@@ -124,7 +124,7 @@ class ActivityDialPage extends ConsumerWidget {
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
               ),
               subtitle: const Text(
-                'Thêm icon sự kiện của riêng bạn',
+                'Thêm, sửa, xoá, sắp xếp icon trên trang chủ',
                 style: TextStyle(fontSize: 11.5, color: Color(0xFF7E7268)),
               ),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
@@ -298,11 +298,11 @@ class ActivityDialPage extends ConsumerWidget {
                       onTapCenter: () => _openTodayLogsSheet(context),
                     ),
 
-                    // --- 4. SỰ KIỆN CỦA BẠN: loại tự tạo trong Cài đặt (LOG-05) ---
-                    if (state.customTypes.isNotEmpty) ...[
+                    // --- 4. SỰ KIỆN KHÁC: từ loại thứ 20 theo thứ tự trong Cài đặt (LOG-05) ---
+                    if (state.extraTypes.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       const Text(
-                        'Sự kiện của bạn',
+                        'Sự kiện khác',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
@@ -314,7 +314,7 @@ class ActivityDialPage extends ConsumerWidget {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            for (final type in state.customTypes)
+                            for (final type in state.extraTypes)
                               Padding(
                                 padding: const EdgeInsets.only(right: 4),
                                 child: RadialDialNode(

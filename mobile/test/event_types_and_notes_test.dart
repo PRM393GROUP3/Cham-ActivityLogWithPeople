@@ -1,6 +1,7 @@
 import 'package:cham/features/account/data/account_api.dart';
 import 'package:cham/features/activity_dial/domain/activity_event_type.dart';
 import 'package:cham/features/activity_dial/domain/activity_log.dart';
+import 'package:cham/features/activity_dial/domain/dial_layout.dart';
 import 'package:cham/features/activity_dial/presentation/activity_dial_controller.dart';
 import 'package:cham/features/activity_dial/presentation/pages/activity_dial_page.dart';
 import 'package:cham/features/activity_dial/presentation/pages/event_types_page.dart';
@@ -29,59 +30,141 @@ void main() {
     return c;
   }
 
-  group('Custom event types (LOG-01, LOG-02, LOG-05)', () {
-    test('are added after the 19 defaults and survive an app restart', () async {
+  group('layoutDial', () {
+    List<ActivityEventType> types(int n) =>
+        [for (var i = 0; i < n; i++) ActivityEventType.custom(id: 't$i', name: 'T$i', emoji: '⭐')];
+
+    test('fills inner, middle, outer rings in order and spreads each ring evenly', () {
+      final few = layoutDial(types(3));
+      expect(few.dial.map((t) => t.orbit), [1, 1, 1]);
+      expect(few.dial.map((t) => t.angleDegree), [-90, 30, 150]);
+      expect(few.rest, isEmpty);
+
+      final many = layoutDial(types(25));
+      expect(many.dial.where((t) => t.orbit == 1), hasLength(6));
+      expect(many.dial.where((t) => t.orbit == 2), hasLength(6));
+      expect(many.dial.where((t) => t.orbit == 3), hasLength(7));
+      expect(many.rest.map((t) => t.id), ['t19', 't20', 't21', 't22', 't23', 't24']);
+    });
+  });
+
+  group('Event types in Settings (LOG-01, LOG-02, LOG-05)', () {
+    Future<(ProviderContainer, ActivityDialController)> loaded() async {
       final c = makeContainer();
       c.read(activityDialControllerProvider);
       await settle();
+      return (c, c.read(activityDialControllerProvider.notifier));
+    }
 
-      await c.read(activityDialControllerProvider.notifier).addEventType(emoji: ' 🏸 ', name: ' Cầu lông ');
+    test('start with the 19 defaults, all on the dial', () async {
+      final (c, _) = await loaded();
       final state = c.read(activityDialControllerProvider);
+      expect(state.eventTypes.map((t) => t.id), ActivityEventType.defaultTypes.map((t) => t.id));
       expect(state.dialTypes, hasLength(19));
-      expect(state.customTypes.single.name, 'Cầu lông');
-      expect(state.customTypes.single.emoji, '🏸');
-      expect(state.customTypes.single.isCustom, isTrue);
+      expect(state.extraTypes, isEmpty);
+    });
+
+    test('a new type goes to the end (row under the dial) and survives a restart', () async {
+      final (c, ctrl) = await loaded();
+      await ctrl.addEventType(emoji: ' 🏸 ', name: ' Cầu lông ');
+      expect(c.read(activityDialControllerProvider).extraTypes.single.name, 'Cầu lông');
 
       final reopened = makeContainer();
       reopened.read(activityDialControllerProvider);
       await settle();
-      expect(reopened.read(activityDialControllerProvider).customTypes.map((t) => t.name), ['Cầu lông']);
+      expect(reopened.read(activityDialControllerProvider).eventTypes.last.emoji, '🏸');
     });
 
-    test('require an emoji and a name of at most 50 characters', () async {
-      final c = makeContainer();
-      c.read(activityDialControllerProvider);
-      await settle();
-      final ctrl = c.read(activityDialControllerProvider.notifier);
+    test('editing a default changes future taps only; old records keep their name', () async {
+      final (c, ctrl) = await loaded();
+      final coffee = c.read(activityDialControllerProvider).eventTypes.first;
+      final oldLog = await ctrl.quickLog(coffee);
 
+      await ctrl.updateEventType(coffee.id, emoji: '🧋', name: 'Trà sữa');
+      final edited = c.read(activityDialControllerProvider).eventTypes.first;
+      expect(edited.name, 'Trà sữa');
+      expect(edited.icon, isNull, reason: 'a new emoji replaces the old Material icon');
+      expect(c.read(activityDialControllerProvider).logs.firstWhere((l) => l.id == oldLog.id).name, 'Cà phê');
+
+      final newLog = await ctrl.quickLog(edited);
+      expect((newLog.emoji, newLog.name), ('🧋', 'Trà sữa'));
+
+      final reopened = makeContainer();
+      reopened.read(activityDialControllerProvider);
+      await settle();
+      expect(reopened.read(activityDialControllerProvider).eventTypes.first.name, 'Trà sữa');
+    });
+
+    test('renaming a default keeps its icon', () async {
+      final (c, ctrl) = await loaded();
+      await ctrl.updateEventType('coffee', emoji: '☕', name: 'Cà phê đen');
+      expect(c.read(activityDialControllerProvider).eventTypes.first.icon, isNotNull);
+    });
+
+    test('deleting removes the button but keeps history; the last type cannot be deleted', () async {
+      final (c, ctrl) = await loaded();
+      final log = await ctrl.quickLog(c.read(activityDialControllerProvider).eventTypes.first);
+
+      await ctrl.deleteEventType('coffee');
+      final state = c.read(activityDialControllerProvider);
+      expect(state.eventTypes.any((t) => t.id == 'coffee'), isFalse);
+      expect(state.dialTypes, hasLength(18));
+      expect(state.logs.any((l) => l.id == log.id), isTrue);
+
+      for (final t in [...state.eventTypes.skip(1)]) {
+        await ctrl.deleteEventType(t.id);
+      }
+      expect(c.read(activityDialControllerProvider).eventTypes, hasLength(1));
+      expect(() => ctrl.deleteEventType(c.read(activityDialControllerProvider).eventTypes.single.id), throwsArgumentError);
+    });
+
+    test('reordering moves a type to another ring and is saved', () async {
+      final (c, ctrl) = await loaded();
+      await ctrl.reorderEventTypes(0, 18); // Cà phê: vòng trong → cuối vòng ngoài
+      final state = c.read(activityDialControllerProvider);
+      expect(state.eventTypes[18].id, 'coffee');
+      expect(state.dialTypes.firstWhere((t) => t.id == 'coffee').orbit, 3);
+      expect(state.dialTypes.firstWhere((t) => t.id == 'water').orbit, 1);
+
+      final reopened = makeContainer();
+      reopened.read(activityDialControllerProvider);
+      await settle();
+      expect(reopened.read(activityDialControllerProvider).eventTypes[18].id, 'coffee');
+    });
+
+    test('validates emoji and name', () async {
+      final (c, ctrl) = await loaded();
       expect(() => ctrl.addEventType(emoji: '', name: 'X'), throwsArgumentError);
       expect(() => ctrl.addEventType(emoji: '🏸', name: '  '), throwsArgumentError);
       expect(() => ctrl.addEventType(emoji: '🏸', name: 'a' * 51), throwsArgumentError);
-      expect(c.read(activityDialControllerProvider).customTypes, isEmpty);
+      expect(() => ctrl.updateEventType('coffee', emoji: '☕', name: ''), throwsArgumentError);
+      expect(c.read(activityDialControllerProvider).eventTypes, hasLength(19));
     });
 
-    test('a tap on a custom type creates a Private record like the defaults', () async {
-      final c = makeContainer();
-      c.read(activityDialControllerProvider);
-      await settle();
-      final ctrl = c.read(activityDialControllerProvider.notifier);
-      final type = await ctrl.addEventType(emoji: '🏸', name: 'Cầu lông');
-
-      final log = await ctrl.quickLog(type);
-      expect(log.emoji, '🏸');
-      expect(log.eventTypeId, type.id);
-      expect(log.visibility, ShareVisibility.private);
-    });
-
-    testWidgets('Settings page: picking an emoji fills its default name, Save adds it', (tester) async {
+    Future<ProviderContainer> pumpSettings(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(420, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
       final c = makeContainer();
       await tester.pumpWidget(UncontrolledProviderScope(
         container: c,
         child: const MaterialApp(home: EventTypesPage()),
       ));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Chưa có loại sự kiện nào'), findsOneWidget);
+      return c;
+    }
 
+    testWidgets('Settings lists the 19 defaults with their ring position', (tester) async {
+      await pumpSettings(tester);
+      expect(find.text('☕ Cà phê'), findsOneWidget);
+      expect(find.text('🚲 Đạp xe'), findsOneWidget);
+      expect(find.text('Vòng trong'), findsNWidgets(6));
+      expect(find.text('Vòng giữa'), findsNWidgets(6));
+      expect(find.text('Vòng ngoài'), findsNWidgets(7));
+    });
+
+    testWidgets('add: picking an emoji fills its default name', (tester) async {
+      final c = await pumpSettings(tester);
       await tester.tap(find.text('Thêm loại sự kiện'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const ValueKey('emoji-🏃')));
@@ -91,11 +174,36 @@ void main() {
 
       await tester.tap(find.text('Lưu'));
       await tester.pumpAndSettle();
-      expect(find.text('Chạy bộ'), findsOneWidget);
-      expect(c.read(activityDialControllerProvider).customTypes.single.emoji, '🏃');
+      expect(c.read(activityDialControllerProvider).eventTypes.last.emoji, '🏃');
+      expect(find.text('Hàng dưới vòng tròn'), findsOneWidget);
     });
 
-    testWidgets('home screen shows "Sự kiện của bạn" and tapping logs it', (tester) async {
+    testWidgets('edit a default from its pencil button', (tester) async {
+      final c = await pumpSettings(tester);
+      await tester.tap(find.byTooltip('Sửa Cà phê'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sửa loại sự kiện'), findsOneWidget);
+
+      await tester.enterText(find.byKey(const ValueKey('name-field')), 'Cà phê sữa đá');
+      await tester.tap(find.text('Lưu'));
+      await tester.pumpAndSettle();
+      expect(find.text('☕ Cà phê sữa đá'), findsOneWidget);
+      expect(c.read(activityDialControllerProvider).eventTypes.first.name, 'Cà phê sữa đá');
+    });
+
+    testWidgets('delete asks for confirmation', (tester) async {
+      final c = await pumpSettings(tester);
+      await tester.tap(find.byTooltip('Xoá Nước'));
+      await tester.pumpAndSettle();
+      expect(find.text('Xoá 💧 Nước?'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Xoá'));
+      await tester.pumpAndSettle();
+      expect(find.text('💧 Nước'), findsNothing);
+      expect(c.read(activityDialControllerProvider).eventTypes, hasLength(18));
+    });
+
+    testWidgets('home shows types past the 19th in "Sự kiện khác"; tapping logs it', (tester) async {
       tester.view.physicalSize = const Size(420, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -110,7 +218,7 @@ void main() {
         child: const MaterialApp(home: ActivityDialPage()),
       ));
       await tester.pumpAndSettle();
-      expect(find.text('Sự kiện của bạn'), findsOneWidget);
+      expect(find.text('Sự kiện khác'), findsOneWidget);
 
       final before = c.read(activityDialControllerProvider).logs.length;
       await tester.tap(find.text('Cầu lông'));

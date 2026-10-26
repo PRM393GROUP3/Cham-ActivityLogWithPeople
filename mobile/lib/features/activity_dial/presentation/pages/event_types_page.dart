@@ -2,80 +2,135 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/activity_event_type.dart';
+import '../../domain/dial_layout.dart';
 import '../../domain/emoji_catalog.dart';
 import '../activity_dial_controller.dart';
 
-/// Cài đặt → Loại sự kiện: xem và tạo loại sự kiện của riêng mình (LOG-01, LOG-02, LOG-05).
-/// Loại đã tạo không sửa, không sắp xếp; hiển thị ở hàng "Sự kiện của bạn" trên trang chủ.
+/// Cài đặt → Loại sự kiện (LOG-05): thêm, sửa, xoá và kéo thả sắp xếp mọi loại sự kiện,
+/// kể cả 19 loại mặc định. Thứ tự quyết định vị trí trên vòng Dial; sửa / xoá không đổi lịch sử.
 class EventTypesPage extends ConsumerWidget {
   const EventTypesPage({super.key});
 
+  void _openSheet(BuildContext context, [ActivityEventType? editing]) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EventTypeSheet(editing: editing),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ActivityEventType type) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Xoá ${type.emoji} ${type.name}?'),
+        content: const Text('Nút này biến khỏi trang chủ. Các lần chấm trước đó vẫn giữ trong lịch sử.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFD34E2F)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xoá'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref.read(activityDialControllerProvider.notifier).deleteEventType(type.id);
+    } on ArgumentError catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${e.message}'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
+  static String _positionLabel(int index) {
+    final inner = dialRingCapacity[0], middle = inner + dialRingCapacity[1];
+    final outer = middle + dialRingCapacity[2];
+    if (index < inner) return 'Vòng trong';
+    if (index < middle) return 'Vòng giữa';
+    if (index < outer) return 'Vòng ngoài';
+    return 'Hàng dưới vòng tròn';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(activityDialControllerProvider);
-    final custom = state.customTypes;
+    final types = ref.watch(activityDialControllerProvider).eventTypes;
+    final controller = ref.read(activityDialControllerProvider.notifier);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFAF6F0),
-        title: const Text(
-          'Loại sự kiện',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
+        title: const Text('Loại sự kiện', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFFB53216),
         foregroundColor: Colors.white,
-        onPressed: () => showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => const AddEventTypeSheet(),
-        ),
+        onPressed: () => _openSheet(context),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Thêm loại sự kiện'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-        children: [
-          Text(
-            '${state.dialTypes.length} loại mặc định trên vòng tròn, ${custom.length} loại của bạn.',
-            style: const TextStyle(color: Color(0xFF7E7369)),
+      body: ReorderableListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+        buildDefaultDragHandles: false,
+        header: const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Text(
+            'Kéo ⠿ để đổi thứ tự: 6 loại đầu ở vòng trong, 6 loại tiếp ở vòng giữa, 7 loại tiếp ở '
+            'vòng ngoài, phần còn lại ở hàng bên dưới vòng tròn. Sửa hoặc xoá không ảnh hưởng các lần '
+            'chấm trước đó.',
+            style: TextStyle(fontSize: 12.5, color: Color(0xFF7E7369), height: 1.35),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Loại đã tạo không sửa và không sắp xếp lại được.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF948A80)),
-          ),
-          const SizedBox(height: 16),
-          if (custom.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: Text(
-                'Chưa có loại sự kiện nào của bạn.\nBấm "Thêm loại sự kiện" để tạo.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF948A80), height: 1.4),
+        ),
+        itemCount: types.length,
+        onReorderItem: controller.reorderEventTypes,
+        itemBuilder: (context, index) {
+          final type = types[index];
+          return _EventTypeTile(
+            key: ValueKey(type.id),
+            type: type,
+            position: _positionLabel(index),
+            dragHandle: ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(Icons.drag_indicator_rounded, color: Color(0xFFA89C91)),
               ),
-            )
-          else
-            for (final type in custom) _EventTypeTile(type: type),
-        ],
+            ),
+            onEdit: () => _openSheet(context, type),
+            onDelete: () => _confirmDelete(context, ref, type),
+          );
+        },
       ),
     );
   }
 }
 
 class _EventTypeTile extends StatelessWidget {
-  const _EventTypeTile({required this.type});
+  const _EventTypeTile({
+    super.key,
+    required this.type,
+    required this.position,
+    required this.dragHandle,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final ActivityEventType type;
+  final String position;
+  final Widget dragHandle;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
       decoration: BoxDecoration(
         color: const Color(0xFFF9F4EB),
         borderRadius: BorderRadius.circular(16),
@@ -83,13 +138,42 @@ class _EventTypeTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(type.emoji, style: const TextStyle(fontSize: 24)),
+          dragHandle,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(color: type.bgColor, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: type.icon != null
+                ? Icon(type.icon, size: 19, color: type.accentColor)
+                : Text(type.emoji, style: const TextStyle(fontSize: 19)),
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              type.name,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${type.emoji} ${type.name}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+                Text(position, style: const TextStyle(fontSize: 11.5, color: Color(0xFF8A7E74))),
+              ],
             ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Sửa ${type.name}',
+            icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF6E6259)),
+            onPressed: onEdit,
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Xoá ${type.name}',
+            icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Color(0xFFD34E2F)),
+            onPressed: onDelete,
           ),
         ],
       ),
@@ -97,20 +181,23 @@ class _EventTypeTile extends StatelessWidget {
   }
 }
 
-/// Bảng tạo loại sự kiện: chọn emoji (tên tự điền theo emoji, LOG-02) hoặc nhập emoji khác.
-class AddEventTypeSheet extends ConsumerStatefulWidget {
-  const AddEventTypeSheet({super.key});
+/// Bảng thêm / sửa loại sự kiện: chọn emoji (tên tự điền theo emoji, LOG-02) hoặc nhập emoji khác.
+class EventTypeSheet extends ConsumerStatefulWidget {
+  const EventTypeSheet({super.key, this.editing});
+
+  /// `null` = thêm mới.
+  final ActivityEventType? editing;
 
   @override
-  ConsumerState<AddEventTypeSheet> createState() => _AddEventTypeSheetState();
+  ConsumerState<EventTypeSheet> createState() => _EventTypeSheetState();
 }
 
-class _AddEventTypeSheetState extends ConsumerState<AddEventTypeSheet> {
-  final _emoji = TextEditingController();
-  final _name = TextEditingController();
+class _EventTypeSheetState extends ConsumerState<EventTypeSheet> {
+  late final _emoji = TextEditingController(text: widget.editing?.emoji);
+  late final _name = TextEditingController(text: widget.editing?.name);
 
-  /// Tên đã được người dùng tự sửa thì không ghi đè khi đổi emoji nữa.
-  bool _nameEdited = false;
+  /// Tên đã có (đang sửa) hoặc người dùng tự gõ thì không ghi đè khi đổi emoji nữa.
+  late bool _nameEdited = widget.editing != null;
   String? _error;
 
   @override
@@ -134,17 +221,21 @@ class _AddEventTypeSheetState extends ConsumerState<AddEventTypeSheet> {
   }
 
   Future<void> _save() async {
+    final controller = ref.read(activityDialControllerProvider.notifier);
     try {
-      final type = await ref
-          .read(activityDialControllerProvider.notifier)
-          .addEventType(emoji: _emoji.text, name: _name.text);
+      final editing = widget.editing;
+      final String message;
+      if (editing == null) {
+        final type = await controller.addEventType(emoji: _emoji.text, name: _name.text);
+        message = 'Đã thêm ${type.emoji} ${type.name}';
+      } else {
+        await controller.updateEventType(editing.id, emoji: _emoji.text, name: _name.text);
+        message = 'Đã lưu thay đổi';
+      }
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Đã thêm ${type.emoji} ${type.name}'),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
       );
     } on ArgumentError catch (e) {
       setState(() => _error = '${e.message}');
@@ -154,9 +245,7 @@ class _AddEventTypeSheetState extends ConsumerState<AddEventTypeSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
           color: Color(0xFFFFFDF9),
@@ -167,15 +256,12 @@ class _AddEventTypeSheetState extends ConsumerState<AddEventTypeSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Thêm loại sự kiện',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            Text(
+              widget.editing == null ? 'Thêm loại sự kiện' : 'Sửa loại sự kiện',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Chọn emoji',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+            const Text('Chọn emoji', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             SizedBox(
               height: 168,
@@ -193,15 +279,10 @@ class _AddEventTypeSheetState extends ConsumerState<AddEventTypeSheet> {
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: _emoji.text == emoji
-                              ? const Color(0xFFFDEEE8)
-                              : null,
+                          color: _emoji.text == emoji ? const Color(0xFFFDEEE8) : null,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(
-                          emoji,
-                          style: const TextStyle(fontSize: 22),
-                        ),
+                        child: Text(emoji, style: const TextStyle(fontSize: 22)),
                       ),
                     ),
                 ],
@@ -217,10 +298,7 @@ class _AddEventTypeSheetState extends ConsumerState<AddEventTypeSheet> {
                     controller: _emoji,
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 22),
-                    decoration: const InputDecoration(
-                      labelText: 'Emoji',
-                      border: OutlineInputBorder(),
-                    ),
+                    decoration: const InputDecoration(labelText: 'Emoji', border: OutlineInputBorder()),
                     onChanged: _onEmojiChanged,
                   ),
                 ),
@@ -248,9 +326,7 @@ class _AddEventTypeSheetState extends ConsumerState<AddEventTypeSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFB53216),
-                ),
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB53216)),
                 onPressed: _save,
                 child: const Text('Lưu'),
               ),

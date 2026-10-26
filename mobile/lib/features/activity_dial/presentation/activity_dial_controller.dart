@@ -12,6 +12,7 @@ import '../data/activity_local_storage.dart';
 import '../data/event_type_storage.dart';
 import '../domain/activity_event_type.dart';
 import '../domain/activity_log.dart';
+import '../domain/dial_layout.dart';
 
 class ActivityDialState {
   const ActivityDialState({
@@ -23,16 +24,16 @@ class ActivityDialState {
 
   final List<ActivityLog> logs;
 
-  /// 19 loại mặc định trên vòng Dial, tiếp theo là các loại tự tạo theo thứ tự tạo.
+  /// Mọi loại sự kiện theo thứ tự người dùng đặt trong Cài đặt (LOG-05).
   final List<ActivityEventType> eventTypes;
   final bool isLoading;
   final ActivityEventType? lastTappedType;
 
-  List<ActivityEventType> get dialTypes =>
-      eventTypes.where((t) => !t.isCustom).toList();
+  /// 19 loại đầu, đã được gán vòng và góc trên vòng Dial theo thứ tự.
+  List<ActivityEventType> get dialTypes => layoutDial(eventTypes).dial;
 
-  List<ActivityEventType> get customTypes =>
-      eventTypes.where((t) => t.isCustom).toList();
+  /// Từ loại thứ 20 trở đi: hiển thị thành hàng bên dưới vòng Dial.
+  List<ActivityEventType> get extraTypes => layoutDial(eventTypes).rest;
 
   /// Bản ghi trong ngày hôm nay theo giờ Việt Nam (HIS-01, DAT-02).
   List<ActivityLog> get todayLogs =>
@@ -85,9 +86,8 @@ class ActivityDialController extends Notifier<ActivityDialState> {
   }
 
   Future<void> _init() async {
-    final customTypes = await ref.read(eventTypeStorageProvider).load();
     state = state.copyWith(
-      eventTypes: [...ActivityEventType.defaultTypes, ...customTypes],
+      eventTypes: await ref.read(eventTypeStorageProvider).load(),
     );
 
     final storedLogs = await _storage.loadLogs();
@@ -155,25 +155,55 @@ class ActivityDialController extends Notifier<ActivityDialState> {
     return newLog;
   }
 
-  /// Tạo loại sự kiện mới (LOG-01, LOG-02, LOG-05). Chỉ tạo: không sửa, không sắp xếp.
+  /// Tạo loại sự kiện mới ở cuối danh sách (LOG-01, LOG-02, LOG-05).
   /// Ném [ArgumentError] nếu thiếu emoji / tên hoặc tên quá 50 ký tự.
   Future<ActivityEventType> addEventType({
     required String emoji,
     required String name,
   }) async {
+    final (e, n) = _validateType(emoji, name);
+    final type = ActivityEventType.custom(id: 'custom-${uuidV4()}', name: n, emoji: e);
+    await _saveTypes([...state.eventTypes, type]);
+    return type;
+  }
+
+  /// Đổi emoji / tên một loại sự kiện. Chỉ áp dụng cho lần chạm sau: bản ghi cũ giữ emoji và
+  /// tên lúc ghi.
+  Future<void> updateEventType(String id, {required String emoji, required String name}) async {
+    final (e, n) = _validateType(emoji, name);
+    await _saveTypes([
+      for (final t in state.eventTypes) t.id == id ? t.copyWith(emoji: e, name: n) : t,
+    ]);
+  }
+
+  /// Xoá một loại sự kiện khỏi trang chủ. Bản ghi cũ của loại đó vẫn nằm trong lịch sử
+  /// (và bản đã Công khai vẫn được chia sẻ). Không xoá được loại cuối cùng.
+  Future<void> deleteEventType(String id) async {
+    if (state.eventTypes.length <= 1) {
+      throw ArgumentError('Cần giữ lại ít nhất một loại sự kiện.');
+    }
+    await _saveTypes(state.eventTypes.where((t) => t.id != id).toList());
+  }
+
+  /// Kéo thả đổi thứ tự: chuyển loại ở [oldIndex] tới vị trí [newIndex] trong danh sách sau khi
+  /// đã bỏ nó ra (quy ước của `ReorderableListView.onReorderItem`).
+  Future<void> reorderEventTypes(int oldIndex, int newIndex) async {
+    final types = [...state.eventTypes];
+    types.insert(newIndex, types.removeAt(oldIndex));
+    await _saveTypes(types);
+  }
+
+  (String, String) _validateType(String emoji, String name) {
     final e = emoji.trim(), n = name.trim();
     if (e.isEmpty) throw ArgumentError('Hãy chọn một emoji.');
     if (n.isEmpty) throw ArgumentError('Hãy đặt tên cho sự kiện.');
     if (n.characters.length > 50) throw ArgumentError('Tên tối đa 50 ký tự.');
+    return (e, n);
+  }
 
-    final type = ActivityEventType.custom(
-      id: 'custom-${uuidV4()}',
-      name: n,
-      emoji: e,
-    );
-    state = state.copyWith(eventTypes: [...state.eventTypes, type]);
-    await ref.read(eventTypeStorageProvider).save(state.customTypes);
-    return type;
+  Future<void> _saveTypes(List<ActivityEventType> types) async {
+    state = state.copyWith(eventTypes: types);
+    await ref.read(eventTypeStorageProvider).save(types);
   }
 
   /// Viết / sửa ghi chú của một bản ghi (NOTE-01). Chuỗi rỗng = xoá ghi chú.

@@ -51,7 +51,7 @@ flowchart TD
   * Bảng liệt kê chi tiết từng lần chấm kèm thời gian (giờ Việt Nam, UTC+7).
   * Nhấn biểu tượng thùng rác màu đỏ để xóa bản ghi chấm nhầm (hệ thống tự động trừ số lượng; tuân thủ nguyên tắc không cung cấp Undo). Xoá bản ghi Công khai sẽ thu hồi nó khỏi feed bạn bè.
 * **Ghi chú cho bản ghi (NOTE-01):** trong `TodayLogsSheet`, chạm icon 📝 trên một bản ghi để mở **tờ giấy ghi chú** (giấy kẻ dòng, lề đỏ). Viết nhiều dòng; ghi chú tự lưu khi quay lại hoặc khi bấm **Lưu**. Dòng đầu ghi chú hiện ngay dưới bản ghi. Ghi chú chỉ lưu trên máy — bạn bè không thấy, kể cả khi bản ghi Công khai.
-* **Hàng "Sự kiện của bạn":** các loại sự kiện tự tạo (xem 2.5) hiện thành một hàng cuộn ngang dưới vòng Dial; chạm để ghi như nút mặc định.
+* **Vị trí các nút do bạn sắp xếp (xem 2.5):** 6 loại đầu ở vòng trong, 6 loại tiếp ở vòng giữa, 7 loại tiếp ở vòng ngoài (chia đều quanh vòng), từ loại thứ 20 trở đi ở hàng **"Sự kiện khác"** dưới vòng Dial; chạm để ghi như mọi nút.
 * **Chia sẻ theo từng bản ghi (SOC-03, SOC-04):**
   * Mọi lần chấm đều bắt đầu ở chế độ **🔒 Riêng tư** — chỉ lưu trên máy, không gửi đi đâu.
   * Trong `TodayLogsSheet`, chạm công tắc **Riêng tư** trên một bản ghi để chuyển sang **🌐 Công khai** → tất cả bạn bè thấy bản ghi đó trong feed. Chạm lại để về Riêng tư (thu hồi).
@@ -91,10 +91,14 @@ flowchart TD
 
 ---
 
-### 2.5. Cài Đặt → Loại Sự Kiện (Tạo icon riêng)
+### 2.5. Cài Đặt → Loại Sự Kiện (Thêm / Sửa / Xoá / Sắp xếp)
 * **Cách mở:** Chạm icon Bánh răng `⚙️` trên trang chủ → **"Loại sự kiện"**.
-* Danh sách các loại bạn đã tạo; bấm **"Thêm loại sự kiện"** → chọn emoji trong lưới gợi ý (tên tự điền theo emoji, vd. 🏃 → *Chạy bộ*) hoặc gõ emoji khác vào ô **Emoji** → sửa tên nếu muốn (tối đa 50 ký tự) → **Lưu**.
-* Loại đã tạo **không sửa, không sắp xếp** (LOG-05); lưu trên máy, dùng được offline.
+* Danh sách **mọi** loại sự kiện theo thứ tự, gồm cả 19 loại mặc định; mỗi dòng ghi vị trí trên trang chủ (*Vòng trong / Vòng giữa / Vòng ngoài / Hàng dưới vòng tròn*).
+* **Thêm:** bấm **"Thêm loại sự kiện"** → chọn emoji trong lưới gợi ý (tên tự điền theo emoji, vd. 🏃 → *Chạy bộ*) hoặc gõ emoji khác vào ô **Emoji** → sửa tên nếu muốn (tối đa 50 ký tự) → **Lưu**. Loại mới nằm cuối danh sách.
+* **Sửa:** bấm ✏️ → đổi emoji / tên → **Lưu**. Đổi emoji của loại mặc định thì nút hiển thị emoji mới thay cho icon cũ.
+* **Xoá:** bấm 🗑 → xác nhận. Phải còn ít nhất một loại.
+* **Sắp xếp:** giữ và kéo biểu tượng ⠿. 6 loại đầu ở vòng trong, 6 loại tiếp ở vòng giữa, 7 loại tiếp ở vòng ngoài (chia đều quanh vòng), từ loại thứ 20 trở đi ở hàng **"Sự kiện khác"** dưới vòng Dial.
+* Sửa / xoá **không đổi lịch sử**: các lần chấm trước giữ emoji và tên lúc ghi. Mọi thay đổi lưu trên máy, dùng được offline.
 
 ---
 
