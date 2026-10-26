@@ -120,7 +120,7 @@ The main container screen integrating the top app bar, segmented tab switch, and
 #### Features
 1. **App Bar:** Back navigation arrow, screen title *"Chi Tiết Khoảnh Khắc"*, and user avatar action button.
 2. **Segmented Tabs:**
-   - `Mã QR của tôi`: thẻ hồ sơ với tên, **mã mời thật** của tài khoản ẩn danh (`Mã mời: …`), **QR chuẩn** chứa `CHAM:<mã>`, nút `Sao chép mã` và `Đổi mã mời`.
+   - `Mã QR của tôi`: thẻ hồ sơ với tên, **mã mời thật** của tài khoản ẩn danh (`Mã mời: …`), **QR chuẩn** chứa `CHAM:<mã>`, nút `Sao chép mã`, `Lưu ảnh QR` (chụp vùng QR + mã mời thành PNG qua `pngSaverProvider`: Android → thư viện ảnh bằng `gal`, Web → tải file) và `Đổi mã mời`.
      Lần đầu mở, trang tự đăng ký tài khoản (cần mạng); khi đang đăng ký hiện vòng xoay, lỗi mạng hiện thông báo + nút **Thử lại**.
    - `Quét mã QR`: giao diện máy quét. Nhập hoặc quét mã → hộp xác nhận **"Kết bạn"** → `POST /api/friends` → thành bạn ngay (SOC-01), SnackBar *"Đã kết bạn với …"* hoặc lỗi.
 
@@ -202,5 +202,5 @@ Mã mời gồm 10 ký tự, vd. `H4R7N2Q8ZK`.
 | **Coral Accent** | `#E85835` | Central QR logo, laser scanner line |
 | **Primary Text** | `#2C2523` | Title, user name, action labels |
 | **Secondary Text** | `#8A827B` | Dòng `Mã mời: …`, muted captions |
-| **Button Pill Fill** | `#F2ECE4` | `Sao chép mã`, `Đổi mã mời` buttons |
+| **Button Pill Fill** | `#F2ECE4` | `Sao chép mã`, `Lưu ảnh QR`, `Đổi mã mời` buttons |
 

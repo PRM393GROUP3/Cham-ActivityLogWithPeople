@@ -76,6 +76,7 @@ flowchart TD
   * Hiển thị tên hiển thị và **mã mời thật** của tài khoản (`Mã mời: …`). Lần đầu mở, app tự tạo tài khoản ẩn danh (cần mạng; mất mạng thì có nút **Thử lại**).
   * **Mã QR chuẩn** (chấm tròn, logo Chấm ở giữa, mức sửa lỗi H) chứa `CHAM:<mã mời>` — quét được bằng camera của app Chấm (và đọc được bằng máy quét QR thông thường). QR không chứa nhật ký.
   * Nút **"Sao chép mã"** (hoặc chạm vào QR): sao chép mã mời để gửi qua tin nhắn.
+  * Nút **"Lưu ảnh QR"**: lưu ảnh PNG gồm mã QR và dòng *"Chấm · Mã mời …"* — Android: vào thư viện ảnh, album **"Chấm"**; Web: tải file `cham-ma-moi-<mã>.png`.
   * Nút **"Đổi mã mời"**: xác nhận → tạo mã mới; mã / QR cũ không kết bạn được nữa, bạn bè hiện có giữ nguyên.
   * Nút 👥 góc phải: mở **danh sách bạn bè**.
 * **Tab "Quét mã QR":**

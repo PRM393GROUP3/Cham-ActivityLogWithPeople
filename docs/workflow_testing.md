@@ -84,6 +84,7 @@ flowchart TD
 | 3.4 | Chạm tab **"Quét mã QR"**, đưa QR của bạn bè vào khung. | Camera mở (xin quyền lần đầu), đọc được mã → hộp **"Kết bạn?"**. QR không phải của Chấm → *"Đây không phải mã QR kết bạn của Chấm."* | Chưa chạy trên thiết bị thật (logic giải mã có test tự động) |
 | 3.5 | Nhấn nút **"Bật đèn"**. | Đèn flash bật, nút đổi thành **"Tắt đèn"**. | Chưa chạy trên thiết bị thật |
 | 3.6 | Nhấn nút **"Nhập mã"**, gõ mã mời của một người khác và bấm **"Kết nối bạn bè"**. | Hộp thoại **"Kết bạn?"**; bấm **"Kết bạn"** → thành bạn ngay, SnackBar *"Đã kết bạn với …"*; feed hiện cả các bản Công khai cũ của người đó. Mã sai → SnackBar lỗi. | Đạt (test tự động + API) |
+| 3.6b | Bấm **"Lưu ảnh QR"**. | Web: tải file `cham-ma-moi-<mã>.png`; Android: ảnh vào album "Chấm". Ảnh quét ra đúng `CHAM:<mã>`. | Đạt (Web: tải và giải mã thật; Android: chưa chạy trên thiết bị) |
 | 3.7 | Bấm **"Đổi mã mời"** → **Đổi mã**. | Mã và QR đổi sang mã mới; mã cũ không kết bạn được nữa. | Đạt (test tự động) |
 | 3.8 | Hồ sơ → **"Danh sách bạn bè"** → bấm 👤✕ trên một người → **Huỷ kết bạn**. | Người đó biến khỏi danh sách; hai bên không còn thấy bản Công khai của nhau. | Đạt (test tự động) |
 | 3.9 | Bấm nút `←` ở góc trên bên trái. | Quay lại màn hình trước đó. | Đạt |
@@ -175,7 +176,7 @@ flutter test
 | [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
 | [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Loại sự kiện: 19 mặc định, thêm / sửa / xoá / kéo thả, xếp mọi loại lên 3 vòng theo thứ tự (`layoutDial`, `dialRingSizes`, tối đa 36), lịch sử cũ giữ nguyên, lưu bền; ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
 | [`stats_test.dart`](../mobile/test/stats_test.dart) | Kỳ Ngày / Tuần (từ Thứ Hai) / Tháng theo giờ VN, đếm theo loại / ngày / giờ, lần gần nhất, trang thống kê (chuyển kỳ, xoá cập nhật số liệu, kỳ trống) |
-| [`qr_friends_test.dart`](../mobile/test/qr_friends_test.dart) | `InviteQr` encode / decode, QR thật mức H, mã không phải Chấm / mã của mình bị chặn, đổi mã mời, danh sách bạn bè, huỷ kết bạn có xác nhận, offline |
+| [`qr_friends_test.dart`](../mobile/test/qr_friends_test.dart) | `InviteQr` encode / decode, QR thật mức H, mã không phải Chấm / mã của mình bị chặn, đổi mã mời, lưu ảnh QR (PNG đúng tên file), danh sách bạn bè, huỷ kết bạn có xác nhận, offline |
 | [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
 | [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
 

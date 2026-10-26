@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:cham/core/utils/image_saver/image_saver.dart';
 import 'package:cham/features/account/data/account_api.dart';
 import 'package:cham/features/account/presentation/account_controller.dart';
 import 'package:cham/features/friends/data/friends_api.dart';
@@ -111,6 +114,38 @@ void main() {
       expect(c.read(accountControllerProvider).value!.inviteCode, 'B3T8WQ2N6M');
       expect(find.text('Mã mời: B3T8WQ2N6M'), findsOneWidget);
       expect(tester.widget<CustomQrView>(find.byType(CustomQrView)).data, 'CHAM:B3T8WQ2N6M');
+    });
+
+    testWidgets('"Lưu ảnh QR" saves a PNG of the QR named after the invite code', (tester) async {
+      tester.view.physicalSize = const Size(420, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+      final saved = <(Uint8List, String)>[];
+      final c = ProviderContainer(overrides: [
+        accountApiProvider.overrideWithValue(FakeAccountApi()),
+        friendsApiProvider.overrideWithValue(FakeFriendsApi()),
+        pngSaverProvider.overrideWithValue((bytes, {required fileName}) async {
+          saved.add((bytes, fileName));
+          return 'saved-ok';
+        }),
+      ]);
+      addTearDown(c.dispose);
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: c,
+        child: const MaterialApp(home: AddQrPage(animateLaser: false, enableCamera: false)),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Lưu ảnh QR'));
+      await tester.tap(find.text('Lưu ảnh QR'));
+      // Chụp ảnh (toImage) là việc bất đồng bộ thật, chạy ngoài fake async của test.
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+      await tester.pumpAndSettle();
+
+      expect(saved, hasLength(1));
+      expect(saved.single.$2, 'cham-ma-moi-MYCODE');
+      expect(saved.single.$1.sublist(0, 4), [0x89, 0x50, 0x4E, 0x47], reason: 'PNG signature');
+      expect(find.text('saved-ok'), findsOneWidget);
     });
 
     testWidgets('the people button opens the friends list', (tester) async {
