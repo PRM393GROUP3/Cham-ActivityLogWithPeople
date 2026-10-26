@@ -47,14 +47,8 @@ class EventTypesPage extends ConsumerWidget {
     }
   }
 
-  static String _positionLabel(int index) {
-    final inner = dialRingCapacity[0], middle = inner + dialRingCapacity[1];
-    final outer = middle + dialRingCapacity[2];
-    if (index < inner) return 'Vòng trong';
-    if (index < middle) return 'Vòng giữa';
-    if (index < outer) return 'Vòng ngoài';
-    return 'Hàng dưới vòng tròn';
-  }
+  static String _positionLabel(int index, int count) =>
+      const {1: 'Vòng trong', 2: 'Vòng giữa', 3: 'Vòng ngoài'}[dialRingOf(index, count)]!;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -80,9 +74,9 @@ class EventTypesPage extends ConsumerWidget {
         header: const Padding(
           padding: EdgeInsets.only(bottom: 12),
           child: Text(
-            'Kéo ⠿ để đổi thứ tự: 6 loại đầu ở vòng trong, 6 loại tiếp ở vòng giữa, 7 loại tiếp ở '
-            'vòng ngoài, phần còn lại ở hàng bên dưới vòng tròn. Sửa hoặc xoá không ảnh hưởng các lần '
-            'chấm trước đó.',
+            'Kéo ⠿ để đổi thứ tự: các loại đầu danh sách ở vòng trong, rồi vòng giữa, rồi vòng ngoài '
+            '(6 / 6 / 7 với 19 loại; thêm loại thì vòng ngoài và vòng giữa nhận thêm). Tối đa '
+            '$maxEventTypes loại. Sửa hoặc xoá không ảnh hưởng các lần chấm trước đó.',
             style: TextStyle(fontSize: 12.5, color: Color(0xFF7E7369), height: 1.35),
           ),
         ),
@@ -93,7 +87,7 @@ class EventTypesPage extends ConsumerWidget {
           return _EventTypeTile(
             key: ValueKey(type.id),
             type: type,
-            position: _positionLabel(index),
+            position: _positionLabel(index, types.length),
             dragHandle: ReorderableDragStartListener(
               index: index,
               child: const Padding(

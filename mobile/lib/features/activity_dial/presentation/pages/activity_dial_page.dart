@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../activity_dial_controller.dart';
 import '../../domain/activity_event_type.dart';
 import '../widgets/orbital_dial_widget.dart';
-import '../widgets/radial_dial_node.dart';
 import '../widgets/today_logs_sheet.dart';
 import '../widgets/today_summary_card.dart';
 import '../widgets/user_profile_sheet.dart';
@@ -297,42 +296,6 @@ class ActivityDialPage extends ConsumerWidget {
                       },
                       onTapCenter: () => _openTodayLogsSheet(context),
                     ),
-
-                    // --- 4. SỰ KIỆN KHÁC: từ loại thứ 20 theo thứ tự trong Cài đặt (LOG-05) ---
-                    if (state.extraTypes.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Sự kiện khác',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF6E6259),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final type in state.extraTypes)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 4),
-                                child: RadialDialNode(
-                                  type: type,
-                                  circleRadius: 22,
-                                  iconSize: 20,
-                                  onTap: () async {
-                                    await controller.quickLog(type);
-                                    if (context.mounted) {
-                                      _showFeedbackToast(context, type);
-                                    }
-                                  },
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),

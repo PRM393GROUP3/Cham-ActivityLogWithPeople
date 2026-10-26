@@ -84,7 +84,7 @@ Các thói quen được phân bổ trên 3 quỹ đạo đồng tâm xoay quanh
 ### 5. Cài Đặt Hệ Thống
 - **Cách mở:** Chạm vào biểu tượng **Bánh răng cài đặt (⚙️)** ở góc trên bên phải.
 - **Thông tin:** Hiển thị trạng thái hoạt động offline (`Local-First`), cơ chế ghi 1-chạm và tự động đồng bộ khi có Internet.
-- **Loại sự kiện:** thêm, sửa, xoá và kéo thả sắp xếp mọi icon sự kiện (kể cả 19 loại mặc định). Thứ tự quyết định vị trí: 6 loại đầu ở vòng trong, 6 loại tiếp ở vòng giữa, 7 loại tiếp ở vòng ngoài (chia đều quanh vòng), từ loại thứ 20 trở đi ở hàng **"Sự kiện khác"** dưới vòng Dial. Lịch sử cũ không bị đổi.
+- **Loại sự kiện:** thêm, sửa, xoá và kéo thả sắp xếp mọi icon sự kiện (kể cả 19 loại mặc định). Thứ tự quyết định vị trí: **mọi loại đều nằm trên vòng Dial**: các loại đầu danh sách ở vòng trong, rồi vòng giữa, rồi vòng ngoài (6 / 6 / 7 với 19 loại; từ loại thứ 20, loại mới vào vòng đang thưa nhất so với chu vi — thường là vòng ngoài rồi vòng giữa), các nút trên mỗi vòng chia đều; tối đa 36 loại. Lịch sử cũ không bị đổi.
 - **Cài đặt Widget (2×2, 4×2).**
 
 ---

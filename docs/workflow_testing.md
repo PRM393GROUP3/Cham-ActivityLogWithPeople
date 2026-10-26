@@ -105,8 +105,8 @@ flowchart TD
 
 | Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
 | :---: | :--- | :--- | :---: |
-| 6.1 | `⚙️` → **Loại sự kiện**. | Thấy đủ 19 loại mặc định theo thứ tự, mỗi dòng ghi *Vòng trong / giữa / ngoài*. | Đạt (test tự động) |
-| 6.2 | **Thêm loại sự kiện**, chạm 🏃 rồi **Lưu**. | Tên tự điền *Chạy bộ*; loại mới ở cuối danh sách (*Hàng dưới vòng tròn*) và ở hàng **"Sự kiện khác"** trên trang chủ; còn sau khi mở lại app. | Đạt (test tự động) |
+| 6.1 | `⚙️` → **Loại sự kiện**. | Thấy đủ 19 loại mặc định theo thứ tự, mỗi dòng ghi *Vòng trong / giữa / ngoài*. | Đạt (test tự động + xem trên Web) |
+| 6.2 | **Thêm loại sự kiện**, chạm 🏃 rồi **Lưu**. | Tên tự điền *Chạy bộ*; loại mới ở cuối danh sách và xuất hiện **trên vòng ngoài** của trang chủ; còn sau khi mở lại app. Thêm đến 36 loại thì bị chặn. | Đạt (test tự động) |
 | 6.3 | Bấm ✏️ trên *Cà phê*, đổi tên / emoji, **Lưu**. | Trang chủ đổi theo; các bản ghi Cà phê cũ trong lịch sử giữ tên cũ. | Đạt (test tự động) |
 | 6.4 | Bấm 🗑 trên *Nước* → **Xoá**. | Nút Nước biến khỏi trang chủ; bản ghi Nước cũ vẫn trong lịch sử. Xoá tới loại cuối cùng thì bị chặn. | Đạt (test tự động) |
 | 6.5 | Kéo *Cà phê* xuống vị trí 19. | Cà phê chuyển ra vòng ngoài; các nút trên mỗi vòng chia đều lại. | Đạt (test tự động) |
@@ -156,7 +156,7 @@ flutter test
 | [`sharing_test.dart`](../mobile/test/sharing_test.dart) | Hàng đợi gửi: gộp theo bản ghi, còn sau khi mở lại app, gửi lại khi có mạng, thu hồi khi xoá (DAT-03, BR-02, BR-03, AC-05) |
 | [`feed_test.dart`](../mobile/test/feed_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã |
 | [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
-| [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Loại sự kiện: 19 mặc định, thêm / sửa / xoá / kéo thả, xếp vòng theo thứ tự (`layoutDial`), lịch sử cũ giữ nguyên, lưu bền; ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
+| [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Loại sự kiện: 19 mặc định, thêm / sửa / xoá / kéo thả, xếp mọi loại lên 3 vòng theo thứ tự (`layoutDial`, `dialRingSizes`, tối đa 36), lịch sử cũ giữ nguyên, lưu bền; ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
 | [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
 | [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
 

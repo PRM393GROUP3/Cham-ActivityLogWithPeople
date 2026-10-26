@@ -29,11 +29,8 @@ class ActivityDialState {
   final bool isLoading;
   final ActivityEventType? lastTappedType;
 
-  /// 19 loại đầu, đã được gán vòng và góc trên vòng Dial theo thứ tự.
-  List<ActivityEventType> get dialTypes => layoutDial(eventTypes).dial;
-
-  /// Từ loại thứ 20 trở đi: hiển thị thành hàng bên dưới vòng Dial.
-  List<ActivityEventType> get extraTypes => layoutDial(eventTypes).rest;
+  /// Mọi loại sự kiện, đã được gán vòng và góc trên vòng Dial theo thứ tự.
+  List<ActivityEventType> get dialTypes => layoutDial(eventTypes);
 
   /// Bản ghi trong ngày hôm nay theo giờ Việt Nam (HIS-01, DAT-02).
   List<ActivityLog> get todayLogs =>
@@ -162,6 +159,9 @@ class ActivityDialController extends Notifier<ActivityDialState> {
     required String name,
   }) async {
     final (e, n) = _validateType(emoji, name);
+    if (state.eventTypes.length >= maxEventTypes) {
+      throw ArgumentError('Tối đa $maxEventTypes loại sự kiện để vòng tròn còn dễ nhìn.');
+    }
     final type = ActivityEventType.custom(id: 'custom-${uuidV4()}', name: n, emoji: e);
     await _saveTypes([...state.eventTypes, type]);
     return type;

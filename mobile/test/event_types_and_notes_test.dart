@@ -34,17 +34,35 @@ void main() {
     List<ActivityEventType> types(int n) =>
         [for (var i = 0; i < n; i++) ActivityEventType.custom(id: 't$i', name: 'T$i', emoji: '⭐')];
 
-    test('fills inner, middle, outer rings in order and spreads each ring evenly', () {
+    test('keeps the original 6 / 6 / 7 rings for 19 types and spreads each ring evenly', () {
+      expect(dialRingSizes(19), [6, 6, 7]);
       final few = layoutDial(types(3));
-      expect(few.dial.map((t) => t.orbit), [1, 1, 1]);
-      expect(few.dial.map((t) => t.angleDegree), [-90, 30, 150]);
-      expect(few.rest, isEmpty);
+      expect(few.map((t) => t.orbit), [1, 1, 1]);
+      expect(few.map((t) => t.angleDegree), [-90, 30, 150]);
+    });
 
-      final many = layoutDial(types(25));
-      expect(many.dial.where((t) => t.orbit == 1), hasLength(6));
-      expect(many.dial.where((t) => t.orbit == 2), hasLength(6));
-      expect(many.dial.where((t) => t.orbit == 3), hasLength(7));
-      expect(many.rest.map((t) => t.id), ['t19', 't20', 't21', 't22', 't23', 't24']);
+    test('every type stays on a ring; extra types go to the sparsest ring first', () {
+      expect(dialRingSizes(20), [6, 6, 8]);
+      for (var n = 1; n <= maxEventTypes; n++) {
+        final sizes = dialRingSizes(n);
+        expect(sizes.reduce((a, b) => a + b), n);
+        final placed = layoutDial(types(n));
+        expect(placed, hasLength(n));
+        expect(placed.every((t) => t.orbit >= 1 && t.orbit <= 3), isTrue);
+      }
+      final full = dialRingSizes(maxEventTypes);
+      expect(full[2], greaterThan(full[1]));
+      expect(full[1], greaterThan(full[0]));
+      expect(full[2], lessThanOrEqualTo(17), reason: 'outer ring stays readable at ~390px');
+    });
+
+    test('dialRingOf matches where layoutDial puts each type', () {
+      for (final n in [5, 19, 20, 30, maxEventTypes]) {
+        final placed = layoutDial(types(n));
+        for (var i = 0; i < n; i++) {
+          expect(dialRingOf(i, n), placed[i].orbit);
+        }
+      }
     });
   });
 
@@ -61,13 +79,15 @@ void main() {
       final state = c.read(activityDialControllerProvider);
       expect(state.eventTypes.map((t) => t.id), ActivityEventType.defaultTypes.map((t) => t.id));
       expect(state.dialTypes, hasLength(19));
-      expect(state.extraTypes, isEmpty);
     });
 
-    test('a new type goes to the end (row under the dial) and survives a restart', () async {
+    test('a new type goes on the dial (outer ring) and survives a restart', () async {
       final (c, ctrl) = await loaded();
       await ctrl.addEventType(emoji: ' 🏸 ', name: ' Cầu lông ');
-      expect(c.read(activityDialControllerProvider).extraTypes.single.name, 'Cầu lông');
+      final dial = c.read(activityDialControllerProvider).dialTypes;
+      expect(dial, hasLength(20));
+      expect(dial.last.name, 'Cầu lông');
+      expect(dial.last.orbit, 3);
 
       final reopened = makeContainer();
       reopened.read(activityDialControllerProvider);
@@ -141,6 +161,15 @@ void main() {
       expect(c.read(activityDialControllerProvider).eventTypes, hasLength(19));
     });
 
+    test('allows at most $maxEventTypes types', () async {
+      final (c, ctrl) = await loaded();
+      for (var i = c.read(activityDialControllerProvider).eventTypes.length; i < maxEventTypes; i++) {
+        await ctrl.addEventType(emoji: '⭐', name: 'Sự kiện $i');
+      }
+      expect(() => ctrl.addEventType(emoji: '⭐', name: 'Thừa'), throwsArgumentError);
+      expect(c.read(activityDialControllerProvider).dialTypes, hasLength(maxEventTypes));
+    });
+
     Future<ProviderContainer> pumpSettings(WidgetTester tester) async {
       tester.view.physicalSize = const Size(420, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -175,7 +204,7 @@ void main() {
       await tester.tap(find.text('Lưu'));
       await tester.pumpAndSettle();
       expect(c.read(activityDialControllerProvider).eventTypes.last.emoji, '🏃');
-      expect(find.text('Hàng dưới vòng tròn'), findsOneWidget);
+      expect(find.text('Vòng ngoài'), findsNWidgets(8));
     });
 
     testWidgets('edit a default from its pencil button', (tester) async {
@@ -203,7 +232,7 @@ void main() {
       expect(c.read(activityDialControllerProvider).eventTypes, hasLength(18));
     });
 
-    testWidgets('home shows types past the 19th in "Sự kiện khác"; tapping logs it', (tester) async {
+    testWidgets('a 20th type appears on the dial; tapping it logs it', (tester) async {
       tester.view.physicalSize = const Size(420, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -218,7 +247,8 @@ void main() {
         child: const MaterialApp(home: ActivityDialPage()),
       ));
       await tester.pumpAndSettle();
-      expect(find.text('Sự kiện khác'), findsOneWidget);
+      expect(find.text('Sự kiện khác'), findsNothing);
+      expect(find.text('Cầu lông'), findsOneWidget);
 
       final before = c.read(activityDialControllerProvider).logs.length;
       await tester.tap(find.text('Cầu lông'));

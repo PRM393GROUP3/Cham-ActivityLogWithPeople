@@ -1,6 +1,6 @@
 # SRS ứng dụng ghi nhật ký sinh hoạt
 
-Phiên bản 0.5  |  Ngày 26 tháng 10 năm 2026
+Phiên bản 0.6  |  Ngày 26 tháng 10 năm 2026
 
 ## 1 Mục đích và phạm vi
 
@@ -27,7 +27,7 @@ Người dùng quản lý nhật ký của mình; bạn bè chỉ xem các bản
 | LOG-02 | Khi chọn emoji, hệ thống điền tên mặc định theo tên emoji; người dùng được đổi tên trước khi lưu loại sự kiện. |
 | LOG-03 | Chạm nút sự kiện phải tạo ngay một bản ghi Private với thời điểm hiện tại, không mở form và không yêu cầu nhập thêm. |
 | LOG-04 | Không cung cấp Undo. Với bản ghi đã tạo, chỉ cho phép Delete; không sửa nội dung hoặc thời điểm. |
-| LOG-05 | Trong **Cài đặt → Loại sự kiện**, người dùng **thêm, sửa (emoji, tên), xoá và kéo thả sắp xếp** mọi loại sự kiện, kể cả 19 loại mặc định. Thứ tự quyết định vị trí: 6 loại đầu ở vòng trong, 6 loại tiếp ở vòng giữa, 7 loại tiếp ở vòng ngoài (chia đều quanh vòng), từ loại thứ 20 trở đi ở hàng **"Sự kiện khác"** dưới vòng Dial. Sửa hoặc xoá chỉ áp dụng cho lần chạm sau: **bản ghi cũ giữ emoji và tên lúc ghi** và vẫn nằm trong lịch sử (bản đã Công khai vẫn được chia sẻ). Phải còn ít nhất một loại. |
+| LOG-05 | Trong **Cài đặt → Loại sự kiện**, người dùng **thêm, sửa (emoji, tên), xoá và kéo thả sắp xếp** mọi loại sự kiện, kể cả 19 loại mặc định. Thứ tự quyết định vị trí: **mọi loại đều nằm trên vòng Dial**: các loại đầu danh sách ở vòng trong, rồi vòng giữa, rồi vòng ngoài (6 / 6 / 7 với 19 loại; từ loại thứ 20, loại mới vào vòng đang thưa nhất so với chu vi — thường là vòng ngoài rồi vòng giữa), các nút trên mỗi vòng chia đều; tối đa 36 loại. Sửa hoặc xoá chỉ áp dụng cho lần chạm sau: **bản ghi cũ giữ emoji và tên lúc ghi** và vẫn nằm trong lịch sử (bản đã Công khai vẫn được chia sẻ). Phải còn ít nhất một loại. |
 | NOTE-01 | Mỗi bản ghi có thể có một **ghi chú** dạng văn bản nhiều dòng. Chạm icon ghi chú trên bản ghi trong lịch sử để mở **tờ giấy ghi chú**; ghi chú được lưu khi rời trang hoặc bấm Lưu, được sửa hay xoá (để trống) bất cứ lúc nào. Ghi chú **chỉ lưu trên máy**, không gửi lên server kể cả khi bản ghi Công khai. Ghi chú không thay đổi thời điểm hay loại sự kiện của bản ghi (LOG-04). |
 | HIS-01 | Hiển thị lịch sử theo ngày và lần ghi gần nhất của từng loại sự kiện. Mỗi bản ghi hiển thị chế độ chia sẻ (Private / Public), trạng thái gửi và dòng đầu của ghi chú (nếu có). |
 | HIS-02 | Cho phép xóa bản ghi trong lịch sử; lịch sử, lần ghi gần nhất và thống kê phải được cập nhật tương ứng. |
@@ -90,7 +90,7 @@ NFR-03 — Chỉ báo “đã lưu” khi ghi local thành công; nếu thất b
 
 AC-01 — Ở chế độ máy bay, chạm nút trong app hoặc widget tạo đúng một bản ghi Private đúng thời điểm, không mở form; mở lại app vẫn thấy bản ghi.
 
-AC-02 — Trong Cài đặt thấy đủ 19 loại mặc định. Thêm loại mới: chọn emoji điền tên mặc định, đổi được tên. Sửa / xoá / kéo thả một loại: trang chủ cập nhật đúng vị trí theo thứ tự và còn sau khi mở lại app; các bản ghi cũ giữ nguyên emoji, tên và vẫn ở trong lịch sử.
+AC-02 — Trong Cài đặt thấy đủ 19 loại mặc định; mọi loại (kể cả loại thêm mới) đều hiển thị trên vòng Dial; không thêm được quá 36 loại. Thêm loại mới: chọn emoji điền tên mặc định, đổi được tên. Sửa / xoá / kéo thả một loại: trang chủ cập nhật đúng vị trí theo thứ tự và còn sau khi mở lại app; các bản ghi cũ giữ nguyên emoji, tên và vẫn ở trong lịch sử.
 
 AC-03 — Xóa một bản ghi làm lịch sử, lần ghi gần nhất và thống kê khớp dữ liệu còn lại; không có Undo hoặc sửa bản ghi.
 
@@ -117,7 +117,7 @@ AC-09 — Mở ghi chú của một bản ghi, viết nhiều dòng rồi quay l
 | Phạm vi chia sẻ | Theo từng bản ghi, chọn sau khi ghi |
 | Chế độ chia sẻ | Private (mặc định) / Public (tất cả bạn bè); không chọn từng người nhận |
 | Thu hồi | Được: chuyển về Private hoặc xóa bản ghi |
-| Loại sự kiện | Thêm / sửa / xoá / sắp xếp trong Cài đặt (cả loại mặc định); thứ tự quyết định vị trí trên vòng Dial; bản ghi cũ giữ nguyên |
+| Loại sự kiện | Thêm / sửa / xoá / sắp xếp trong Cài đặt (cả loại mặc định); tất cả nằm trên vòng Dial theo thứ tự, tối đa 36; bản ghi cũ giữ nguyên |
 | Ghi chú | Mỗi bản ghi một ghi chú, sửa được, chỉ lưu trên máy |
 | Bản ghi | Chỉ tạo và xóa; không sửa, không Undo |
 | Múi giờ | Việt Nam (UTC+7) |
