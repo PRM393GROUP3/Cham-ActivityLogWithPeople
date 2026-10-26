@@ -1,4 +1,6 @@
+import 'package:cham/core/network/api_exception.dart';
 import 'package:cham/core/time/vn_time.dart';
+import 'package:dio/dio.dart';
 import 'package:cham/core/utils/uuid.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,5 +34,32 @@ void main() {
     final ids = List.generate(200, (_) => uuidV4());
     expect(ids.every(pattern.hasMatch), isTrue);
     expect(ids.toSet().length, ids.length);
+  });
+
+  group('ApiException', () {
+    DioException withBody(int status, Object? body) {
+      final req = RequestOptions(path: '/friends');
+      return DioException(
+        requestOptions: req,
+        response: Response(requestOptions: req, statusCode: status, data: body),
+        type: DioExceptionType.badResponse,
+      );
+    }
+
+    test('shows Vietnamese messages for user-facing error codes', () {
+      final e = ApiException.fromDio(withBody(404, {
+        'error': {'code': 'INVITE_NOT_FOUND', 'message': 'Invite code is invalid or has been rotated'},
+      }));
+      expect(e.message, 'Mã mời không đúng hoặc đã được đổi.');
+      expect(e.isNetworkError, isFalse);
+    });
+
+    test('treats an unreachable server as a retryable network error', () {
+      final e = ApiException.fromDio(DioException(
+        requestOptions: RequestOptions(path: '/feed'),
+        type: DioExceptionType.connectionError,
+      ));
+      expect(e.isNetworkError, isTrue);
+    });
   });
 }
