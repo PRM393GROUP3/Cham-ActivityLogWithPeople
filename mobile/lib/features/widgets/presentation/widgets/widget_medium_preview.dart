@@ -112,13 +112,13 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
           end: Alignment.bottomRight,
           colors: [
             const Color(0xFFF7F3EE),
-            const Color(0xFFEFE8DE).withOpacity(0.9),
+            const Color(0xFFEFE8DE).withValues(alpha: 0.9),
             const Color(0xFFEAE2D7),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -137,12 +137,12 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -311,7 +311,7 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(16),
-            splashColor: Colors.black.withOpacity(0.12),
+            splashColor: Colors.black.withValues(alpha: 0.12),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               width: 54,
@@ -320,11 +320,11 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
                 color: item.backgroundColor,
                 borderRadius: BorderRadius.circular(16),
                 border: item.isCompleted
-                    ? Border.all(color: Colors.black.withOpacity(0.08), width: 1.2)
+                    ? Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1.2)
                     : null,
                 boxShadow: [
                   BoxShadow(
-                    color: item.backgroundColor.withOpacity(0.3),
+                    color: item.backgroundColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),

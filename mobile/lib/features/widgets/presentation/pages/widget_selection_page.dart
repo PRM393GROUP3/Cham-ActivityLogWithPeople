@@ -187,7 +187,7 @@ class _WidgetSelectionPageState extends State<WidgetSelectionPage> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -216,7 +216,7 @@ class _WidgetSelectionPageState extends State<WidgetSelectionPage> {
           backgroundColor: const Color(0xFFB53216),
           foregroundColor: Colors.white,
           elevation: 2,
-          shadowColor: const Color(0xFFB53216).withOpacity(0.3),
+          shadowColor: const Color(0xFFB53216).withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(27),
           ),
