@@ -113,7 +113,6 @@ flutter test
 | [`activity_dial_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/activity_dial_test.dart) | Kiểm thử 19 loại sự kiện trên 3 quỹ đạo & serialization | `flutter test test/activity_dial_test.dart` |
 | [`add_qr_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/add_qr_test.dart) | Kiểm thử tab Mã QR cá nhân, nút lưu/chia sẻ và máy quét | `flutter test test/add_qr_test.dart` |
 | [`widget_selection_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/widget_selection_test.dart) | Kiểm thử xem trước widget 2x2, 4x2 và modal hướng dẫn | `flutter test test/widget_selection_test.dart` |
-| [`todo_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/todo_test.dart) | Kiểm thử parse dữ liệu realtime WebSocket từ backend | `flutter test test/todo_test.dart` |
 
 ---
 

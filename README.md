@@ -10,7 +10,7 @@ Cả backend và mobile đều tổ chức theo **feature** (`features/<tên>/..
 
 - **Backend** chỉ lo phần xã hội: tài khoản ẩn danh, bạn bè (QR), chia sẻ sự kiện, reaction. Nhật ký cá nhân
   **không** lên server (DAT-01) — nó nằm ở local trên máy.
-- **Mobile** hiện vẫn là feature mẫu `todos`, chưa chuyển sang API mới (xem mục 7).
+- **Mobile** đã có giao diện các màn hình chính; chưa nối với API backend (xem mục 7).
 
 ---
 
@@ -251,16 +251,13 @@ mobile/
 │   │       └── api_exception.dart  # map lỗi backend/network → ApiException
 │   │
 │   └── features/
-│       └── todos/
-│           ├── domain/
-│           │   └── todo.dart          # model Todo + TodoEvent (sự kiện realtime)
-│           ├── data/
-│           │   ├── todo_api.dart      # gọi REST API
-│           │   └── todo_realtime.dart # StreamProvider WebSocket, tự reconnect sau 3s
-│           └── presentation/
-│               ├── todo_controller.dart  # AsyncNotifier: state danh sách, optimistic update, nhận sự kiện WS
-│               ├── pages/todo_page.dart  # màn hình
-│               └── widgets/todo_tile.dart
+│       ├── shell/            # MainShellPage: khung chính, chuyển màn hình bằng thao tác vuốt
+│       ├── activity_dial/    # vòng quay ghi nhật ký hoạt động (lưu local trên máy)
+│       ├── social/           # feed bạn bè, stories
+│       ├── friends/          # kết bạn bằng QR (hiện / quét mã)
+│       └── widgets/          # chọn và xem trước widget màn hình chính
+│
+│       # mỗi feature chia: domain/ (model) · data/ (lưu trữ, gọi API) · presentation/ (controller, pages, widgets)
 └── test/
 ```
 
@@ -283,7 +280,7 @@ mobile/
 6. Viết test trong `test/`.
 
 **Mobile**
-1. Tạo `lib/features/notes/{domain,data,presentation}` theo mẫu `todos`.
+1. Tạo `lib/features/notes/{domain,data,presentation}` theo mẫu `activity_dial`.
 2. Thêm màn hình vào điều hướng trong `app.dart`.
 
 ---

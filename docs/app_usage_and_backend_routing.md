@@ -410,4 +410,4 @@ Authorization: Bearer <user_access_token>
 flutter test
 ```
 
-Kết quả kỳ vọng: **All tests passed!** (Bao gồm `main_navigation_test.dart`, `activity_dial_test.dart`, `add_qr_test.dart`, `widget_selection_test.dart`, `todo_test.dart`).
+Kết quả kỳ vọng: **All tests passed!** (Bao gồm `main_navigation_test.dart`, `activity_dial_test.dart`, `add_qr_test.dart`, `widget_selection_test.dart`).
