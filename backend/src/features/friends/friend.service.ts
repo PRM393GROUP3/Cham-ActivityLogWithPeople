@@ -7,6 +7,7 @@ import type { FriendDto } from "./friend.types";
 const toDto = (row: FriendRow): FriendDto => ({
   id: row.id,
   displayName: row.displayName,
+  avatarEmoji: row.avatarEmoji,
   since: row.since.toISOString(),
 });
 

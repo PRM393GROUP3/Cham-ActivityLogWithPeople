@@ -7,6 +7,7 @@ export type NewUserRow = typeof users.$inferInsert;
 export type MeDto = {
   id: string;
   displayName: string;
+  avatarEmoji: string | null;
   inviteCode: string;
   createdAt: string;
 };
@@ -15,4 +16,5 @@ export type MeDto = {
 export type PublicUserDto = {
   id: string;
   displayName: string;
+  avatarEmoji: string | null;
 };
