@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/time/vn_time.dart';
+
 /// Thẻ thông tin "Hôm nay" hiển thị thứ ngày và số lượng "chấm"
 /// Bấm vào để xem lịch sử chi tiết trong ngày (HIS-01)
 class TodaySummaryCard extends StatelessWidget {
@@ -28,7 +30,7 @@ class TodaySummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final now = VnTime.now();
     final dayMonthStr = 'HÔM NAY, ${now.day} THÁNG ${now.month}';
     final weekdayStr = _formatDayTitle(now);
 

@@ -22,25 +22,38 @@ void main() {
     });
 
     test('serializes and deserializes ActivityLog to/from JSON correctly', () {
-      final now = DateTime.now();
       final log = ActivityLog(
-        id: 'test-uuid-1234',
+        id: '0b7f5c1e-3f0a-4c55-9d0e-2b8f1a6c7d90',
         eventTypeId: 'coffee',
         name: 'Cà phê',
         emoji: '☕',
-        occurredAt: now,
-        isSharedOnline: true,
+        occurredAt: DateTime.utc(2026, 10, 1, 1, 30),
+        visibility: ShareVisibility.public,
+        syncStatus: ShareSyncStatus.pending,
       );
 
-      final json = log.toJson();
-      final restored = ActivityLog.fromJson(json);
+      final restored = ActivityLog.fromJson(log.toJson());
 
       expect(restored.id, log.id);
       expect(restored.eventTypeId, log.eventTypeId);
       expect(restored.name, log.name);
       expect(restored.emoji, log.emoji);
-      expect(restored.occurredAt.toIso8601String(), log.occurredAt.toIso8601String());
-      expect(restored.isSharedOnline, true);
+      expect(restored.occurredAt, log.occurredAt);
+      expect(restored.visibility, ShareVisibility.public);
+      expect(restored.syncStatus, ShareSyncStatus.pending);
+    });
+
+    test('new records and records saved by older versions are Private (SOC-03)', () {
+      final legacy = ActivityLog.fromJson({
+        'id': 'a',
+        'eventTypeId': 'coffee',
+        'name': 'Cà phê',
+        'emoji': '☕',
+        'occurredAt': '2026-10-01T08:00:00.000',
+        'isSharedOnline': true,
+      });
+      expect(legacy.visibility, ShareVisibility.private);
+      expect(legacy.syncStatus, ShareSyncStatus.synced);
     });
   });
 }

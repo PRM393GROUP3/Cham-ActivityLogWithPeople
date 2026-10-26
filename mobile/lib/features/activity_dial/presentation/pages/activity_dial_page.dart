@@ -63,28 +63,21 @@ class ActivityDialPage extends ConsumerWidget {
     );
   }
 
-  void _openTodayLogsSheet(
-    BuildContext context,
-    ActivityDialState state,
-    ActivityDialController controller,
-  ) {
+  void _openTodayLogsSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => TodayLogsSheet(
-        state: state,
-        controller: controller,
-      ),
+      builder: (_) => const TodayLogsSheet(),
     );
   }
 
-  void _openProfileSheet(BuildContext context, ActivityDialState state) {
+  void _openProfileSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => UserProfileSheet(state: state),
+      builder: (_) => const UserProfileSheet(),
     );
   }
 
@@ -228,7 +221,7 @@ class ActivityDialPage extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             InkWell(
-                              onTap: () => _openProfileSheet(context, state),
+                              onTap: () => _openProfileSheet(context),
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
                                 width: 34,
@@ -254,7 +247,7 @@ class ActivityDialPage extends ConsumerWidget {
                     // --- 2. BANNER CARD: HÔM NAY + "4 chấm" badge ---
                     TodaySummaryCard(
                       todayCount: state.todayCount,
-                      onTap: () => _openTodayLogsSheet(context, state, controller),
+                      onTap: () => _openTodayLogsSheet(context),
                     ),
 
                     const SizedBox(height: 20),
@@ -268,7 +261,7 @@ class ActivityDialPage extends ConsumerWidget {
                           _showFeedbackToast(context, type);
                         }
                       },
-                      onTapCenter: () => _openTodayLogsSheet(context, state, controller),
+                      onTapCenter: () => _openTodayLogsSheet(context),
                     ),
                   ],
                 ),
@@ -280,7 +273,7 @@ class ActivityDialPage extends ConsumerWidget {
         elevation: 4,
         backgroundColor: const Color(0xFF221C18),
         shape: const CircleBorder(),
-        onPressed: () => _openTodayLogsSheet(context, state, controller),
+        onPressed: () => _openTodayLogsSheet(context),
         child: const Icon(
           Icons.auto_awesome_rounded,
           color: Colors.white,

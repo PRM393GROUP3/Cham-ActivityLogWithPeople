@@ -12,7 +12,6 @@ class ActivityEventType {
     required this.accentColor,
     required this.orbit,
     required this.angleDegree,
-    this.shareByDefault = false,
   });
 
   final String id;
@@ -28,9 +27,6 @@ class ActivityEventType {
   /// Vị trí góc trên vòng tròn tính bằng độ (-90 độ là đỉnh 12 giờ)
   final double angleDegree;
 
-  /// Cấu hình chia sẻ mặc định (SOC-03, DAT-03)
-  final bool shareByDefault;
-
   /// 19 Loại sự kiện chuẩn theo bản thiết kế "Wear OS Dial"
   static const List<ActivityEventType> defaultTypes = [
     // --- VÒNG TRONG (INNER ORBIT: 6 hoạt động thói quen cao) ---
@@ -43,7 +39,6 @@ class ActivityEventType {
       accentColor: Color(0xFFD97746),
       orbit: 1,
       angleDegree: -90, // Đỉnh 12h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'water',
@@ -64,7 +59,6 @@ class ActivityEventType {
       accentColor: Color(0xFF4C9854),
       orbit: 1,
       angleDegree: 30, // 4h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'eating',
@@ -95,7 +89,6 @@ class ActivityEventType {
       accentColor: Color(0xFF7A52A3),
       orbit: 1,
       angleDegree: 210, // 10h
-      shareByDefault: true,
     ),
 
     // --- VÒNG GIỮA (MIDDLE ORBIT: 6 hoạt động) ---
@@ -118,7 +111,6 @@ class ActivityEventType {
       accentColor: Color(0xFF468F5A),
       orbit: 2,
       angleDegree: -25, // ~2h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'sleep',
@@ -159,7 +151,6 @@ class ActivityEventType {
       accentColor: Color(0xFFD49A24),
       orbit: 2,
       angleDegree: 230, // ~10h
-      shareByDefault: true,
     ),
 
     // --- VÒNG NGOÀI (OUTER ORBIT: 7 hoạt động) ---
@@ -192,7 +183,6 @@ class ActivityEventType {
       accentColor: Color(0xFFC94A4A),
       orbit: 3,
       angleDegree: 20, // ~3h
-      shareByDefault: true,
     ),
     ActivityEventType(
       id: 'movie',
@@ -233,7 +223,6 @@ class ActivityEventType {
       accentColor: Color(0xFF2FA296),
       orbit: 3,
       angleDegree: 215, // ~10h
-      shareByDefault: true,
     ),
   ];
 }

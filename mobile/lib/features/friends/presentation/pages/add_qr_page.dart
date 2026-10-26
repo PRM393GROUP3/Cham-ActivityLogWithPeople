@@ -1,34 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../account/presentation/account_controller.dart';
 import '../../domain/qr_code_data.dart';
+import '../controllers/friends_controller.dart';
 import '../widgets/custom_qr_view.dart';
 import '../widgets/qr_scanner_view.dart';
 
 enum QrTab { myQr, scanQr }
 
-class AddQrPage extends StatefulWidget {
+/// QR cá nhân (mã mời) và quét / nhập mã để kết bạn trực tiếp (SOC-01).
+class AddQrPage extends ConsumerStatefulWidget {
   const AddQrPage({
     super.key,
     this.initialTab = QrTab.myQr,
     this.animateLaser = true,
-    this.qrData = const QrCodeData(
-      displayName: 'Hà My (Tôi)',
-      username: '@hamy_cham',
-      inviteCode: 'CHAM-8F3K9M',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240',
-    ),
+    this.qrData,
   });
 
   final QrTab initialTab;
   final bool animateLaser;
-  final QrCodeData qrData;
+
+  /// Dữ liệu QR cố định (dùng cho test/preview). `null` = lấy từ tài khoản, tự đăng ký lần đầu.
+  final QrCodeData? qrData;
 
   @override
-  State<AddQrPage> createState() => _AddQrPageState();
+  ConsumerState<AddQrPage> createState() => _AddQrPageState();
 }
 
-class _AddQrPageState extends State<AddQrPage> {
+class _AddQrPageState extends ConsumerState<AddQrPage> {
   late QrTab _currentTab;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Tạo tài khoản ẩn danh ngay khi mở màn QR lần đầu để có mã mời.
+    if (widget.qrData == null) {
+      ref.read(accountControllerProvider.notifier).ensure().ignore();
+    }
+  }
 
   @override
   void initState() {
@@ -56,8 +66,8 @@ class _AddQrPageState extends State<AddQrPage> {
     );
   }
 
-  void _handleScannedCode(String code) {
-    showDialog<void>(
+  Future<void> _handleScannedCode(String code) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -66,10 +76,10 @@ class _AddQrPageState extends State<AddQrPage> {
           ),
           title: const Row(
             children: [
-              Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32)),
+              Icon(Icons.qr_code_2_rounded, color: Color(0xFFB53216)),
               SizedBox(width: 8),
               Text(
-                'Tìm thấy bạn bè!',
+                'Kết bạn?',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -79,7 +89,7 @@ class _AddQrPageState extends State<AddQrPage> {
             ],
           ),
           content: Text(
-            'Đã nhận diện mã kết bạn "$code". Bạn có muốn gửi lời mời kết nối không?',
+            'Kết bạn ngay với chủ mã "$code"? Hai bạn sẽ thấy các hoạt động Công khai của nhau.',
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF5E5752),
@@ -87,7 +97,7 @@ class _AddQrPageState extends State<AddQrPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Hủy'),
             ),
             FilledButton(
@@ -97,21 +107,26 @@ class _AddQrPageState extends State<AddQrPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Đã kết nối thành công với mã $code!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
+              onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Kết bạn'),
             ),
           ],
         );
       },
     );
+    if (confirmed != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final friend = await ref.read(friendsControllerProvider.notifier).add(code);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Đã kết bạn với ${friend.displayName}!'), behavior: SnackBarBehavior.floating),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Không kết bạn được: $e'), behavior: SnackBarBehavior.floating),
+      );
+    }
   }
 
   @override
@@ -225,7 +240,7 @@ class _AddQrPageState extends State<AddQrPage> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: _currentTab == QrTab.myQr
-                    ? _buildMyQrCard(context)
+                    ? _buildMyQr(context)
                     : QrScannerView(
                         key: const ValueKey('scanner_view'),
                         animateLaser: widget.animateLaser,
@@ -241,7 +256,42 @@ class _AddQrPageState extends State<AddQrPage> {
     );
   }
 
-  Widget _buildMyQrCard(BuildContext context) {
+  Widget _buildMyQr(BuildContext context) {
+    if (widget.qrData != null) return _buildMyQrCard(context, widget.qrData!);
+
+    final account = ref.watch(accountControllerProvider);
+    final data = account.value;
+    if (data != null) {
+      return _buildMyQrCard(
+        context,
+        QrCodeData(displayName: data.displayName, username: 'Mã mời: ${data.inviteCode}', inviteCode: data.inviteCode),
+      );
+    }
+    return Padding(
+      key: const ValueKey('my_qr_pending'),
+      padding: const EdgeInsets.all(32),
+      child: account.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Text(
+                  'Cần kết nối mạng ở lần đầu để tạo mã mời.'
+                  '${account.hasError ? '\n${account.error}' : ''}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF6B645E)),
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB53216)),
+                  onPressed: () => ref.read(accountControllerProvider.notifier).ensure().ignore(),
+                  child: const Text('Thử lại'),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildMyQrCard(BuildContext context, QrCodeData qrData) {
     return Container(
       key: const ValueKey('my_qr_card'),
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -282,9 +332,9 @@ class _AddQrPageState extends State<AddQrPage> {
                   ],
                 ),
                 child: ClipOval(
-                  child: widget.qrData.avatarUrl != null
+                  child: qrData.avatarUrl != null
                       ? Image.network(
-                          widget.qrData.avatarUrl!,
+                          qrData.avatarUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               _buildDefaultAvatar(),
@@ -329,7 +379,7 @@ class _AddQrPageState extends State<AddQrPage> {
 
           // Display Name
           Text(
-            widget.qrData.displayName,
+            qrData.displayName,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -342,7 +392,7 @@ class _AddQrPageState extends State<AddQrPage> {
 
           // Username Handle
           Text(
-            widget.qrData.username,
+            qrData.username,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -354,12 +404,12 @@ class _AddQrPageState extends State<AddQrPage> {
 
           // QR Code Graphic
           CustomQrView(
-            data: widget.qrData.inviteCode,
+            data: qrData.inviteCode,
             size: 240,
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Mã mời của bạn: ${widget.qrData.inviteCode}'),
+                  content: Text('Mã mời của bạn: ${qrData.inviteCode}'),
                   duration: const Duration(milliseconds: 1400),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -373,7 +423,7 @@ class _AddQrPageState extends State<AddQrPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              widget.qrData.instruction,
+              qrData.instruction,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,

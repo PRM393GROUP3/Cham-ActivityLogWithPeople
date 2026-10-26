@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/feed_item.dart';
+import '../../domain/story_user.dart';
 
 class StoriesBar extends StatelessWidget {
   const StoriesBar({
     super.key,
     required this.users,
-    required this.selectedUser,
+    required this.selectedUserId,
     required this.onSelectUser,
   });
 
   final List<StoryUser> users;
-  final String selectedUser;
-  final ValueChanged<String> onSelectUser;
+
+  /// `null` = "Tất cả".
+  final String? selectedUserId;
+  final ValueChanged<String?> onSelectUser;
 
   @override
   Widget build(BuildContext context) {
@@ -49,10 +51,10 @@ class StoriesBar extends StatelessWidget {
   }
 
   Widget _buildAllItem() {
-    final isSelected = selectedUser == 'Tất cả';
+    final isSelected = selectedUserId == null;
 
     return GestureDetector(
-      onTap: () => onSelectUser('Tất cả'),
+      onTap: () => onSelectUser(null),
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -117,10 +119,10 @@ class StoriesBar extends StatelessWidget {
   }
 
   Widget _buildUserItem(StoryUser user) {
-    final isSelected = selectedUser == user.name;
+    final isSelected = selectedUserId == user.id;
 
     return GestureDetector(
-      onTap: () => onSelectUser(user.name),
+      onTap: () => onSelectUser(user.id),
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -143,22 +145,13 @@ class StoriesBar extends StatelessWidget {
                     ),
                   ),
                   child: ClipOval(
-                    child: Image.network(
-                      user.avatarUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: const Color(0xFFEAE3DC),
-                        alignment: Alignment.center,
-                        child: Text(
-                          user.name.isNotEmpty ? user.name[0] : '?',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E1B18),
+                    child: user.avatarUrl == null
+                        ? _initial(user.name)
+                        : Image.network(
+                            user.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => _initial(user.name),
                           ),
-                        ),
-                      ),
-                    ),
                   ),
                 ),
                 if (isSelected)
@@ -196,4 +189,17 @@ class StoriesBar extends StatelessWidget {
       ),
     );
   }
+
+  Widget _initial(String name) => Container(
+        color: const Color(0xFFEAE3DC),
+        alignment: Alignment.center,
+        child: Text(
+          name.isNotEmpty ? name.characters.first.toUpperCase() : '?',
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E1B18),
+          ),
+        ),
+      );
 }
