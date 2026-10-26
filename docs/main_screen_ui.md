@@ -68,15 +68,16 @@ Các thói quen được phân bổ trên 3 quỹ đạo đồng tâm xoay quanh
   - Cách 2: Chạm vào nút tròn màu đen **FAB (Floating Action Button)** ở góc dưới bên phải.
   - Cách 3: Chạm vào nút tâm `+ CHẤM`.
 - **Thao tác trong bảng lịch sử:**
-  - Xem danh sách từng lần chấm kèm thời gian cụ thể (ví dụ: `14:25`).
+  - Xem danh sách từng lần chấm kèm thời gian theo giờ Việt Nam (ví dụ: `14:25`).
   - Xem thống kê số lần của từng thói quen trong ngày.
-  - **Xóa bản ghi:** Nhấn vào biểu tượng thùng rác màu đỏ cạnh bản ghi để xóa (hệ thống sẽ cập nhật lại số lượng ngay lập tức).
+  - **Xóa bản ghi:** Nhấn vào biểu tượng thùng rác màu đỏ cạnh bản ghi để xóa (hệ thống sẽ cập nhật lại số lượng ngay lập tức). Xoá bản ghi Công khai sẽ thu hồi nó khỏi feed bạn bè.
+  - **Riêng tư / Công khai:** mỗi bản ghi mới là **🔒 Riêng tư** (chỉ trên máy). Chạm công tắc để chuyển **🌐 Công khai** (tất cả bạn bè thấy), chạm lại để thu hồi. Dòng trạng thái cho biết *đang chờ gửi / bạn bè đã thấy / chưa gửi được*; có nút **Thử lại** khi gửi lỗi.
 
 ### 4. Xem Mã Mời Kết Bạn & Hồ Sơ Cá Nhân
 - **Cách mở:** Chạm vào biểu tượng **Avatar tròn màu nâu đỏ** ở góc trên bên phải thanh tiêu đề.
 - **Chức năng:**
-  - Hiển thị tên hiển thị (`Tôi`), mã người dùng ẩn danh (UUID).
-  - Hiển thị **Mã mời kết bạn** cá nhân (ví dụ: `CHAM-7K9M2P`).
+  - Hiển thị tên hiển thị của tài khoản ẩn danh (mặc định `Bạn`).
+  - Hiển thị **Mã mời kết bạn** cá nhân (10 ký tự, ví dụ: `K7M2P9XQ4R`). Tài khoản chỉ được tạo ở lần đầu dùng tính năng xã hội, nên trước đó hiện *"Chưa có"*.
   - Nút **"Sao chép mã"**: Copy mã vào clipboard để gửi cho bạn bè.
 
 ### 5. Cài Đặt Hệ Thống

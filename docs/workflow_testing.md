@@ -15,11 +15,13 @@ flowchart TD
     Toast --> UpdateCount[Cập nhật số chấm hôm nay +1]
     Home -->|Chạm Banner Hôm nay / Nút FAB| History[📋 Bảng Lịch Sử Hôm Nay]
     History -->|Nhấn icon Thùng rác| DeleteLog[Xóa bản ghi & Trừ số chấm]
+    History -->|Chạm công tắc Riêng tư| MakePublic[Chuyển Công khai → gửi lên server / chờ gửi khi offline]
+    MakePublic -->|Chạm lại| MakePrivate[Về Riêng tư → thu hồi khỏi feed bạn bè]
 
     %% Flow 2: Vuốt sang Bảng tin
     Home -->|Vuốt sang trái / Bấm icon Bảng tin| Feed[👥 Bảng Tin Bạn Bè]
     Feed -->|Chạm Avatar Stories| FilterFeed[Lọc hoạt động theo bạn bè]
-    Feed -->|Chạm emoji phản ứng| React[Thả reaction ❤️ 👍 😊]
+    Feed -->|Chạm emoji phản ứng| React[Thả / đổi / gỡ reaction 👍 ❤️ 🥰 😆 😮 😢 😡]
     Feed -->|Vuốt sang phải / Nút Back ←| Home
 
     %% Flow 3: Kết nối bạn bè QR
@@ -27,7 +29,7 @@ flowchart TD
     ProfileModal -->|Bấm 'Mở Mã QR & Quét'| QRPage[📱 Màn Hình QR & Quét Bạn Bè]
     QRPage -->|Tab 1: Mã QR của tôi| MyQR[Xem mã QR cá nhân & Chia sẻ ảnh]
     QRPage -->|Tab 2: Quét mã QR| Scanner[Quét mã bạn bè / Nhập mã thủ công]
-    Scanner -->|Nhập mã hợp lệ| AddFriendSuccess[Hiển thị Dialog Kết bạn thành công]
+    Scanner -->|Nhập mã hợp lệ + xác nhận| AddFriendSuccess[Kết bạn ngay — SnackBar "Đã kết bạn với …"]
     QRPage -->|Nút Back ←| ProfileModal
 
     %% Flow 4: Cài đặt Widget
@@ -51,6 +53,9 @@ flowchart TD
 | 1.2 | Chạm vào nút `☕ Cà phê` trên quỹ đạo trong (R1). | Nút nảy hiệu ứng co giãn (bounce scale); xuất hiện Toast `Đã chấm: Cà phê (+1 chấm) — Đã lưu`; số chấm trên thẻ hôm nay tăng thêm 1. | Đạt |
 | 1.3 | Chạm vào thẻ banner **"HÔM NAY"** hoặc nút tròn FAB đen ở góc dưới phải. | Mở `TodayLogsSheet` hiển thị danh sách các bản ghi của ngày hôm nay kèm giờ ghi nhận (ví dụ `14:30`). | Đạt |
 | 1.4 | Nhấn biểu tượng thùng rác màu đỏ cạnh bản ghi vừa tạo. | Bản ghi bị xóa ngay lập tức; tổng số chấm hôm nay được tính lại tương ứng; không có nút Undo. | Đạt |
+| 1.5 | Quan sát công tắc trên mỗi bản ghi mới. | Mọi bản ghi mới đều là **🔒 Riêng tư**; chưa có gì gửi lên server (SOC-03). | Đạt (test tự động) |
+| 1.6 | Chạm công tắc **Riêng tư** của một bản ghi (đang online). | Đổi thành **🌐 Công khai**, dòng trạng thái *"Bạn bè đã thấy"*; bạn bè thấy bản ghi trong feed. | Đạt (test tự động + API) |
+| 1.7 | Chạm công tắc **Công khai** để về Riêng tư. | Đổi thành **🔒 Riêng tư**; bản ghi biến mất khỏi feed bạn bè (SOC-04). | Đạt (test tự động + API) |
 
 ---
 
@@ -60,8 +65,9 @@ flowchart TD
 | Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
 | :---: | :--- | :--- | :---: |
 | 2.1 | Tại màn hình chính, đặt ngón tay và vuốt từ phải sang trái (Swipe Left). | Màn hình trượt mượt mà sang `FeedPage` (Bảng tin hoạt động xã hội). | Đạt |
-| 2.2 | Quan sát thanh Stories trên đầu Bảng tin và chạm vào người dùng `Minh Thư`. | Danh sách bảng tin lọc chỉ hiển thị các hoạt động của `Minh Thư`. | Đạt |
-| 2.3 | Chạm vào emoji `❤️` trên thẻ hoạt động. | Emoji được đánh dấu nổi bật với nền hồng nhạt (`#FADCD9`); chạm lại lần nữa để hủy thả reaction. | Đạt |
+| 2.2 | Quan sát thanh lọc trên đầu Bảng tin và chạm vào một người bạn (vd. `Minh Thư`). | Thanh lọc lấy từ danh sách bạn bè thật; bảng tin chỉ hiển thị bản ghi Công khai của người đó. | Đạt (test tự động) |
+| 2.3 | Chạm `❤️` trên thẻ hoạt động, rồi chạm `😆`, rồi chạm lại `😆`. | Lần 1 thả ❤️ (nền hồng `#FADCD9`, số đếm +1); lần 2 đổi sang 😆 (❤️ −1); lần 3 gỡ reaction. Mỗi người tối đa 1 reaction (AC-07). | Đạt (test tự động + API) |
+| 2.3b | Thả reaction khi server từ chối (vd. mất mạng). | Reaction tự hoàn tác, hiện SnackBar báo lỗi. | Đạt (test tự động) |
 | 2.4 | Vuốt từ trái sang phải (Swipe Right) hoặc chạm nút `←` trên Header. | Trượt mượt mà quay trở lại màn hình chính `ActivityDialPage`. | Đạt |
 
 ---
@@ -71,12 +77,12 @@ flowchart TD
 
 | Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
 | :---: | :--- | :--- | :---: |
-| 3.1 | Tại màn hình chính hoặc bảng tin, chạm vào icon Avatar tròn màu nâu đỏ. | Mở `UserProfileSheet` hiển thị thông tin ẩn danh và mã mời `CHAM-XXXXXX`. | Đạt |
+| 3.1 | Tại màn hình chính hoặc bảng tin, chạm vào icon Avatar tròn màu nâu đỏ. | Mở `UserProfileSheet` hiển thị tên và mã mời (10 ký tự); hiện *"Chưa có"* nếu chưa dùng tính năng xã hội lần nào. | Đạt |
 | 3.2 | Chạm vào nút **"Mở Mã QR & Quét Bạn Bè"**. | Điều hướng vào màn hình `AddQrPage` với tab mặc định là **"Mã QR của tôi"**. | Đạt |
-| 3.3 | Kiểm tra các thành phần trên thẻ QR. | Thấy Avatar cá nhân, tên `Hà My (Tôi)`, username `@hamy_cham`, mã QR dot-matrix kèm logo Chấm ở tâm, nút `Chia sẻ ảnh` và `Lưu vào máy`. | Đạt |
+| 3.3 | Kiểm tra các thành phần trên thẻ QR. | Thấy tên, dòng `Mã mời: …` của tài khoản thật, hình QR dot-matrix kèm logo Chấm ở tâm, nút `Chia sẻ ảnh` và `Lưu vào máy`. Lần đầu mở khi mất mạng: thông báo cần mạng + nút **Thử lại**. | Đạt (test tự động) |
 | 3.4 | Chạm tab **"Quét mã QR"**. | Chuyển sang giao diện máy quét với khung nhắm góc bo tròn và tia laser quét chuyển động lên xuống. | Đạt |
 | 3.5 | Nhấn nút **"Bật đèn"**. | Nút đổi trạng thái thành **"Tắt đèn"** với màu nhấn cam sáng. | Đạt |
-| 3.6 | Nhấn nút **"Nhập mã"**, gõ `CHAM-7K9M2P` và bấm **"Kết nối bạn bè"**. | Xuất hiện Dialog `Tìm thấy bạn bè!` cho phép xác nhận kết bạn. | Đạt |
+| 3.6 | Nhấn nút **"Nhập mã"**, gõ mã mời của một người khác và bấm **"Kết nối bạn bè"**. | Hộp thoại **"Kết bạn?"**; bấm **"Kết bạn"** → thành bạn ngay, SnackBar *"Đã kết bạn với …"*; feed hiện cả các bản Công khai cũ của người đó. Mã sai → SnackBar lỗi. | Đạt (test tự động + API) |
 | 3.7 | Bấm nút `←` ở góc trên bên trái. | Quay lại màn hình trước đó. | Đạt |
 
 ---
@@ -94,6 +100,22 @@ flowchart TD
 
 ---
 
+### Kịch Bản 5: Chia Sẻ Khi Mất Mạng (Offline Sharing Flow)
+* **Mục tiêu:** Kiểm tra hàng đợi gửi (DAT-03, BR-02, AC-05).
+
+| Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
+| :---: | :--- | :--- | :---: |
+| 5.1 | Bật chế độ máy bay, chạm một nút thói quen. | Bản ghi Riêng tư được lưu ngay, Toast "Đã lưu" (AC-01). | Đạt (test tự động) |
+| 5.2 | Mở lịch sử, chuyển bản ghi sang **Công khai**. | Công tắc đổi ngay; dòng trạng thái *"Chưa gửi được, sẽ thử lại"* (màu đỏ); nút **Thử lại** xuất hiện ở đầu bảng. | Đạt (test tự động) |
+| 5.3 | Tắt app, tắt chế độ máy bay, mở lại app. | Bản ghi được gửi tự động với **thời điểm ghi gốc**; trạng thái *"Bạn bè đã thấy"*; bạn bè chỉ thấy **1** bản. | Đạt (test tự động) |
+| 5.4 | Khi offline, chuyển Công khai rồi về Riêng tư, sau đó có mạng. | Chỉ gửi thao tác thu hồi; bạn bè không bao giờ thấy bản ghi. | Đạt (test tự động) |
+| 5.5 | Xoá một bản ghi Công khai. | Bản ghi bị thu hồi khỏi feed bạn bè (BR-03). | Đạt (test tự động) |
+
+> "Đạt (test tự động)" = được kiểm tra bằng `flutter test` với API giả; "+ API" = đã chạy thêm với backend local thật.
+> Các bước chưa được chạy tay trên thiết bị Android thật.
+
+---
+
 ## 🤖 Thực Thi Kiểm Thử Tự Động (Automated Testing Execution)
 
 Tất cả các bài kiểm thử tự động đã được lập trình đầy đủ bằng Flutter Test Framework.
@@ -107,12 +129,29 @@ flutter test
 ```
 
 ### 2. Chi Tiết Các Tệp Kiểm Thử Thành Phần
-| Tệp kiểm thử | Phạm vi kiểm tra | Lệnh thực thi độc lập |
-| :--- | :--- | :--- |
-| [`main_navigation_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/main_navigation_test.dart) | Kiểm thử vuốt ngang trái/phải và điều hướng QR/Widget | `flutter test test/main_navigation_test.dart` |
-| [`activity_dial_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/activity_dial_test.dart) | Kiểm thử 19 loại sự kiện trên 3 quỹ đạo & serialization | `flutter test test/activity_dial_test.dart` |
-| [`add_qr_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/add_qr_test.dart) | Kiểm thử tab Mã QR cá nhân, nút lưu/chia sẻ và máy quét | `flutter test test/add_qr_test.dart` |
-| [`widget_selection_test.dart`](file:///c:/Users/admin/StudioProjects/Cham-ActivityLogWithPeople/mobile/test/widget_selection_test.dart) | Kiểm thử xem trước widget 2x2, 4x2 và modal hướng dẫn | `flutter test test/widget_selection_test.dart` |
+
+**Mobile** (`cd mobile`). Các test gọi API dùng bản giả trong `test/helpers/fakes.dart`, không cần backend.
+
+| Tệp kiểm thử | Phạm vi kiểm tra |
+| :--- | :--- |
+| [`main_navigation_test.dart`](../mobile/test/main_navigation_test.dart) | Vuốt ngang trang chủ ⇄ feed (dữ liệu feed/bạn bè từ API giả), điều hướng hồ sơ → QR |
+| [`activity_dial_test.dart`](../mobile/test/activity_dial_test.dart) | 19 loại sự kiện trên 3 quỹ đạo; serialization bản ghi; bản ghi mới / bản cũ đều Riêng tư |
+| [`today_logs_sheet_test.dart`](../mobile/test/today_logs_sheet_test.dart) | Công tắc Riêng tư ⇄ Công khai, trạng thái gửi, nút Thử lại (NFR-03) |
+| [`sharing_test.dart`](../mobile/test/sharing_test.dart) | Hàng đợi gửi: gộp theo bản ghi, còn sau khi mở lại app, gửi lại khi có mạng, thu hồi khi xoá (DAT-03, BR-02, BR-03, AC-05) |
+| [`feed_test.dart`](../mobile/test/feed_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã |
+| [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
+| [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
+| [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
+
+Chạy riêng một tệp: `flutter test test/<tên_tệp>.dart`
+
+**Backend** (`cd backend && npm test`, chạy trong Workers runtime với D1 tạm):
+
+| Tệp kiểm thử | Phạm vi kiểm tra |
+| :--- | :--- |
+| [`users.test.ts`](../backend/test/users.test.ts) | Đăng ký ẩn danh và xác thực bằng token, từ chối token sai, tên trống |
+| [`friends.test.ts`](../backend/test/friends.test.ts) | Kết bạn trực tiếp bằng mã (idempotent, không phân biệt hoa thường), từ chối mã của mình / mã sai / mã đã đổi, huỷ kết bạn 2 chiều |
+| [`shares.test.ts`](../backend/test/shares.test.ts) | Công khai cho tất cả bạn bè, chặn chọn người nhận, gửi lại không trùng, thu hồi, bạn mới thấy bản cũ, phân trang, 7 reaction |
 
 ---
 

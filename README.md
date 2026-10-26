@@ -10,7 +10,8 @@ Cả backend và mobile đều tổ chức theo **feature** (`features/<tên>/..
 
 - **Backend** chỉ lo phần xã hội: tài khoản ẩn danh, bạn bè (QR), chia sẻ sự kiện, reaction. Nhật ký cá nhân
   **không** lên server (DAT-01) — nó nằm ở local trên máy.
-- **Mobile** đã có giao diện các màn hình chính; chưa nối với API backend (xem mục 7).
+- **Mobile** ghi nhật ký offline; mỗi bản ghi **Riêng tư** (mặc định) hoặc **Công khai** (tất cả bạn bè). Feed,
+  bạn bè, mã QR và reaction đã nối với API (mục 7).
 
 ---
 
@@ -173,13 +174,18 @@ Thêm biến mới: thêm key vào **tất cả** file `env/*.json` + khai báo 
 
 **Luồng chia sẻ một bản ghi:**
 
-1. Người dùng chạm nút → app lưu bản ghi **vào local** trước (BR-02). Nếu loại sự kiện có bật chia sẻ, thêm bản ghi vào hàng chờ.
-2. Khi có mạng, app gọi `PUT /api/shares/:id` với `:id` = id của bản ghi local. PUT là idempotent → gửi lại bao nhiêu lần cũng chỉ có một bản (AC-05).
-3. Worker ghi D1 rồi gửi hint `share.upserted` tới `UserRoom` của từng người được xem.
-4. App của người nhận nhận hint → gọi `GET /api/feed/:id` để lấy dữ liệu (quyền xem luôn được kiểm tra ở REST, WebSocket không mang dữ liệu).
+1. Người dùng chạm nút → app lưu bản ghi **Riêng tư** vào local (BR-02). Chưa có gì gửi lên server.
+2. Trong lịch sử, người dùng chuyển bản ghi sang **Công khai** → app lưu lựa chọn local, đưa thao tác vào **hàng đợi gửi**
+   (`ShareOutbox`, lưu bền, mỗi bản ghi chỉ giữ thao tác mới nhất), rồi gọi `PUT /api/shares/:id` với `:id` = id bản ghi.
+   PUT là idempotent → gửi lại bao nhiêu lần cũng chỉ có một bản (AC-05). Mất mạng thì giữ trong hàng đợi, gửi lại
+   khi mở app, khi có thay đổi mới hoặc khi bấm "Thử lại".
+3. Chuyển về **Riêng tư** hoặc xoá bản ghi Công khai → `DELETE /api/shares/:id` (thu hồi với mọi người, SOC-04).
+4. Worker ghi D1 rồi gửi hint `share.upserted` / `share.removed` tới `UserRoom` của từng người bạn.
+5. Người nhận tải lại feed (`GET /api/feed`) — quyền xem luôn được kiểm tra ở REST, WebSocket không mang dữ liệu.
+   *Hiện app mobile tải lại khi mở feed / kéo xuống; chưa nghe WebSocket.*
 
-**Quyền xem** một share (một chỗ duy nhất: `ShareRepository.visibleTo`): chủ sở hữu, hoặc người **đang là bạn** của chủ
-**và** (share là broadcast **hoặc** người đó nằm trong `share_targets`). Vì kiểm tra bạn bè lúc đọc, huỷ kết bạn thu hồi quyền ngay.
+**Quyền xem** một share (một chỗ duy nhất: `ShareRepository.visibleTo`): chủ sở hữu, hoặc người **đang là bạn** của chủ.
+Vì kiểm tra bạn bè lúc đọc: bạn mới thấy được cả các bản Công khai cũ, huỷ kết bạn thu hồi quyền ngay.
 
 ### Backend (`backend/`)
 
@@ -246,15 +252,19 @@ mobile/
 │   │
 │   ├── core/                     # dùng chung cho mọi feature
 │   │   ├── config/env.dart         # đọc APP_ENV, API_BASE_URL
-│   │   └── network/
-│   │       ├── api_client.dart     # dioProvider: Dio với baseUrl, timeout, interceptor lỗi
-│   │       └── api_exception.dart  # map lỗi backend/network → ApiException
+│   │   ├── network/
+│   │   │   ├── api_client.dart     # dioProvider: baseUrl, gắn Bearer token, guardApi()
+│   │   │   └── api_exception.dart  # map lỗi backend/network → ApiException (isNetworkError)
+│   │   ├── time/vn_time.dart       # giờ Việt Nam UTC+7 cho hiển thị, "hôm nay", thống kê (DAT-02)
+│   │   └── utils/uuid.dart         # UUID v4 cho id bản ghi (= id bản chia sẻ trên server)
 │   │
 │   └── features/
 │       ├── shell/            # MainShellPage: khung chính, chuyển màn hình bằng thao tác vuốt
-│       ├── activity_dial/    # vòng quay ghi nhật ký hoạt động (lưu local trên máy)
-│       ├── social/           # feed bạn bè, stories
-│       ├── friends/          # kết bạn bằng QR (hiện / quét mã)
+│       ├── activity_dial/    # vòng quay ghi 1 chạm (local), lịch sử hôm nay, công tắc Riêng tư/Công khai
+│       ├── sharing/          # hàng đợi gửi (ShareOutbox) + ShareApi: PUT/DELETE /api/shares/:id
+│       ├── account/          # tài khoản ẩn danh, tự đăng ký ở lần đầu dùng tính năng xã hội
+│       ├── social/           # feed bạn bè từ API, 7 reaction
+│       ├── friends/          # mã QR (mã mời), quét / nhập mã → kết bạn ngay, danh sách bạn bè
 │       └── widgets/          # chọn và xem trước widget màn hình chính
 │
 │       # mỗi feature chia: domain/ (model) · data/ (lưu trữ, gọi API) · presentation/ (controller, pages, widgets)
@@ -291,7 +301,9 @@ Mọi endpoint (trừ `/health`, `/api/auth/register`) cần header `Authorizati
 Thời gian dạng ISO 8601. Danh sách phân trang: `?limit=1..50` (mặc định 20) và `?cursor=<nextCursor của trang trước>`,
 response `{ data: [...], nextCursor: string | null }`.
 
-**Tài khoản** — ẩn danh theo máy: lần đầu mở app gọi `register`, lưu `token` vào secure storage. Mất token = mất tài khoản.
+**Tài khoản** — ẩn danh theo máy: app gọi `register` ở lần đầu dùng tính năng xã hội (mở feed, mã QR, hoặc chuyển
+một bản ghi sang Công khai), lưu `token` trong SharedPreferences. Mất token = mất tài khoản. Chỉ dùng app offline thì
+không cần tài khoản (DAT-01).
 
 | Method | Path                     | Body                         | Response                                   |
 | ------ | ------------------------ | ---------------------------- | ------------------------------------------ |
@@ -308,20 +320,19 @@ response `{ data: [...], nextCursor: string | null }`.
 | ------ | ------------------------ | -------------------- | ------------------------------------------------------------- |
 | GET    | `/api/friends`           |                      | `{ data: Friend[] }`                                          |
 | POST   | `/api/friends`           | `{ inviteCode }`     | `201` mới / `200` đã là bạn · `404 INVITE_NOT_FOUND` · `400 CANNOT_FRIEND_SELF` |
-| DELETE | `/api/friends/:userId`   |                      | `204` — thu hồi quyền xem share **2 chiều**, xoá target và reaction giữa 2 người |
+| DELETE | `/api/friends/:userId`   |                      | `204` — thu hồi quyền xem share **2 chiều**, xoá reaction giữa 2 người |
 
-**Share của mình** — `:id` là **id bản ghi local** (UUID).
+**Share của mình** — mỗi share là một bản ghi **Công khai**; `:id` là **id bản ghi local** (UUID). Bản ghi Riêng tư không bao giờ lên server.
 
 | Method | Path               | Body                                                    | Response                          |
 | ------ | ------------------ | ------------------------------------------------------- | --------------------------------- |
 | GET    | `/api/shares`      |                                                         | `{ data: OwnShare[], nextCursor }` |
 | GET    | `/api/shares/:id`  |                                                         | `{ data: OwnShare }` / 404        |
-| PUT    | `/api/shares/:id`  | `{ emoji, name, occurredAt, targetIds? }`               | `201` tạo mới / `200` cập nhật · `409` id thuộc người khác |
-| DELETE | `/api/shares/:id`  |                                                         | `204` (kể cả khi không tồn tại → retry an toàn) |
+| PUT    | `/api/shares/:id`  | `{ emoji, name, occurredAt }` — chuyển sang Công khai    | `201` tạo mới / `200` cập nhật · `409` id thuộc người khác · `400` nếu có field lạ |
+| DELETE | `/api/shares/:id`  |                                                         | `204` — về Riêng tư / xoá: thu hồi với mọi người (kể cả khi không tồn tại → retry an toàn) |
 
-`targetIds` bỏ trống / `null` / `[]` → **broadcast** cho mọi bạn bè. Có phần tử → **multicast**, chỉ những người đó
-(id không phải bạn bè bị bỏ qua, và *không* quay về broadcast). PUT lại với `targetIds` khác = đổi quyền xem;
-reaction của người mất quyền bị xoá.
+Công khai = **tất cả bạn bè hiện tại** xem được; không có chọn từng người nhận. Body là strict: gửi field lạ
+(vd. `targetIds` của bản cũ) bị trả `400` thay vì âm thầm công khai cho mọi người.
 
 **Feed của bạn bè**
 
@@ -329,13 +340,13 @@ reaction của người mất quyền bị xoá.
 | ------ | ------------------------- | --------------------------------------- | ---------------------------------- |
 | GET    | `/api/feed`               |                                         | `{ data: FeedShare[], nextCursor }` — mới nhất trước theo `occurredAt` |
 | GET    | `/api/feed/:id`           |                                         | `{ data: FeedShare }` / 404 nếu không có quyền |
-| PUT    | `/api/feed/:id/reaction`  | `{ emoji }` ∈ `❤️ 😂 😮 😢 👍 🔥`        | `{ data: FeedShare }` — mỗi người 1 reaction, gửi lại = đổi |
+| PUT    | `/api/feed/:id/reaction`  | `{ emoji }` ∈ `👍 ❤️ 🥰 😆 😮 😢 😡`     | `{ data: FeedShare }` — mỗi người 1 reaction, gửi lại = đổi |
 | DELETE | `/api/feed/:id/reaction`  |                                         | `204`                              |
 
 ```ts
 Me        = { id, displayName, inviteCode, createdAt }
 Friend    = { id, displayName, since }
-OwnShare  = { id, emoji, name, occurredAt, audience: "all" | "targets", targetIds: string[],
+OwnShare  = { id, emoji, name, occurredAt,
               reactions: { user: { id, displayName }, emoji, reactedAt }[], createdAt, updatedAt }
 FeedShare = { id, owner: { id, displayName }, emoji, name, occurredAt,
               reactions: { emoji, count }[], myReaction: string | null }

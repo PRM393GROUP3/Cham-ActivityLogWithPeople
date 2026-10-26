@@ -48,16 +48,22 @@ flowchart TD
 * **Thẻ banner "HÔM NAY":** Hiển thị thứ trong tuần (kèm câu chúc tích cực: *Thứ Hai tươi mới, Thứ Bảy thảnh thơi...*), huy hiệu số chấm đã ghi trong ngày và chuỗi ngày duy trì liên tục (streak).
 * **Xem lại lịch sử & xóa bản ghi (HIS-01, HIS-02, LOG-04):**
   * Chạm vào thẻ banner **"HÔM NAY"**, nút tròn **FAB đen** ở góc dưới phải hoặc nút tâm **`+ CHẤM`** để mở bảng `TodayLogsSheet`.
-  * Bảng liệt kê chi tiết từng lần chấm kèm thời gian chính xác.
-  * Nhấn biểu tượng thùng rác màu đỏ để xóa bản ghi chấm nhầm (hệ thống tự động trừ số lượng; tuân thủ nguyên tắc không cung cấp Undo).
+  * Bảng liệt kê chi tiết từng lần chấm kèm thời gian (giờ Việt Nam, UTC+7).
+  * Nhấn biểu tượng thùng rác màu đỏ để xóa bản ghi chấm nhầm (hệ thống tự động trừ số lượng; tuân thủ nguyên tắc không cung cấp Undo). Xoá bản ghi Công khai sẽ thu hồi nó khỏi feed bạn bè.
+* **Chia sẻ theo từng bản ghi (SOC-03, SOC-04):**
+  * Mọi lần chấm đều bắt đầu ở chế độ **🔒 Riêng tư** — chỉ lưu trên máy, không gửi đi đâu.
+  * Trong `TodayLogsSheet`, chạm công tắc **Riêng tư** trên một bản ghi để chuyển sang **🌐 Công khai** → tất cả bạn bè thấy bản ghi đó trong feed. Chạm lại để về Riêng tư (thu hồi).
+  * Dòng trạng thái tách "đã lưu trên máy" với trạng thái gửi: *Đang chờ gửi…*, *Bạn bè đã thấy*, *Chưa gửi được, sẽ thử lại*, *Đang thu hồi…*. Khi có lỗi, nút **Thử lại** xuất hiện ở đầu bảng.
+  * Lần đầu chuyển sang Công khai, app tự tạo tài khoản ẩn danh (cần mạng).
 
 ---
 
 ### 2.2. Bảng Tin Xã Hội & Tương Tác Bạn Bè (Social Feed Screen)
 * **Cách mở:** Vuốt từ phải sang trái (Swipe Left) trên màn hình chính, hoặc chạm vào icon Bảng tin (`Icons.people_alt_outlined`) trên thanh Header.
-* **Thanh Stories bạn bè:** Nằm ở đầu trang, hiển thị avatar của bạn bè đang kết nối. Chạm vào avatar của ai sẽ lọc bảng tin chỉ hiển thị hoạt động của người đó; chọn `Tất cả` để xem feed chung.
-* **Thẻ hoạt động (Feed Card):** Hiển thị avatar người đăng, huy hiệu thói quen, câu mô tả hành động (ví dụ: *Minh Thư đã hoàn thành chạy bộ 5km*), thời gian tương đối (*vừa xong, 15 phút trước*).
-* **Thả biểu tượng cảm xúc (Reactions):** Dải nút 5 cảm xúc trực quan (`❤️`, `👍`, `😊`, `😢`, `😆`). Chạm vào biểu tượng để thả cảm xúc (nền đổi sang màu hồng nổi bật); chạm lại để thu hồi.
+* **Dữ liệu:** lấy từ `GET /api/feed` — chỉ các bản ghi **Công khai** của bạn bè hiện tại. Kéo xuống để tải lại. Mất mạng thì hiện thông báo kèm nút **Thử lại**; chưa có bạn bè thì có nút **Mở mã QR**.
+* **Thanh lọc bạn bè:** Nằm ở đầu trang, lấy từ `GET /api/friends` (chữ cái đầu của tên làm avatar). Chạm vào ai sẽ lọc bảng tin chỉ hiển thị hoạt động của người đó; chọn `Tất cả` để xem feed chung.
+* **Thẻ hoạt động (Feed Card):** tên người đăng, emoji hoạt động ở góc avatar, câu *"Minh Thư đã chấm 🏃 Chạy bộ"*, thời gian tương đối theo giờ Việt Nam (*vừa xong, 15 phút trước, Hôm qua 21:30*).
+* **Thả reaction (SOC-05):** 7 reaction giống Facebook — 👍 Thích · ❤️ Yêu thích · 🥰 Thương thương · 😆 Haha · 😮 Wow · 😢 Buồn · 😡 Phẫn nộ, kèm số người đã thả. Mỗi người 1 reaction: chạm để thả, chạm emoji khác để đổi, chạm lại để gỡ. Nếu server từ chối, reaction tự hoàn tác và hiện thông báo.
 
 ---
 
@@ -65,14 +71,13 @@ flowchart TD
 * **Cách mở:** Chạm vào Avatar cá nhân ở góc trên bên phải $\rightarrow$ trong modal hồ sơ chọn **"Mở Mã QR & Quét Bạn Bè"**.
 * **Tab "Mã QR của tôi":**
   * Hiển thị mã QR dạng **dot-matrix** thẩm mỹ với các chấm tròn nghệ thuật và logo Chăm ở trung tâm.
-  * Hiển thị tên hiển thị, username (`@hamy_cham`), mã mời (`CHAM-XXXXXX`).
-  * Nút **"Chia sẻ ảnh"**: Xuất file ảnh mã QR kèm khung trang trí để gửi qua mạng xã hội, tin nhắn.
-  * Nút **"Lưu vào máy"**: Tải trực tiếp ảnh mã QR vào thư viện ảnh thiết bị.
+  * Hiển thị tên hiển thị và **mã mời thật** của tài khoản (`Mã mời: …`). Lần đầu mở, app tự tạo tài khoản ẩn danh (cần mạng; mất mạng thì có nút **Thử lại**).
+  * ⚠️ Hình QR hiện là hình minh hoạ (dot-matrix) sinh từ mã mời, **chưa phải mã QR quét được bằng camera**.
+  * Nút **"Chia sẻ ảnh"** / **"Lưu vào máy"**: hiện mới là giao diện (chỉ hiện thông báo), chưa xuất ảnh.
 * **Tab "Quét mã QR":**
   * Giao diện ống ngắm máy quét với 4 góc bo sáng và tia laser quét lên xuống.
-  * Nút **"Bật đèn" / "Tắt đèn"**: Bật đèn flash khi quét trong môi trường tối.
-  * Nút **"Chọn ảnh"**: Quét mã QR từ ảnh có sẵn trong thư viện.
-  * Nút **"Nhập mã"**: Nhập thủ công mã mời bạn bè 6–8 ký tự để kết bạn mà không cần camera.
+  * Nút **"Bật đèn" / "Tắt đèn"**, **"Chọn ảnh"**: hiện mới là giao diện, chưa dùng camera / thư viện ảnh.
+  * Nút **"Nhập mã"**: nhập mã mời của bạn bè → xác nhận **"Kết bạn"** → gọi `POST /api/friends` → **thành bạn bè ngay** (không cần người kia đồng ý, SOC-01). Feed và danh sách bạn được tải lại; bạn mới thấy được cả các bản Công khai trước đó.
 
 ---
 
@@ -86,45 +91,47 @@ flowchart TD
 
 ## ⚡ 3. Cơ Chế Local-First & Đồng Bộ Ngoại Tuyến (Offline-First Mechanism)
 
-Hệ thống tuân thủ nghiêm ngặt các yêu cầu **DAT-01, DAT-03, BR-01, BR-02**:
+Hệ thống tuân thủ các yêu cầu **DAT-01, DAT-03, BR-01, BR-02, BR-03, SOC-03, SOC-04**:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as Người Dùng
-    participant UI as Màn Hình Chính (Flutter)
-    participant Local as Local Storage (SQLite / SharedPrefs)
-    participant Outbox as Hàng Đợi Ngoại Tuyến (Outbox Queue)
+    participant UI as App (Flutter)
+    participant Local as Local Storage (SharedPreferences)
+    participant Outbox as Hàng đợi gửi (ShareOutbox)
     participant API as Backend (Cloudflare Workers)
-    participant DB as Cloudflare D1 Database
-    participant WS as Durable Object (UserRoom)
+    participant DB as Cloudflare D1
 
     User->>UI: Chạm nút thói quen (VD: ☕ Cà phê)
-    UI->>Local: Ghi bản ghi (ID: UUID, Tên, Emoji, occurredAt: Now)
-    Local-->>UI: Ghi thành công
-    UI-->>User: Rung phản hồi & Hiển thị Toast "Đã lưu" (Tức thì)
+    UI->>Local: Lưu bản ghi Riêng tư (UUID, emoji, tên, occurredAt = bây giờ)
+    UI-->>User: Toast "Đã lưu" (không gửi gì lên server)
 
-    alt Thiết bị Đang Online
-        UI->>API: PUT /api/shares/:id (Idempotent với UUID local)
-        API->>DB: Upsert bản ghi vào bảng shares
-        API->>WS: Broadcast sự kiện RealtimeEvent tới bạn bè
-        API-->>UI: 201 Created / 200 OK
-    else Thiết bị Đang Mất Mạng (Offline / Airplane Mode)
-        UI->>Outbox: Đưa bản ghi vào hàng đợi Outbox
-        Note over UI,Outbox: Dữ liệu được bảo toàn nguyên vẹn tại local
-        User->>UI: Khi có mạng Internet trở lại
-        Outbox->>API: Gửi lại PUT /api/shares/:id (Giữ nguyên occurredAt gốc)
-        API->>DB: Upsert không tạo bản ghi trùng lặp
-        Outbox-->>Local: Xóa khỏi hàng đợi sau khi thành công
+    User->>UI: Trong lịch sử, chuyển bản ghi sang Công khai
+    UI->>Local: Lưu visibility = public, trạng thái = đang chờ gửi
+    UI->>Outbox: put(publish) — mỗi bản ghi chỉ giữ thao tác mới nhất
+
+    alt Đang online
+        Outbox->>API: PUT /api/shares/:id (id = UUID bản ghi, giữ occurredAt gốc)
+        API->>DB: Upsert (gửi lại không tạo bản trùng)
+        API-->>Outbox: 201 / 200
+        Outbox-->>Local: Xoá khỏi hàng đợi, trạng thái = "Bạn bè đã thấy"
+    else Mất mạng
+        Outbox-->>Local: Giữ trong hàng đợi, trạng thái = "Chưa gửi được, sẽ thử lại"
+        Note over Outbox: Gửi lại khi mở app, khi có thay đổi mới, hoặc khi bấm "Thử lại"
     end
+
+    User->>UI: Chuyển về Riêng tư (hoặc xoá bản ghi Công khai)
+    UI->>Outbox: put(revoke) — thay thao tác publish nếu chưa gửi
+    Outbox->>API: DELETE /api/shares/:id → thu hồi với mọi người
 ```
 
 ### Nguyên tắc đảm bảo tính toàn vẹn:
-1. **Idempotent PUT Requests:** API chia sẻ sử dụng chính UUID tạo ra từ local làm định danh URL: `PUT /api/shares/:id`. Dù hàng đợi gửi lại nhiều lần do mạng chập chờn, server vẫn chỉ lưu đúng 1 bản ghi duy nhất (`DAT-03`).
-2. **Bảo tồn thời điểm gốc (`occurredAt`):** Dù bản ghi được đồng bộ trễ nhiều giờ sau khi người dùng kết nối mạng lại, thời gian hiển thị trên bảng tin bạn bè vẫn là thời điểm thực tế lúc người dùng chạm nút (`BR-02`).
-3. **Quyền xem Broadcast & Multicast (SOC-03, AC-06):**
-   * Mặc định `targetIds: null` $\rightarrow$ Broadcast cho tất cả bạn bè đang có.
-   * Khi chọn danh sách `targetIds: ['user-id-1', 'user-id-2']` $\rightarrow$ Multicast, chỉ người trong danh sách mới có quyền xem hoạt động.
+1. **Riêng tư mặc định:** chạm nút (trong app hay widget) luôn tạo bản ghi Riêng tư; chỉ bản ghi người dùng tự chuyển sang Công khai mới lên server (DAT-01).
+2. **Idempotent:** `PUT` và `DELETE /api/shares/:id` dùng chính UUID của bản ghi, nên hàng đợi gửi lại bao nhiêu lần server cũng chỉ có đúng một bản (AC-05). `DELETE` một id không tồn tại vẫn trả `204`.
+3. **Ý định cuối cùng thắng:** hàng đợi khoá theo id bản ghi. Chuyển Công khai rồi về Riêng tư khi đang offline → chỉ gửi `DELETE`.
+4. **Bảo tồn thời điểm gốc (`occurredAt`):** gửi trễ bao lâu thì bạn bè vẫn thấy đúng giờ chạm nút (BR-02).
+5. **Quyền xem (SOC-03, AC-06):** Công khai = tất cả bạn bè **hiện tại** của chủ bản ghi. Không có chọn từng người nhận. Kết bạn mới → thấy cả bản Công khai cũ; huỷ kết bạn → mất quyền ngay, reaction giữa hai người bị xoá.
 
 ---
 
@@ -143,7 +150,7 @@ Authorization: Bearer <user_access_token>
 
 #### 1. Đăng ký tài khoản ẩn danh (Auto-Registration)
 * **Phương thức & URL:** `POST /api/auth/register`
-* **Mô tả:** Được gọi tự động trong lần đầu tiên mở ứng dụng để cấp danh tính ẩn danh.
+* **Mô tả:** Được gọi tự động ở lần đầu dùng tính năng xã hội (mở feed, mở mã QR, hoặc chuyển một bản ghi sang Công khai). Dùng app offline thì không cần tài khoản.
 * **Request Body:**
   ```json
   {
@@ -157,7 +164,7 @@ Authorization: Bearer <user_access_token>
       "user": {
         "id": "e9a8f3b2-7c1d-4e5f-8a0b-1c2d3e4f5a6b",
         "displayName": "Bạn",
-        "inviteCode": "CHAM-7K9M2P",
+        "inviteCode": "K7M2P9XQ4R",
         "createdAt": "2026-10-25T07:00:00.000Z"
       },
       "token": "tok_sec_9f8e7d6c5b4a3..."
@@ -173,7 +180,7 @@ Authorization: Bearer <user_access_token>
     "data": {
       "id": "e9a8f3b2-7c1d-4e5f-8a0b-1c2d3e4f5a6b",
       "displayName": "Hà My",
-      "inviteCode": "CHAM-7K9M2P",
+      "inviteCode": "K7M2P9XQ4R",
       "createdAt": "2026-10-25T07:00:00.000Z"
     }
   }
@@ -188,7 +195,7 @@ Authorization: Bearer <user_access_token>
     "data": {
       "id": "e9a8f3b2-7c1d-4e5f-8a0b-1c2d3e4f5a6b",
       "displayName": "Hà My",
-      "inviteCode": "CHAM-9X2L8Q",
+      "inviteCode": "B3T8WQ2N6M",
       "createdAt": "2026-10-25T07:00:00.000Z"
     }
   }
@@ -196,11 +203,12 @@ Authorization: Bearer <user_access_token>
 
 #### 4. Kênh thông báo thời gian thực (Realtime WebSocket)
 * **Phương thức & URL:** `GET /api/me/ws` hoặc `GET /api/me/ws?token=<token>`
-* **Mô tả:** Mở kết nối WebSocket tới Durable Object (`UserRoomDO`) để nhận các gợi ý cập nhật:
+* **Mô tả:** Mở kết nối WebSocket tới Durable Object `UserRoom` để nhận **gợi ý tải lại** (không chứa dữ liệu; dữ liệu luôn lấy qua REST để kiểm tra quyền). App mobile hiện chưa dùng kênh này — feed tải lại khi mở / kéo xuống.
   ```json
-  { "type": "friend_added", "friendId": "..." }
-  { "type": "feed_updated", "shareId": "..." }
-  { "type": "reaction_added", "shareId": "...", "emoji": "❤️" }
+  { "type": "share.upserted", "id": "..." }
+  { "type": "share.removed", "id": "..." }
+  { "type": "reaction.changed", "shareId": "..." }
+  { "type": "friends.changed" }
   ```
 
 ---
@@ -214,18 +222,8 @@ Authorization: Bearer <user_access_token>
   ```json
   {
     "data": [
-      {
-        "id": "u2-uuid",
-        "displayName": "Minh Thư",
-        "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
-        "createdAt": "2026-10-20T10:15:00.000Z"
-      },
-      {
-        "id": "u3-uuid",
-        "displayName": "Hoàng Long",
-        "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-        "createdAt": "2026-10-22T08:30:00.000Z"
-      }
+      { "id": "u2-uuid", "displayName": "Minh Thư", "since": "2026-10-20T10:15:00.000Z" },
+      { "id": "u3-uuid", "displayName": "Hoàng Long", "since": "2026-10-22T08:30:00.000Z" }
     ]
   }
   ```
@@ -235,61 +233,55 @@ Authorization: Bearer <user_access_token>
 * **Request Body:**
   ```json
   {
-    "inviteCode": "CHAM-8F3K9M"
+    "inviteCode": "H4R7N2Q8ZK"
   }
   ```
-* **Response:**
-  * `201 Created`: Nếu đây là kết nối bạn bè mới.
-  * `200 OK`: Nếu hai người dùng đã là bạn bè trước đó.
+* **Response:** kết bạn **trực tiếp**, không cần người kia đồng ý (SOC-01).
+  * `201 Created`: kết nối bạn bè mới. · `200 OK`: hai người đã là bạn bè trước đó.
+  * `404 INVITE_NOT_FOUND`: mã không tồn tại (hoặc đã bị đổi). · `400 CANNOT_FRIEND_SELF`: quét mã của chính mình.
   ```json
   {
-    "data": {
-      "id": "u4-uuid",
-      "displayName": "An Nhiên",
-      "createdAt": "2026-10-25T07:30:00.000Z"
-    }
+    "data": { "id": "u4-uuid", "displayName": "An Nhiên", "since": "2026-10-25T07:30:00.000Z" }
   }
   ```
 
 #### 3. Xóa bạn bè
 * **Phương thức & URL:** `DELETE /api/friends/:userId`
-* **Response:** `204 No Content` (Hủy quyền xem feed hai chiều).
+* **Response:** `204 No Content` (Hủy quyền xem feed hai chiều; reaction giữa hai người bị xoá).
 
 ---
 
 ### 4.3. Phân Hệ Đồng Bộ Nhật Ký Chia Sẻ (`/api/shares`)
 
-#### 1. Gửi bản ghi chia sẻ lên hệ thống (Idempotent Upsert)
+#### 1. Chuyển bản ghi sang Công khai (Idempotent Upsert)
 * **Phương thức & URL:** `PUT /api/shares/:id`
-* **Path Parameter:** `:id` là UUID của bản ghi được tạo ra từ ứng dụng local.
-* **Request Body:**
+* **Path Parameter:** `:id` là UUID v4 (dạng `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`) của bản ghi local.
+* **Request Body** (strict — field lạ như `targetIds` bị trả `400`):
   ```json
   {
     "emoji": "☕",
-    "name": "Cà phê sáng",
-    "occurredAt": "2026-10-25T07:15:00.000Z",
-    "targetIds": null
+    "name": "Cà phê",
+    "occurredAt": "2026-10-25T00:15:00.000Z"
   }
   ```
-  *(Ghi chú: `targetIds: null` hoặc `[]` là broadcast cho tất cả bạn bè; truyền mảng `['id1', 'id2']` để áp dụng multicast).*
-* **Response (201 Created / 200 OK):**
+* **Response (201 tạo mới / 200 cập nhật):** `409` nếu id đã thuộc người khác.
   ```json
   {
     "data": {
-      "id": "c1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
-      "userId": "e9a8f3b2-7c1d-4e5f-8a0b-1c2d3e4f5a6b",
+      "id": "c1a2b3c4-d5e6-4f8a-9b0c-1d2e3f4a5b6c",
       "emoji": "☕",
-      "name": "Cà phê sáng",
-      "occurredAt": "2026-10-25T07:15:00.000Z",
-      "targetIds": null,
-      "createdAt": "2026-10-25T07:15:01.000Z"
+      "name": "Cà phê",
+      "occurredAt": "2026-10-25T00:15:00.000Z",
+      "reactions": [],
+      "createdAt": "2026-10-25T00:15:01.000Z",
+      "updatedAt": "2026-10-25T00:15:01.000Z"
     }
   }
   ```
 
-#### 2. Xóa bản ghi đã chia sẻ
+#### 2. Về Riêng tư / xoá bản ghi Công khai (thu hồi)
 * **Phương thức & URL:** `DELETE /api/shares/:id`
-* **Response:** `204 No Content` (Bản ghi bị gỡ bỏ khỏi bảng tin của bạn bè).
+* **Response:** `204 No Content` — gỡ khỏi feed của mọi người bạn, reaction trên đó bị xoá. Id không tồn tại cũng trả `204` để hàng đợi gửi lại an toàn.
 
 ---
 
@@ -300,26 +292,24 @@ Authorization: Bearer <user_access_token>
 * **Query Parameters:**
   * `cursor`: Con trỏ phân trang từ lần tải trước.
   * `limit`: Số lượng bài viết mỗi trang (mặc định: `20`, tối đa: `50`).
-* **Response (200 OK):**
+* **Response (200 OK):** chỉ gồm bản ghi Công khai của bạn bè hiện tại, mới nhất trước theo `occurredAt`.
   ```json
   {
     "data": [
       {
-        "id": "share-uuid-1",
-        "userId": "u2-uuid",
-        "userName": "Minh Thư",
-        "userAvatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
+        "id": "8f0c2a7e-1b3d-4c5e-9f6a-7b8c9d0e1f2a",
+        "owner": { "id": "u2-uuid", "displayName": "Minh Thư" },
         "emoji": "🏃",
-        "name": "đã hoàn thành chạy bộ 5km",
-        "occurredAt": "2026-10-25T07:05:00.000Z",
-        "myReaction": "❤️",
-        "reactionsCount": {
-          "❤️": 3,
-          "👍": 1
-        }
+        "name": "Chạy bộ",
+        "occurredAt": "2026-10-25T00:05:00.000Z",
+        "reactions": [
+          { "emoji": "❤️", "count": 3 },
+          { "emoji": "👍", "count": 1 }
+        ],
+        "myReaction": "❤️"
       }
     ],
-    "nextCursor": "1730000000000_share-uuid-1"
+    "nextCursor": "1761350700000_8f0c2a7e-1b3d-4c5e-9f6a-7b8c9d0e1f2a"
   }
   ```
 
@@ -328,21 +318,11 @@ Authorization: Bearer <user_access_token>
 * **Request Body:**
   ```json
   {
-    "emoji": "❤️"
+    "emoji": "🥰"
   }
   ```
-  *(Các emoji hợp lệ: `❤️`, `😂`, `😮`, `😢`, `👍`, `🔥`)*
-* **Response (200 OK):**
-  ```json
-  {
-    "data": {
-      "shareId": "share-uuid-1",
-      "userId": "e9a8f3b2-7c1d-4e5f-8a0b-1c2d3e4f5a6b",
-      "emoji": "❤️",
-      "updatedAt": "2026-10-25T07:20:00.000Z"
-    }
-  }
-  ```
+  *(7 emoji hợp lệ: `👍` `❤️` `🥰` `😆` `😮` `😢` `😡`; emoji khác → `400`. Mỗi người 1 reaction, gửi lại = đổi.)*
+* **Response (200 OK):** trả về bản ghi trong feed với số đếm mới (cùng dạng phần tử của `GET /api/feed`).
 
 #### 3. Thu hồi cảm xúc (Unreact)
 * **Phương thức & URL:** `DELETE /api/feed/:id/reaction`
@@ -410,4 +390,6 @@ Authorization: Bearer <user_access_token>
 flutter test
 ```
 
-Kết quả kỳ vọng: **All tests passed!** (Bao gồm `main_navigation_test.dart`, `activity_dial_test.dart`, `add_qr_test.dart`, `widget_selection_test.dart`).
+Kết quả kỳ vọng: **All tests passed!** Danh sách test và phạm vi: xem [`workflow_testing.md`](workflow_testing.md).
+
+Backend: `cd backend && npm test` (chạy trong Workers runtime, tự áp migration lên DB tạm).
