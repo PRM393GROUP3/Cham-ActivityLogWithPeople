@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../account/presentation/account_controller.dart';
+import '../../../account/presentation/widgets/user_avatar.dart';
 
 /// Bottom Sheet hiển thị hồ sơ người dùng ẩn danh và mã mời kết bạn (SOC-01).
 /// Tài khoản chỉ được tạo khi dùng tính năng xã hội lần đầu, nên có thể chưa có mã mời.
@@ -49,13 +50,10 @@ class UserProfileSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          // Avatar lớn với viền cam
+          // Avatar lớn với viền cam (emoji người dùng chọn, hoặc chữ cái đầu)
           Container(
-            width: 72,
-            height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFA93B24),
               border: Border.all(color: const Color(0xFFFF6F52), width: 3),
               boxShadow: [
                 BoxShadow(
@@ -65,13 +63,16 @@ class UserProfileSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 42,
-              color: Colors.white,
-            ),
+            child: UserAvatar(name: displayName, emoji: account?.avatarEmoji, radius: 33),
           ),
-          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/profile');
+            },
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: const Text('Sửa tên & avatar'),
+          ),
 
           // Tên hiển thị người dùng
           Text(

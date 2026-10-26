@@ -4,6 +4,7 @@ class QrCodeData {
     required this.username,
     required this.inviteCode,
     this.avatarUrl,
+    this.avatarEmoji,
     this.instruction = 'Đưa mã này để bạn bè quét kết nối một chạm.',
   });
 
@@ -11,6 +12,9 @@ class QrCodeData {
   final String username;
   final String inviteCode;
   final String? avatarUrl;
+
+  /// Avatar emoji của tài khoản; ưu tiên hơn [avatarUrl].
+  final String? avatarEmoji;
   final String instruction;
 
   QrCodeData copyWith({
@@ -25,6 +29,7 @@ class QrCodeData {
       username: username ?? this.username,
       inviteCode: inviteCode ?? this.inviteCode,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      avatarEmoji: avatarEmoji,
       instruction: instruction ?? this.instruction,
     );
   }

@@ -4,6 +4,7 @@ class FeedShare {
     required this.id,
     required this.ownerId,
     required this.ownerName,
+    this.ownerAvatarEmoji,
     required this.emoji,
     required this.name,
     required this.occurredAt,
@@ -14,6 +15,7 @@ class FeedShare {
   final String id;
   final String ownerId;
   final String ownerName;
+  final String? ownerAvatarEmoji;
   final String emoji;
   final String name;
   final DateTime occurredAt;
@@ -32,6 +34,7 @@ class FeedShare {
       id: json['id'] as String,
       ownerId: owner['id'] as String,
       ownerName: owner['displayName'] as String,
+      ownerAvatarEmoji: owner['avatarEmoji'] as String?,
       emoji: json['emoji'] as String,
       name: json['name'] as String,
       occurredAt: DateTime.parse(json['occurredAt'] as String),
@@ -61,6 +64,7 @@ class FeedShare {
       id: id,
       ownerId: ownerId,
       ownerName: ownerName,
+      ownerAvatarEmoji: ownerAvatarEmoji,
       emoji: this.emoji,
       name: name,
       occurredAt: occurredAt,

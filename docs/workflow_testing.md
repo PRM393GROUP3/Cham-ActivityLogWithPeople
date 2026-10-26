@@ -105,6 +105,19 @@ flowchart TD
 
 ---
 
+### Kịch Bản 8: Tên & Avatar (Profile Flow)
+* **Mục tiêu:** SOC-06, AC-12.
+
+| Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
+| :---: | :--- | :--- | :---: |
+| 8.1 | Hồ sơ → **"Sửa tên & avatar"**. | Mở **Hồ sơ của bạn**: tên hiện tại, lưới emoji, ô nhập emoji khác. | Đạt (test tự động + xem trên Web) |
+| 8.2 | Đổi tên, chọn 🦊, bấm **Lưu**. | *"Đã lưu hồ sơ"*; nút góc phải trang chủ và sheet hồ sơ hiện 🦊 và tên mới, còn sau khi tải lại. | Đạt (test tự động + xem trên Web) |
+| 8.3 | Nhập *"hi"* vào ô emoji rồi Lưu. | *"Avatar phải là đúng một emoji."*, không gửi lên server. | Đạt (test tự động) |
+| 8.4 | Bạn bè mở danh sách bạn bè / feed. | Thấy tên và avatar mới (bản ghi cũ của bạn trong feed cũng hiện avatar mới). | Đạt (test tự động + API) |
+| 8.5 | **"Bỏ avatar"** rồi Lưu. | Avatar về chữ cái đầu của tên. | Đạt (test tự động + API) |
+
+---
+
 ### Kịch Bản 7: Lịch Sử & Thống Kê (Stats Flow)
 * **Mục tiêu:** HIS-01, HIS-02, STA-01, AC-08, AC-10.
 
@@ -179,6 +192,7 @@ flutter test
 | [`stats_test.dart`](../mobile/test/stats_test.dart) | Kỳ Ngày / Tuần (từ Thứ Hai) / Tháng theo giờ VN, đếm theo loại / ngày / giờ, lần gần nhất, trang thống kê (chuyển kỳ, xoá cập nhật số liệu, kỳ trống) |
 | [`qr_friends_test.dart`](../mobile/test/qr_friends_test.dart) | `InviteQr` encode / decode, QR thật mức H, mã không phải Chấm / mã của mình bị chặn, đổi mã mời, lưu ảnh QR (PNG đúng tên file), danh sách bạn bè, huỷ kết bạn có xác nhận, offline |
 | [`qr_image_test.dart`](../mobile/test/qr_image_test.dart), [`qr_image_web_test.dart`](../mobile/test/qr_image_web_test.dart) | Đọc QR từ ảnh: QR của app, ảnh chụp JPEG lớn, QR đảo màu, ảnh không có QR; nút "Chọn ảnh". `qr_image_web_test` chạy được trong Chrome: `flutter test --platform chrome test/qr_image_web_test.dart` |
+| [`profile_test.dart`](../mobile/test/profile_test.dart) | Kiểm tra "đúng một emoji", lưu tên + avatar (tự đăng ký lần đầu, bỏ avatar), màn Hồ sơ (chọn / nhập emoji, lỗi, offline), avatar ở danh sách bạn bè |
 | [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
 | [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
 
@@ -188,7 +202,7 @@ Chạy riêng một tệp: `flutter test test/<tên_tệp>.dart`
 
 | Tệp kiểm thử | Phạm vi kiểm tra |
 | :--- | :--- |
-| [`users.test.ts`](../backend/test/users.test.ts) | Đăng ký ẩn danh và xác thực bằng token, từ chối token sai, tên trống |
+| [`users.test.ts`](../backend/test/users.test.ts) | Đăng ký ẩn danh và xác thực bằng token, từ chối token sai, tên trống; tên + avatar emoji (👩‍💻 👍🏽 🇻🇳 hợp lệ; chữ, nhiều emoji bị từ chối), avatar hiện ở bạn bè và feed |
 | [`friends.test.ts`](../backend/test/friends.test.ts) | Kết bạn trực tiếp bằng mã (idempotent, không phân biệt hoa thường), từ chối mã của mình / mã sai / mã đã đổi, huỷ kết bạn 2 chiều |
 | [`shares.test.ts`](../backend/test/shares.test.ts) | Công khai cho tất cả bạn bè, chặn chọn người nhận, gửi lại không trùng, thu hồi, bạn mới thấy bản cũ, phân trang, 7 reaction |
 

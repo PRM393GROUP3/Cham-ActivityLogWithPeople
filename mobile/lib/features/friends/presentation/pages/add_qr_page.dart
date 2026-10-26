@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/image_saver/image_saver.dart';
 import '../../../account/presentation/account_controller.dart';
+import '../../../account/presentation/widgets/user_avatar.dart';
 import '../../domain/invite_qr.dart';
 import '../../domain/qr_code_data.dart';
 import '../controllers/friends_controller.dart';
@@ -316,7 +317,12 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
     if (data != null) {
       return _buildMyQrCard(
         context,
-        QrCodeData(displayName: data.displayName, username: 'Mã mời: ${data.inviteCode}', inviteCode: data.inviteCode),
+        QrCodeData(
+          displayName: data.displayName,
+          username: 'Mã mời: ${data.inviteCode}',
+          inviteCode: data.inviteCode,
+          avatarEmoji: data.avatarEmoji,
+        ),
       );
     }
     return Padding(
@@ -384,7 +390,9 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
                   ],
                 ),
                 child: ClipOval(
-                  child: qrData.avatarUrl != null
+                  child: qrData.avatarEmoji != null
+                      ? UserAvatar(name: qrData.displayName, emoji: qrData.avatarEmoji, radius: 33)
+                      : qrData.avatarUrl != null
                       ? Image.network(
                           qrData.avatarUrl!,
                           fit: BoxFit.cover,
@@ -441,6 +449,13 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
           ),
 
           const SizedBox(height: 2),
+
+          if (widget.qrData == null)
+            TextButton(
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+              onPressed: () => Navigator.pushNamed(context, '/profile'),
+              child: const Text('Sửa tên & avatar'),
+            ),
 
           // Username Handle
           Text(

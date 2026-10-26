@@ -20,8 +20,20 @@ class AccountApi {
           id: user['id'] as String,
           displayName: user['displayName'] as String,
           inviteCode: user['inviteCode'] as String,
+          avatarEmoji: user['avatarEmoji'] as String?,
           token: data['token'] as String,
         );
+      });
+
+  /// PATCH /api/me — đổi tên và / hoặc avatar. [clearAvatar] = bỏ avatar (về chữ cái đầu).
+  Future<Profile> updateProfile({String? displayName, String? avatarEmoji, bool clearAvatar = false}) =>
+      guardApi(() async {
+        final res = await _dio.patch<Map<String, dynamic>>('/me', data: {
+          'displayName': ?displayName,
+          if (clearAvatar) 'avatarEmoji': null else 'avatarEmoji': ?avatarEmoji,
+        });
+        final me = res.data!['data'] as Map<String, dynamic>;
+        return (displayName: me['displayName'] as String, avatarEmoji: me['avatarEmoji'] as String?);
       });
 
   /// POST /api/me/invite-code → mã mời mới; mã cũ (và QR cũ) hết hiệu lực.

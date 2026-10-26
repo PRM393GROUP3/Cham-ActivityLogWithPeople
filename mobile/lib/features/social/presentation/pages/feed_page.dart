@@ -46,7 +46,7 @@ class _FeedPageState extends ConsumerState<FeedPage> {
   Widget build(BuildContext context) {
     final feed = ref.watch(feedControllerProvider);
     final friends = ref.watch(friendsControllerProvider).value ?? const [];
-    final storyUsers = [for (final f in friends) StoryUser(id: f.id, name: f.displayName)];
+    final storyUsers = [for (final f in friends) StoryUser(id: f.id, name: f.displayName, avatarEmoji: f.avatarEmoji)];
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),

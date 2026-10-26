@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/time/vn_time.dart';
+import '../../../account/presentation/widgets/user_avatar.dart';
 import '../../domain/feed_share.dart';
 import '../../domain/reaction.dart';
 
@@ -39,23 +40,7 @@ class FeedCard extends StatelessWidget {
             height: 56,
             child: Stack(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE6DFD5),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    share.ownerName.isNotEmpty ? share.ownerName.characters.first.toUpperCase() : '?',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E1B18),
-                    ),
-                  ),
-                ),
+                UserAvatar(name: share.ownerName, emoji: share.ownerAvatarEmoji, radius: 28),
                 Positioned(
                   right: 0,
                   bottom: 0,

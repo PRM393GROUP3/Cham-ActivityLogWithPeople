@@ -25,6 +25,15 @@ class FakeAccountApi implements AccountApi {
 
   String nextInviteCode = 'B3T8WQ2N6M';
 
+  final profileUpdates = <({String? displayName, String? avatarEmoji, bool clearAvatar})>[];
+
+  @override
+  Future<Profile> updateProfile({String? displayName, String? avatarEmoji, bool clearAvatar = false}) async {
+    if (!online) throw offline;
+    profileUpdates.add((displayName: displayName, avatarEmoji: avatarEmoji, clearAvatar: clearAvatar));
+    return (displayName: displayName ?? testAccount.displayName, avatarEmoji: clearAvatar ? null : avatarEmoji);
+  }
+
   @override
   Future<String> rotateInviteCode() async {
     if (!online) throw offline;

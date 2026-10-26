@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/config/env.dart';
+import 'features/account/presentation/pages/edit_profile_page.dart';
 import 'features/activity_dial/presentation/pages/activity_dial_page.dart';
 import 'features/activity_dial/presentation/pages/event_types_page.dart';
 import 'features/friends/presentation/pages/add_qr_page.dart';
@@ -28,7 +29,8 @@ class ChamApp extends StatelessWidget {
           ? (child ?? const SizedBox.shrink())
           : Banner(
               message: Env.appEnv.name.toUpperCase(),
-              location: BannerLocation.topEnd,
+              // Góc dưới trái: góc trên phải là nút hồ sơ / avatar.
+              location: BannerLocation.bottomStart,
               child: child ?? const SizedBox.shrink(),
             ),
       initialRoute: '/',
@@ -41,6 +43,7 @@ class ChamApp extends StatelessWidget {
         '/event-types': (context) => const EventTypesPage(),
         '/stats': (context) => const StatsPage(),
         '/friends': (context) => const FriendsPage(),
+        '/profile': (context) => const EditProfilePage(),
       },
     );
   }

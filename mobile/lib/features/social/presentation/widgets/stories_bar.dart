@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../account/presentation/widgets/user_avatar.dart';
 import '../../domain/story_user.dart';
 
 class StoriesBar extends StatelessWidget {
@@ -144,15 +145,7 @@ class StoriesBar extends StatelessWidget {
                       width: isSelected ? 3.0 : 2.0,
                     ),
                   ),
-                  child: ClipOval(
-                    child: user.avatarUrl == null
-                        ? _initial(user.name)
-                        : Image.network(
-                            user.avatarUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => _initial(user.name),
-                          ),
-                  ),
+                  child: UserAvatar(name: user.name, emoji: user.avatarEmoji, radius: 29),
                 ),
                 if (isSelected)
                   Positioned(
@@ -189,17 +182,4 @@ class StoriesBar extends StatelessWidget {
       ),
     );
   }
-
-  Widget _initial(String name) => Container(
-        color: const Color(0xFFEAE3DC),
-        alignment: Alignment.center,
-        child: Text(
-          name.isNotEmpty ? name.characters.first.toUpperCase() : '?',
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E1B18),
-          ),
-        ),
-      );
 }

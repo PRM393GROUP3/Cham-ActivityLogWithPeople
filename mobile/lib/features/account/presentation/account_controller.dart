@@ -28,6 +28,20 @@ class AccountController extends AsyncNotifier<Account?> {
     return _registering ??= _register().whenComplete(() => _registering = null);
   }
 
+  /// Đặt tên hiển thị và avatar emoji (`null` = bỏ avatar). Tự đăng ký ở lần đầu (cần mạng).
+  Future<Account> updateProfile({required String displayName, required String? avatarEmoji}) async {
+    final account = await ensure();
+    final profile = await ref.read(accountApiProvider).updateProfile(
+          displayName: displayName,
+          avatarEmoji: avatarEmoji,
+          clearAvatar: avatarEmoji == null,
+        );
+    final updated = account.copyWith(displayName: profile.displayName, avatarEmoji: () => profile.avatarEmoji);
+    await ref.read(accountStorageProvider).save(updated);
+    state = AsyncData(updated);
+    return updated;
+  }
+
   /// Đổi mã mời: người đã có mã cũ / ảnh QR cũ không kết bạn được nữa (bạn bè hiện có giữ nguyên).
   Future<Account> rotateInviteCode() async {
     final account = await ensure();

@@ -88,6 +88,12 @@ flowchart TD
 
 ---
 
+### 2.3a. Hồ Sơ: Tên & Avatar (Profile Screen)
+* **Cách mở:** sheet hồ sơ (nút avatar góc phải trang chủ) → **"Sửa tên & avatar"**, hoặc dòng **"Sửa tên & avatar"** trên màn QR.
+* **Tên hiển thị:** 1–50 ký tự (mặc định *"Bạn"*).
+* **Avatar:** chọn một emoji trong lưới gợi ý, hoặc gõ emoji bất kỳ vào ô *"Hoặc nhập emoji khác"* (vd. 👩‍💻, 👍🏽, 🇻🇳). **"Bỏ avatar"** → hiện chữ cái đầu của tên. Không phải đúng một emoji → báo lỗi.
+* **Lưu** gửi `PATCH /api/me` (cần mạng; lần đầu tự tạo tài khoản). Avatar hiện ở nút góc phải trang chủ, sheet hồ sơ, màn QR; bạn bè thấy ở danh sách bạn bè, thanh lọc feed và thẻ hoạt động.
+
 ### 2.3b. Danh Sách Bạn Bè (Friends Screen)
 * **Cách mở:** hồ sơ → **"Danh sách bạn bè"**, hoặc nút 👥 trên màn QR.
 * Danh sách bạn bè kèm ngày kết bạn (giờ Việt Nam); kéo xuống để tải lại; nút **"Thêm bạn"** mở màn QR.
@@ -200,6 +206,7 @@ Authorization: Bearer <user_access_token>
       "user": {
         "id": "e9a8f3b2-7c1d-4e5f-8a0b-1c2d3e4f5a6b",
         "displayName": "Bạn",
+        "avatarEmoji": null,
         "inviteCode": "K7M2P9XQ4R",
         "createdAt": "2026-10-25T07:00:00.000Z"
       },

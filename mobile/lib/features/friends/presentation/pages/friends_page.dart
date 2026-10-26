@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/time/vn_time.dart';
+import '../../../account/presentation/widgets/user_avatar.dart';
 import '../../domain/friend.dart';
 import '../controllers/friends_controller.dart';
 
@@ -110,14 +111,7 @@ class _FriendTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: const Color(0xFFE6DFD5),
-            child: Text(
-              friend.displayName.isNotEmpty ? friend.displayName.characters.first.toUpperCase() : '?',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E1B18)),
-            ),
-          ),
+          UserAvatar(name: friend.displayName, emoji: friend.avatarEmoji),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
