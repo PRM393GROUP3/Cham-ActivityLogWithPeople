@@ -85,11 +85,16 @@ class _RadialDialNodeState extends State<RadialDialNode>
                 ],
               ),
               child: Center(
-                child: Icon(
-                  widget.type.icon,
-                  size: widget.iconSize,
-                  color: widget.type.accentColor,
-                ),
+                child: widget.type.icon != null
+                    ? Icon(
+                        widget.type.icon,
+                        size: widget.iconSize,
+                        color: widget.type.accentColor,
+                      )
+                    : Text(
+                        widget.type.emoji,
+                        style: TextStyle(fontSize: widget.iconSize),
+                      ),
               ),
             ),
             const SizedBox(height: 2.5),

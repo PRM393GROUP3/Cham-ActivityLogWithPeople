@@ -100,6 +100,20 @@ flowchart TD
 
 ---
 
+### Kịch Bản 6: Loại Sự Kiện Tự Tạo & Ghi Chú (Custom Types & Notes)
+* **Mục tiêu:** LOG-01, LOG-02, LOG-05, NOTE-01.
+
+| Bước | Hành động | Kết quả kỳ vọng | Trạng thái |
+| :---: | :--- | :--- | :---: |
+| 6.1 | `⚙️` → **Loại sự kiện** → **Thêm loại sự kiện**, chạm 🏃. | Ô tên tự điền *Chạy bộ*; đổi tên được. | Đạt (test tự động) |
+| 6.2 | Bấm **Lưu**. | Loại mới hiện trong danh sách và ở hàng **"Sự kiện của bạn"** trên trang chủ; còn sau khi mở lại app. Không có nút sửa / sắp xếp. | Đạt (test tự động) |
+| 6.3 | Chạm loại vừa tạo trên trang chủ. | Tạo bản ghi Riêng tư mới với emoji / tên đó. | Đạt (test tự động) |
+| 6.4 | Mở lịch sử, chạm icon 📝 trên một bản ghi. | Mở tờ giấy ghi chú (kẻ dòng, lề đỏ) với emoji, tên, giờ của bản ghi. | Đạt (test tự động) |
+| 6.5 | Viết 2 dòng rồi bấm `←` (hoặc **Lưu**). | Ghi chú được lưu; dòng đầu hiện dưới bản ghi, icon 📝 đổi sang dạng đặc. | Đạt (test tự động) |
+| 6.6 | Viết ghi chú cho bản ghi Công khai. | Không có gì gửi lên server; bạn bè không thấy ghi chú. | Đạt (test tự động) |
+
+---
+
 ### Kịch Bản 5: Chia Sẻ Khi Mất Mạng (Offline Sharing Flow)
 * **Mục tiêu:** Kiểm tra hàng đợi gửi (DAT-03, BR-02, AC-05).
 
@@ -140,6 +154,7 @@ flutter test
 | [`sharing_test.dart`](../mobile/test/sharing_test.dart) | Hàng đợi gửi: gộp theo bản ghi, còn sau khi mở lại app, gửi lại khi có mạng, thu hồi khi xoá (DAT-03, BR-02, BR-03, AC-05) |
 | [`feed_test.dart`](../mobile/test/feed_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã |
 | [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
+| [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Tạo loại sự kiện (tên mặc định theo emoji, kiểm tra hợp lệ, lưu bền, hàng "Sự kiện của bạn"); ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
 | [`core_utils_test.dart`](../mobile/test/core_utils_test.dart) | Giờ Việt Nam UTC+7 (AC-08), thời gian tương đối, UUID v4 |
 | [`widget_selection_test.dart`](../mobile/test/widget_selection_test.dart) | Xem trước widget 2x2, 4x2 và modal hướng dẫn |
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/time/vn_time.dart';
 import '../activity_dial_controller.dart';
+import '../pages/note_paper_page.dart';
 import '../../domain/activity_log.dart';
 
 /// Modal BottomSheet xem chi tiết các lần chấm trong ngày hôm nay (HIS-01).
@@ -149,6 +150,11 @@ class TodayLogsSheet extends ConsumerWidget {
                           : ShareVisibility.public,
                     ),
                     onDelete: () => controller.deleteLog(log.id),
+                    onOpenNote: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => NotePaperPage(logId: log.id),
+                      ),
+                    ),
                   );
                 },
               ),
@@ -164,11 +170,13 @@ class _LogItemTile extends StatelessWidget {
     required this.log,
     required this.onToggleVisibility,
     required this.onDelete,
+    required this.onOpenNote,
   });
 
   final ActivityLog log;
   final VoidCallback onToggleVisibility;
   final VoidCallback onDelete;
+  final VoidCallback onOpenNote;
 
   /// Trạng thái lưu local luôn hoàn tất trước; trạng thái gửi hiển thị riêng (NFR-03).
   String get _statusText {
@@ -223,11 +231,35 @@ class _LogItemTile extends StatelessWidget {
                         : const Color(0xFF8A7E74),
                   ),
                 ),
+                if (log.hasNote)
+                  Text(
+                    '📝 ${log.note!.split('\n').first}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: Color(0xFF5E5148),
+                    ),
+                  ),
               ],
             ),
           ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: Icon(
+              log.hasNote
+                  ? Icons.sticky_note_2_rounded
+                  : Icons.sticky_note_2_outlined,
+              color: const Color(0xFFB8862E),
+              size: 20,
+            ),
+            tooltip: log.hasNote ? 'Xem / sửa ghi chú' : 'Viết ghi chú',
+            onPressed: onOpenNote,
+          ),
           _VisibilityChip(isPublic: log.isPublic, onTap: onToggleVisibility),
           IconButton(
+            visualDensity: VisualDensity.compact,
             icon: const Icon(
               Icons.delete_outline_rounded,
               color: Color(0xFFD34E2F),

@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart' show StringCharacters;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -8,6 +9,7 @@ import '../../sharing/data/share_api.dart';
 import '../../sharing/data/share_outbox.dart';
 import '../../sharing/domain/share_op.dart';
 import '../data/activity_local_storage.dart';
+import '../data/event_type_storage.dart';
 import '../domain/activity_event_type.dart';
 import '../domain/activity_log.dart';
 
@@ -20,12 +22,21 @@ class ActivityDialState {
   });
 
   final List<ActivityLog> logs;
+
+  /// 19 loại mặc định trên vòng Dial, tiếp theo là các loại tự tạo theo thứ tự tạo.
   final List<ActivityEventType> eventTypes;
   final bool isLoading;
   final ActivityEventType? lastTappedType;
 
+  List<ActivityEventType> get dialTypes =>
+      eventTypes.where((t) => !t.isCustom).toList();
+
+  List<ActivityEventType> get customTypes =>
+      eventTypes.where((t) => t.isCustom).toList();
+
   /// Bản ghi trong ngày hôm nay theo giờ Việt Nam (HIS-01, DAT-02).
-  List<ActivityLog> get todayLogs => logs.where((l) => VnTime.isToday(l.occurredAt)).toList();
+  List<ActivityLog> get todayLogs =>
+      logs.where((l) => VnTime.isToday(l.occurredAt)).toList();
 
   /// Số lượng chấm đã ghi trong hôm nay (khớp badge "🔴 4 chấm" trên banner)
   int get todayCount => todayLogs.length;
@@ -50,8 +61,8 @@ class ActivityDialState {
 
 final activityDialControllerProvider =
     NotifierProvider<ActivityDialController, ActivityDialState>(
-  ActivityDialController.new,
-);
+      ActivityDialController.new,
+    );
 
 class ActivityDialController extends Notifier<ActivityDialState> {
   ActivityLocalStorage get _storage => ref.read(activityLocalStorageProvider);
@@ -74,6 +85,11 @@ class ActivityDialController extends Notifier<ActivityDialState> {
   }
 
   Future<void> _init() async {
+    final customTypes = await ref.read(eventTypeStorageProvider).load();
+    state = state.copyWith(
+      eventTypes: [...ActivityEventType.defaultTypes, ...customTypes],
+    );
+
     final storedLogs = await _storage.loadLogs();
 
     // Nếu chưa có bản ghi nào, tạo sẵn 4 bản ghi mẫu hôm nay để khớp chính xác thiết kế "4 chấm"
@@ -133,13 +149,41 @@ class ActivityDialController extends Notifier<ActivityDialState> {
 
     // Lưu vào Local Storage (BR-02)
     final updatedLogs = [newLog, ...state.logs];
-    state = state.copyWith(
-      logs: updatedLogs,
-      lastTappedType: type,
-    );
+    state = state.copyWith(logs: updatedLogs, lastTappedType: type);
 
     await _storage.saveLogs(updatedLogs);
     return newLog;
+  }
+
+  /// Tạo loại sự kiện mới (LOG-01, LOG-02, LOG-05). Chỉ tạo: không sửa, không sắp xếp.
+  /// Ném [ArgumentError] nếu thiếu emoji / tên hoặc tên quá 50 ký tự.
+  Future<ActivityEventType> addEventType({
+    required String emoji,
+    required String name,
+  }) async {
+    final e = emoji.trim(), n = name.trim();
+    if (e.isEmpty) throw ArgumentError('Hãy chọn một emoji.');
+    if (n.isEmpty) throw ArgumentError('Hãy đặt tên cho sự kiện.');
+    if (n.characters.length > 50) throw ArgumentError('Tên tối đa 50 ký tự.');
+
+    final type = ActivityEventType.custom(
+      id: 'custom-${uuidV4()}',
+      name: n,
+      emoji: e,
+    );
+    state = state.copyWith(eventTypes: [...state.eventTypes, type]);
+    await ref.read(eventTypeStorageProvider).save(state.customTypes);
+    return type;
+  }
+
+  /// Viết / sửa ghi chú của một bản ghi (NOTE-01). Chuỗi rỗng = xoá ghi chú.
+  /// Chỉ lưu trên máy; không đụng tới hàng đợi chia sẻ.
+  Future<void> setNote(String id, String note) async {
+    final log = _find(id);
+    if (log == null) return;
+    final value = note.trim().isEmpty ? null : note.trimRight();
+    if (value == log.note) return;
+    await _updateLog(log.copyWith(note: () => value));
   }
 
   /// Đổi chế độ chia sẻ của một bản ghi (SOC-03, SOC-04). Lưu local trước, sau đó đưa vào
@@ -150,10 +194,17 @@ class ActivityDialController extends Notifier<ActivityDialState> {
 
     await _outbox.put(
       visibility == ShareVisibility.public
-          ? ShareOp.publish(recordId: log.id, emoji: log.emoji, name: log.name, occurredAt: log.occurredAt)
+          ? ShareOp.publish(
+              recordId: log.id,
+              emoji: log.emoji,
+              name: log.name,
+              occurredAt: log.occurredAt,
+            )
           : ShareOp.revoke(log.id),
     );
-    await _updateLog(log.copyWith(visibility: visibility, syncStatus: ShareSyncStatus.pending));
+    await _updateLog(
+      log.copyWith(visibility: visibility, syncStatus: ShareSyncStatus.pending),
+    );
     await syncShares();
   }
 
@@ -206,7 +257,9 @@ class ActivityDialController extends Notifier<ActivityDialState> {
       try {
         await api.send(op);
         await _outbox.complete(op);
-        if (!await _outbox.contains(op.recordId)) await _markSynced(op.recordId);
+        if (!await _outbox.contains(op.recordId)) {
+          await _markSynced(op.recordId);
+        }
       } on ApiException catch (e) {
         await _markFailed([op.recordId]);
         // Mất mạng: các thao tác sau cũng sẽ lỗi, để lần sau.
@@ -230,13 +283,17 @@ class ActivityDialController extends Notifier<ActivityDialState> {
 
   Future<void> _markSynced(String id) async {
     final log = _find(id);
-    if (log != null) await _updateLog(log.copyWith(syncStatus: ShareSyncStatus.synced));
+    if (log != null) {
+      await _updateLog(log.copyWith(syncStatus: ShareSyncStatus.synced));
+    }
   }
 
   Future<void> _markFailed(Iterable<String> ids) async {
     for (final id in ids) {
       final log = _find(id);
-      if (log != null) await _updateLog(log.copyWith(syncStatus: ShareSyncStatus.failed));
+      if (log != null) {
+        await _updateLog(log.copyWith(syncStatus: ShareSyncStatus.failed));
+      }
     }
   }
 }

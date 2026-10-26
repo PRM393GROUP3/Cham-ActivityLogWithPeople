@@ -12,12 +12,28 @@ class ActivityEventType {
     required this.accentColor,
     required this.orbit,
     required this.angleDegree,
+    this.isCustom = false,
   });
+
+  /// Loại sự kiện người dùng tự tạo trong Cài đặt (LOG-01, LOG-02, LOG-05).
+  /// Không có vị trí trên quỹ đạo: hiển thị ở hàng "Sự kiện của bạn" dưới vòng Dial, bằng emoji.
+  const ActivityEventType.custom({
+    required this.id,
+    required this.name,
+    required this.emoji,
+  }) : icon = null,
+       bgColor = const Color(0xFFFFF4EC),
+       accentColor = const Color(0xFFB53216),
+       orbit = 0,
+       angleDegree = 0,
+       isCustom = true;
 
   final String id;
   final String name;
   final String emoji;
-  final IconData icon;
+
+  /// Icon Material của loại mặc định; `null` với loại tự tạo (hiển thị [emoji]).
+  final IconData? icon;
   final Color bgColor;
   final Color accentColor;
 
@@ -26,6 +42,17 @@ class ActivityEventType {
 
   /// Vị trí góc trên vòng tròn tính bằng độ (-90 độ là đỉnh 12 giờ)
   final double angleDegree;
+
+  final bool isCustom;
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'emoji': emoji};
+
+  factory ActivityEventType.fromJson(Map<String, dynamic> json) =>
+      ActivityEventType.custom(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        emoji: json['emoji'] as String,
+      );
 
   /// 19 Loại sự kiện chuẩn theo bản thiết kế "Wear OS Dial"
   static const List<ActivityEventType> defaultTypes = [

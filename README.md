@@ -260,7 +260,8 @@ mobile/
 │   │
 │   └── features/
 │       ├── shell/            # MainShellPage: khung chính, chuyển màn hình bằng thao tác vuốt
-│       ├── activity_dial/    # vòng quay ghi 1 chạm (local), lịch sử hôm nay, công tắc Riêng tư/Công khai
+│       ├── activity_dial/    # vòng quay ghi 1 chạm (local), lịch sử hôm nay, công tắc Riêng tư/Công khai,
+│       │                     # tờ giấy ghi chú cho bản ghi, Cài đặt → Loại sự kiện (tạo icon riêng)
 │       ├── sharing/          # hàng đợi gửi (ShareOutbox) + ShareApi: PUT/DELETE /api/shares/:id
 │       ├── account/          # tài khoản ẩn danh, tự đăng ký ở lần đầu dùng tính năng xã hội
 │       ├── social/           # feed bạn bè từ API, 7 reaction

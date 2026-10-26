@@ -30,6 +30,7 @@ class ActivityLog {
     required this.occurredAt,
     this.visibility = ShareVisibility.private,
     this.syncStatus = ShareSyncStatus.synced,
+    this.note,
   });
 
   /// UUID v4, cũng là id của bản chia sẻ trên server (PUT /api/shares/:id, BR-04).
@@ -41,11 +42,18 @@ class ActivityLog {
   final ShareVisibility visibility;
   final ShareSyncStatus syncStatus;
 
+  /// Ghi chú người dùng viết cho bản ghi (NOTE-01). Chỉ lưu trên máy, không gửi lên server
+  /// kể cả khi bản ghi Công khai.
+  final String? note;
+
+  bool get hasNote => note != null && note!.isNotEmpty;
+
   bool get isPublic => visibility == ShareVisibility.public;
 
   ActivityLog copyWith({
     ShareVisibility? visibility,
     ShareSyncStatus? syncStatus,
+    String? Function()? note,
   }) {
     return ActivityLog(
       id: id,
@@ -55,28 +63,35 @@ class ActivityLog {
       occurredAt: occurredAt,
       visibility: visibility ?? this.visibility,
       syncStatus: syncStatus ?? this.syncStatus,
+      note: note != null ? note() : this.note,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'eventTypeId': eventTypeId,
-        'name': name,
-        'emoji': emoji,
-        'occurredAt': occurredAt.toUtc().toIso8601String(),
-        'visibility': visibility.name,
-        'syncStatus': syncStatus.name,
-      };
+    'id': id,
+    'eventTypeId': eventTypeId,
+    'name': name,
+    'emoji': emoji,
+    'occurredAt': occurredAt.toUtc().toIso8601String(),
+    'visibility': visibility.name,
+    'syncStatus': syncStatus.name,
+    if (note != null) 'note': note,
+  };
 
   /// Bản ghi lưu từ phiên bản cũ (trường `isSharedOnline`) chưa từng được gửi lên server,
   /// nên được đọc lại là Private.
   factory ActivityLog.fromJson(Map<String, dynamic> json) => ActivityLog(
-        id: json['id'] as String,
-        eventTypeId: json['eventTypeId'] as String,
-        name: json['name'] as String,
-        emoji: json['emoji'] as String,
-        occurredAt: DateTime.parse(json['occurredAt'] as String),
-        visibility: ShareVisibility.values.asNameMap()[json['visibility']] ?? ShareVisibility.private,
-        syncStatus: ShareSyncStatus.values.asNameMap()[json['syncStatus']] ?? ShareSyncStatus.synced,
-      );
+    id: json['id'] as String,
+    eventTypeId: json['eventTypeId'] as String,
+    name: json['name'] as String,
+    emoji: json['emoji'] as String,
+    occurredAt: DateTime.parse(json['occurredAt'] as String),
+    visibility:
+        ShareVisibility.values.asNameMap()[json['visibility']] ??
+        ShareVisibility.private,
+    syncStatus:
+        ShareSyncStatus.values.asNameMap()[json['syncStatus']] ??
+        ShareSyncStatus.synced,
+    note: json['note'] as String?,
+  );
 }

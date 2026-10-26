@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../activity_dial_controller.dart';
 import '../../domain/activity_event_type.dart';
 import '../widgets/orbital_dial_widget.dart';
+import '../widgets/radial_dial_node.dart';
 import '../widgets/today_logs_sheet.dart';
 import '../widgets/today_summary_card.dart';
 import '../widgets/user_profile_sheet.dart';
@@ -11,10 +12,7 @@ import '../widgets/user_profile_sheet.dart';
 /// Màn hình chính "Chấm — Màn hình chính (Wear OS Dial)"
 /// Chuẩn xác 100% theo bản thiết kế mẫu và yêu cầu SRS (LOG-01 → 05, DAT-01).
 class ActivityDialPage extends ConsumerWidget {
-  const ActivityDialPage({
-    super.key,
-    this.onNavigateToFeed,
-  });
+  const ActivityDialPage({super.key, this.onNavigateToFeed});
 
   final VoidCallback? onNavigateToFeed;
 
@@ -89,7 +87,10 @@ class ActivityDialPage extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Cài đặt ứng dụng',
-          style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF261E1A)),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF261E1A),
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -113,7 +114,37 @@ class ActivityDialPage extends ConsumerWidget {
                   color: const Color(0xFFF2ECE4),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.widgets_outlined, color: Color(0xFFB53216)),
+                child: const Icon(
+                  Icons.add_reaction_outlined,
+                  color: Color(0xFFB53216),
+                ),
+              ),
+              title: const Text(
+                'Loại sự kiện',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+              ),
+              subtitle: const Text(
+                'Thêm icon sự kiện của riêng bạn',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF7E7268)),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/event-types');
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2ECE4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.widgets_outlined,
+                  color: Color(0xFFB53216),
+                ),
               ),
               title: const Text(
                 'Cài đặt Widget (2×2, 4×2)',
@@ -134,7 +165,10 @@ class ActivityDialPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Đóng',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -254,7 +288,7 @@ class ActivityDialPage extends ConsumerWidget {
 
                     // --- 3. RADIAL ORBITAL DIAL (Wear OS Dial) ---
                     OrbitalDialWidget(
-                      eventTypes: state.eventTypes,
+                      eventTypes: state.dialTypes,
                       onTapNode: (type) async {
                         await controller.quickLog(type);
                         if (context.mounted) {
@@ -263,6 +297,42 @@ class ActivityDialPage extends ConsumerWidget {
                       },
                       onTapCenter: () => _openTodayLogsSheet(context),
                     ),
+
+                    // --- 4. SỰ KIỆN CỦA BẠN: loại tự tạo trong Cài đặt (LOG-05) ---
+                    if (state.customTypes.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Sự kiện của bạn',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF6E6259),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final type in state.customTypes)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: RadialDialNode(
+                                  type: type,
+                                  circleRadius: 22,
+                                  iconSize: 20,
+                                  onTap: () async {
+                                    await controller.quickLog(type);
+                                    if (context.mounted) {
+                                      _showFeedbackToast(context, type);
+                                    }
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

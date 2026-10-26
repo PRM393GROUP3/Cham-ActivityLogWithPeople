@@ -50,6 +50,8 @@ flowchart TD
   * Chạm vào thẻ banner **"HÔM NAY"**, nút tròn **FAB đen** ở góc dưới phải hoặc nút tâm **`+ CHẤM`** để mở bảng `TodayLogsSheet`.
   * Bảng liệt kê chi tiết từng lần chấm kèm thời gian (giờ Việt Nam, UTC+7).
   * Nhấn biểu tượng thùng rác màu đỏ để xóa bản ghi chấm nhầm (hệ thống tự động trừ số lượng; tuân thủ nguyên tắc không cung cấp Undo). Xoá bản ghi Công khai sẽ thu hồi nó khỏi feed bạn bè.
+* **Ghi chú cho bản ghi (NOTE-01):** trong `TodayLogsSheet`, chạm icon 📝 trên một bản ghi để mở **tờ giấy ghi chú** (giấy kẻ dòng, lề đỏ). Viết nhiều dòng; ghi chú tự lưu khi quay lại hoặc khi bấm **Lưu**. Dòng đầu ghi chú hiện ngay dưới bản ghi. Ghi chú chỉ lưu trên máy — bạn bè không thấy, kể cả khi bản ghi Công khai.
+* **Hàng "Sự kiện của bạn":** các loại sự kiện tự tạo (xem 2.5) hiện thành một hàng cuộn ngang dưới vòng Dial; chạm để ghi như nút mặc định.
 * **Chia sẻ theo từng bản ghi (SOC-03, SOC-04):**
   * Mọi lần chấm đều bắt đầu ở chế độ **🔒 Riêng tư** — chỉ lưu trên máy, không gửi đi đâu.
   * Trong `TodayLogsSheet`, chạm công tắc **Riêng tư** trên một bản ghi để chuyển sang **🌐 Công khai** → tất cả bạn bè thấy bản ghi đó trong feed. Chạm lại để về Riêng tư (thu hồi).
@@ -86,6 +88,13 @@ flowchart TD
 * **Widget Nhỏ (2×2):** Nút tròn lớn màu cam san hô, cho phép chạm trực tiếp từ màn hình chính điện thoại để ghi nhận thói quen yêu thích trong tích tắc.
 * **Widget Vừa (4×2):** Hiển thị tiến độ trong ngày (ví dụ `3/4`), chuỗi streak, và 2 nút thói quen tùy chọn để chấm nhanh.
 * **Hướng dẫn ghim widget:** Bấm nút **"Thêm Widget"** để xem hướng dẫn từng bước ghim widget vào Android Launcher.
+
+---
+
+### 2.5. Cài Đặt → Loại Sự Kiện (Tạo icon riêng)
+* **Cách mở:** Chạm icon Bánh răng `⚙️` trên trang chủ → **"Loại sự kiện"**.
+* Danh sách các loại bạn đã tạo; bấm **"Thêm loại sự kiện"** → chọn emoji trong lưới gợi ý (tên tự điền theo emoji, vd. 🏃 → *Chạy bộ*) hoặc gõ emoji khác vào ô **Emoji** → sửa tên nếu muốn (tối đa 50 ký tự) → **Lưu**.
+* Loại đã tạo **không sửa, không sắp xếp** (LOG-05); lưu trên máy, dùng được offline.
 
 ---
 

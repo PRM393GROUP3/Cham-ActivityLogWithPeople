@@ -71,6 +71,7 @@ Các thói quen được phân bổ trên 3 quỹ đạo đồng tâm xoay quanh
   - Xem danh sách từng lần chấm kèm thời gian theo giờ Việt Nam (ví dụ: `14:25`).
   - Xem thống kê số lần của từng thói quen trong ngày.
   - **Xóa bản ghi:** Nhấn vào biểu tượng thùng rác màu đỏ cạnh bản ghi để xóa (hệ thống sẽ cập nhật lại số lượng ngay lập tức). Xoá bản ghi Công khai sẽ thu hồi nó khỏi feed bạn bè.
+  - **Ghi chú:** chạm icon 📝 để mở tờ giấy ghi chú của bản ghi; dòng đầu ghi chú hiện dưới bản ghi. Ghi chú chỉ lưu trên máy.
   - **Riêng tư / Công khai:** mỗi bản ghi mới là **🔒 Riêng tư** (chỉ trên máy). Chạm công tắc để chuyển **🌐 Công khai** (tất cả bạn bè thấy), chạm lại để thu hồi. Dòng trạng thái cho biết *đang chờ gửi / bạn bè đã thấy / chưa gửi được*; có nút **Thử lại** khi gửi lỗi.
 
 ### 4. Xem Mã Mời Kết Bạn & Hồ Sơ Cá Nhân
@@ -83,6 +84,8 @@ Các thói quen được phân bổ trên 3 quỹ đạo đồng tâm xoay quanh
 ### 5. Cài Đặt Hệ Thống
 - **Cách mở:** Chạm vào biểu tượng **Bánh răng cài đặt (⚙️)** ở góc trên bên phải.
 - **Thông tin:** Hiển thị trạng thái hoạt động offline (`Local-First`), cơ chế ghi 1-chạm và tự động đồng bộ khi có Internet.
+- **Loại sự kiện:** mở trang tạo icon sự kiện của riêng bạn (emoji + tên). Loại tự tạo hiện ở hàng **"Sự kiện của bạn"** dưới vòng Dial.
+- **Cài đặt Widget (2×2, 4×2).**
 
 ---
 
