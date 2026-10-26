@@ -77,7 +77,7 @@ class FeedCard extends StatelessWidget {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: share.ownerName,
+                        text: share.isMine ? 'Bạn' : share.ownerName,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -117,7 +117,7 @@ class FeedCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Thanh reaction: chạm để thả / đổi, chạm lại để gỡ
+                // Thanh reaction: chạm để thả / đổi, chạm lại để gỡ. Bài của mình: chỉ xem số đếm.
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAF8F5),
@@ -127,10 +127,30 @@ class FeedCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      for (final reaction in Reaction.values) _buildReactionButton(reaction),
+                      for (final reaction in Reaction.values) _buildReactionButton(context, reaction),
                     ],
                   ),
                 ),
+                if (share.isMine) ...[
+                  const SizedBox(height: 6),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: share.reactors.isEmpty ? null : () => _showReactors(context),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        share.reactors.isEmpty
+                            ? 'Chưa có ai thả cảm xúc'
+                            : '${share.reactors.length} người đã thả cảm xúc · Xem',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: share.reactors.isEmpty ? FontWeight.w400 : FontWeight.w700,
+                          color: share.reactors.isEmpty ? const Color(0xFF8A7E74) : const Color(0xFFB53216),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -139,14 +159,56 @@ class FeedCard extends StatelessWidget {
     );
   }
 
-  Widget _buildReactionButton(Reaction reaction) {
+  /// Ai đã thả cảm xúc gì vào bài của mình.
+  void _showReactors(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFFFFFDF9),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+              child: Text(
+                'Cảm xúc cho ${share.emoji} ${share.name}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+                children: [
+                  for (final r in share.reactors)
+                    ListTile(
+                      leading: UserAvatar(name: r.displayName, emoji: r.avatarEmoji, radius: 20),
+                      title: Text(r.displayName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: Text(VnTime.relative(r.reactedAt)),
+                      trailing: Text(r.emoji, style: const TextStyle(fontSize: 24)),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReactionButton(BuildContext context, Reaction reaction) {
     final isSelected = share.myReaction == reaction.emoji;
     final count = share.reactionCounts[reaction.emoji] ?? 0;
 
     return Tooltip(
       message: reaction.label,
       child: GestureDetector(
-        onTap: () => onReactionTap(reaction.emoji),
+        // Không tự thả cảm xúc cho bài của mình (server cũng chặn): chạm thì mở danh sách người thả.
+        onTap: () => share.isMine
+            ? (share.reactors.isEmpty ? null : _showReactors(context))
+            : onReactionTap(reaction.emoji),
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),

@@ -8,6 +8,7 @@ import '../../account/presentation/account_controller.dart';
 import '../../sharing/data/share_api.dart';
 import '../../sharing/data/share_outbox.dart';
 import '../../sharing/domain/share_op.dart';
+import '../../social/presentation/controllers/feed_controller.dart';
 import '../data/activity_local_storage.dart';
 import '../data/event_type_storage.dart';
 import '../domain/activity_event_type.dart';
@@ -283,9 +284,11 @@ class ActivityDialController extends Notifier<ActivityDialState> {
     }
 
     final api = ref.read(shareApiProvider);
+    var sent = false;
     for (final op in ops) {
       try {
         await api.send(op);
+        sent = true;
         await _outbox.complete(op);
         if (!await _outbox.contains(op.recordId)) {
           await _markSynced(op.recordId);
@@ -293,9 +296,11 @@ class ActivityDialController extends Notifier<ActivityDialState> {
       } on ApiException catch (e) {
         await _markFailed([op.recordId]);
         // Mất mạng: các thao tác sau cũng sẽ lỗi, để lần sau.
-        if (e.isNetworkError) return;
+        if (e.isNetworkError) break;
       }
     }
+    // Bài của mình trong feed (và cảm xúc trên đó) đổi theo: tải lại feed nếu đang mở.
+    if (sent) ref.invalidate(feedControllerProvider);
   }
 
   ActivityLog? _find(String id) {

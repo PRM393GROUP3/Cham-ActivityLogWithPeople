@@ -53,9 +53,15 @@ class FakeShareApi implements ShareApi {
 }
 
 class FakeFeedApi implements FeedApi {
-  FakeFeedApi(this.shares);
+  FakeFeedApi(this.shares, {this.own = const []});
 
   List<FeedShare> shares;
+
+  /// Phần tử dạng JSON của `GET /api/shares` (bài của chính mình).
+  List<Map<String, dynamic>> own;
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchOwn({int limit = 50}) async => own;
   bool failReact = false;
   final reacted = <(String, String?)>[];
 

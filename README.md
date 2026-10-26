@@ -265,7 +265,7 @@ mobile/
 │       ├── stats/            # Lịch sử & thống kê: Ngày / Tuần / Tháng, theo loại, theo ngày, theo giờ (giờ VN)
 │       ├── sharing/          # hàng đợi gửi (ShareOutbox) + ShareApi: PUT/DELETE /api/shares/:id
 │       ├── account/          # tài khoản ẩn danh (tự đăng ký lần đầu dùng tính năng xã hội), Hồ sơ: tên + avatar emoji
-│       ├── social/           # feed bạn bè từ API, 7 reaction
+│       ├── social/           # feed: bài Công khai của bạn bè + của mình (xem ai đã thả gì), 7 reaction
 │       ├── friends/          # QR chuẩn `CHAM:<mã>`, quét camera / ảnh / nhập mã → kết bạn ngay, đổi mã, danh sách bạn bè + huỷ kết bạn
 │       └── widgets/          # chọn và xem trước widget màn hình chính
 │

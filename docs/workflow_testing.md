@@ -68,6 +68,7 @@ flowchart TD
 | 2.1 | Tại màn hình chính, đặt ngón tay và vuốt từ phải sang trái (Swipe Left). | Màn hình trượt mượt mà sang `FeedPage` (Bảng tin hoạt động xã hội). | Đạt |
 | 2.2 | Quan sát thanh lọc trên đầu Bảng tin và chạm vào một người bạn (vd. `Minh Thư`). | Thanh lọc lấy từ danh sách bạn bè thật; bảng tin chỉ hiển thị bản ghi Công khai của người đó. | Đạt (test tự động) |
 | 2.3 | Chạm `❤️` trên thẻ hoạt động, rồi chạm `😆`, rồi chạm lại `😆`. | Lần 1 thả ❤️ (nền hồng `#FADCD9`, số đếm +1); lần 2 đổi sang 😆 (❤️ −1); lần 3 gỡ reaction. Mỗi người tối đa 1 reaction (AC-07). | Đạt (test tự động + API) |
+| 2.3c | Chuyển một bản ghi sang Công khai, bạn bè thả 🥰 / 😆 rồi mở feed. | Bài *"Bạn đã chấm …"* có số đếm và *"2 người đã thả cảm xúc · Xem"*; mở ra thấy đúng tên, avatar, emoji. Chạm emoji trên bài của mình không thả cảm xúc. | Đạt (test tự động + chạy thật trên Web với backend local) |
 | 2.3b | Thả reaction khi server từ chối (vd. mất mạng). | Reaction tự hoàn tác, hiện SnackBar báo lỗi. | Đạt (test tự động) |
 | 2.4 | Vuốt từ trái sang phải (Swipe Right) hoặc chạm nút `←` trên Header. | Trượt mượt mà quay trở lại màn hình chính `ActivityDialPage`. | Đạt |
 
@@ -186,7 +187,7 @@ flutter test
 | [`activity_dial_test.dart`](../mobile/test/activity_dial_test.dart) | 19 loại sự kiện trên 3 quỹ đạo; serialization bản ghi; bản ghi mới / bản cũ đều Riêng tư |
 | [`today_logs_sheet_test.dart`](../mobile/test/today_logs_sheet_test.dart) | Công tắc Riêng tư ⇄ Công khai, trạng thái gửi, nút Thử lại (NFR-03) |
 | [`sharing_test.dart`](../mobile/test/sharing_test.dart) | Hàng đợi gửi: gộp theo bản ghi, còn sau khi mở lại app, gửi lại khi có mạng, thu hồi khi xoá (DAT-03, BR-02, BR-03, AC-05) |
-| [`feed_test.dart`](../mobile/test/feed_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã |
+| [`feed_test.dart`](../mobile/test/feed_test.dart), [`own_posts_widget_test.dart`](../mobile/test/own_posts_widget_test.dart) | Bộ 7 reaction, parse `/api/feed`, thả/đổi/gỡ + hoàn tác khi lỗi, kết bạn bằng mã; bài của mình trong feed (gộp + sắp xếp, không tự thả, danh sách ai đã thả gì) |
 | [`add_qr_test.dart`](../mobile/test/add_qr_test.dart) | Tab Mã QR / Quét mã; mã mời thật từ tài khoản; offline lần đầu; nhập mã → kết bạn ngay |
 | [`event_types_and_notes_test.dart`](../mobile/test/event_types_and_notes_test.dart) | Loại sự kiện: 19 mặc định, thêm / sửa / xoá / kéo thả, xếp mọi loại lên 3 vòng theo thứ tự (`layoutDial`, `dialRingSizes`, tối đa 36), lịch sử cũ giữ nguyên, lưu bền; ghi chú (lưu local, không gửi server, tờ giấy, nút Lưu) |
 | [`stats_test.dart`](../mobile/test/stats_test.dart) | Kỳ Ngày / Tuần (từ Thứ Hai) / Tháng theo giờ VN, đếm theo loại / ngày / giờ, lần gần nhất, trang thống kê (chuyển kỳ, xoá cập nhật số liệu, kỳ trống) |

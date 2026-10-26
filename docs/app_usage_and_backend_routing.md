@@ -62,9 +62,10 @@ flowchart TD
 
 ### 2.2. Bảng Tin Xã Hội & Tương Tác Bạn Bè (Social Feed Screen)
 * **Cách mở:** Vuốt từ phải sang trái (Swipe Left) trên màn hình chính, hoặc chạm vào icon Bảng tin (`Icons.people_alt_outlined`) trên thanh Header.
-* **Dữ liệu:** lấy từ `GET /api/feed` — chỉ các bản ghi **Công khai** của bạn bè hiện tại. Kéo xuống để tải lại. Mất mạng thì hiện thông báo kèm nút **Thử lại**; chưa có bạn bè thì có nút **Mở mã QR**.
+* **Dữ liệu:** bản ghi **Công khai** của bạn bè hiện tại (`GET /api/feed`) **và của chính bạn** (`GET /api/shares`), gộp lại, mới nhất trước. Bài vừa chuyển Công khai / thu hồi được cập nhật ngay sau khi gửi xong. Kéo xuống để tải lại. Mất mạng thì hiện thông báo kèm nút **Thử lại**; chưa có bạn bè thì có nút **Mở mã QR**.
 * **Thanh lọc bạn bè:** Nằm ở đầu trang, lấy từ `GET /api/friends` (chữ cái đầu của tên làm avatar). Chạm vào ai sẽ lọc bảng tin chỉ hiển thị hoạt động của người đó; chọn `Tất cả` để xem feed chung.
 * **Thẻ hoạt động (Feed Card):** tên người đăng, emoji hoạt động ở góc avatar, câu *"Minh Thư đã chấm 🏃 Chạy bộ"*, thời gian tương đối theo giờ Việt Nam (*vừa xong, 15 phút trước, Hôm qua 21:30*).
+* **Bài của bạn:** ghi *"Bạn đã chấm …"*; thanh cảm xúc chỉ hiện số đếm (không tự thả được). Dòng **"N người đã thả cảm xúc · Xem"** (hoặc chạm vào emoji) mở danh sách **ai đã thả gì**: avatar, tên, emoji, thời gian. Mục **"Bạn"** trên thanh lọc chỉ hiện bài của bạn.
 * **Thả reaction (SOC-05):** 7 reaction giống Facebook — 👍 Thích · ❤️ Yêu thích · 🥰 Thương thương · 😆 Haha · 😮 Wow · 😢 Buồn · 😡 Phẫn nộ, kèm số người đã thả. Mỗi người 1 reaction: chạm để thả, chạm emoji khác để đổi, chạm lại để gỡ. Nếu server từ chối, reaction tự hoàn tác và hiện thông báo.
 
 ---
