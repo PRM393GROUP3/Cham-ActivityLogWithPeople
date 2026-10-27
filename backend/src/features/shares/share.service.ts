@@ -43,45 +43,38 @@ export class ShareService {
   }
 
   /**
-   * Idempotent create-or-replace keyed by the client's record id, so the offline queue can resend
-   * safely. Re-sending with a different `targetIds` updates who can see it.
+   * Makes a record Public (visible to all current friends). Idempotent create-or-replace keyed by
+   * the client's record id, so the offline queue can resend safely.
    */
   async upsert(ownerId: string, id: string, input: UpsertShareInput): Promise<{ share: OwnShareDto; created: boolean }> {
     const existing = await this.repo.findById(id);
     if (existing && existing.ownerId !== ownerId) throw new ConflictError(`Share id '${id}' is already in use`);
 
-    const viewersBefore = existing ? await this.repo.findViewerIds(id) : [];
     const now = new Date();
-    await this.repo.upsert(
-      {
-        id,
-        ownerId,
-        emoji: input.emoji,
-        name: input.name,
-        occurredAt: input.occurredAt,
-        audience: input.targetIds ? "targets" : "all",
-        createdAt: existing?.createdAt ?? now,
-        updatedAt: now,
-      },
-      input.targetIds,
-    );
-    const viewersAfter = new Set(await this.repo.findViewerIds(id));
+    await this.repo.upsert({
+      id,
+      ownerId,
+      emoji: input.emoji,
+      name: input.name,
+      occurredAt: input.occurredAt,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    });
 
-    this.notify(viewersAfter, { type: "share.upserted", id });
-    this.notify(
-      viewersBefore.filter((v) => !viewersAfter.has(v)),
-      { type: "share.removed", id },
-    );
+    this.notify(await this.repo.findViewerIds(ownerId), { type: "share.upserted", id });
     return { share: await this.getOwned(ownerId, id), created: !existing };
   }
 
-  /** Revokes the share for everyone. Deleting an unknown id succeeds, so queued deletes can be retried. */
+  /**
+   * Revokes the share for everyone (record set back to Private, or deleted). Deleting an unknown id
+   * succeeds, so queued revocations can be retried.
+   */
   async remove(ownerId: string, id: string): Promise<void> {
     const existing = await this.repo.findById(id);
     if (!existing) return;
     if (existing.ownerId !== ownerId) throw new NotFoundError("Share", id);
 
-    const viewers = await this.repo.findViewerIds(id);
+    const viewers = await this.repo.findViewerIds(ownerId);
     await this.repo.delete(id);
     this.notify(viewers, { type: "share.removed", id });
   }
@@ -126,20 +119,13 @@ export class ShareService {
 
   private async toOwnDtos(rows: ShareRow[]): Promise<OwnShareDto[]> {
     if (!rows.length) return [];
-    const ids = rows.map((r) => r.id);
-    const [reactions, targets] = await Promise.all([
-      this.repo.reactionDetails(ids),
-      Promise.all(rows.map((r) => (r.audience === "targets" ? this.repo.findTargetIds(r.id) : []))),
-    ]);
-    const reactionsByShare = groupBy(reactions, (r) => r.shareId);
+    const reactionsByShare = groupBy(await this.repo.reactionDetails(rows.map((r) => r.id)), (r) => r.shareId);
 
-    return rows.map((r, i) => ({
+    return rows.map((r) => ({
       id: r.id,
       emoji: r.emoji,
       name: r.name,
       occurredAt: r.occurredAt.toISOString(),
-      audience: r.audience,
-      targetIds: targets[i]!,
       reactions: (reactionsByShare.get(r.id) ?? []).map((x) => ({
         user: x.user,
         emoji: x.emoji,

@@ -36,6 +36,20 @@
       "when": 1791211373839,
       "tag": "0004_shares",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792981134174,
+      "tag": "0005_public_shares_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792994415541,
+      "tag": "0006_user_avatar_emoji",
+      "breakpoints": true
     }
   ]
 }

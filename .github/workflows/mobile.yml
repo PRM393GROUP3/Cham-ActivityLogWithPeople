@@ -1,0 +1,34 @@
+name: Mobile CI
+
+on:
+  push:
+    branches: [ main-onlymerge ]
+  pull_request:
+    branches: [ main-onlymerge ]
+
+jobs:
+  test:
+    name: Run Flutter Tests & Lints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Analyze Project
+        working-directory: mobile
+        run: flutter analyze
+
+      - name: Run Widget & Navigation Tests
+        working-directory: mobile
+        run: flutter test

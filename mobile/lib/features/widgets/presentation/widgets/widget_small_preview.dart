@@ -81,7 +81,7 @@ class _WidgetSmallPreviewState extends State<WidgetSmallPreview>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -100,12 +100,12 @@ class _WidgetSmallPreviewState extends State<WidgetSmallPreview>
               borderRadius: BorderRadius.circular(26),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: const Color(0xFFE85835).withOpacity(0.06),
+                  color: const Color(0xFFE85835).withValues(alpha: 0.06),
                   blurRadius: 24,
                   offset: const Offset(0, 4),
                 ),
@@ -156,7 +156,7 @@ class _WidgetSmallPreviewState extends State<WidgetSmallPreview>
                     child: InkWell(
                       onTap: _handleTap,
                       borderRadius: BorderRadius.circular(40),
-                      splashColor: Colors.white.withOpacity(0.3),
+                      splashColor: Colors.white.withValues(alpha: 0.3),
                       child: Container(
                         width: 72,
                         height: 72,
@@ -172,7 +172,7 @@ class _WidgetSmallPreviewState extends State<WidgetSmallPreview>
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFE8522E).withOpacity(0.38),
+                              color: const Color(0xFFE8522E).withValues(alpha: 0.38),
                               blurRadius: 14,
                               offset: const Offset(0, 6),
                             ),
