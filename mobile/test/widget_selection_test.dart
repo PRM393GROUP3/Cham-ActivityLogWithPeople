@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cham/features/activity_dial/domain/activity_event_type.dart';
+import 'package:cham/features/widgets/data/home_widget_bridge.dart';
 import 'package:cham/features/widgets/presentation/pages/widget_selection_page.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('WidgetSelectionPage displays Small (2x2) and toggles to Medium (4x2)',
       (WidgetTester tester) async {
     await tester.pumpWidget(
@@ -38,5 +45,21 @@ void main() {
 
     expect(find.text('Thêm Widget Vừa (4×2)'), findsOneWidget);
     expect(find.text('Đã hiểu'), findsOneWidget);
+  });
+
+  test('HomeWidgetBridge saves and loads custom widget event types (WID-01)', () async {
+    final types = ActivityEventType.defaultTypes;
+    final water = types.firstWhere((t) => t.id == 'water');
+    await HomeWidgetBridge.saveSmallType(water);
+
+    final loadedSmall = await HomeWidgetBridge.loadSmallType(types);
+    expect(loadedSmall.id, 'water');
+    expect(loadedSmall.name, 'Nước');
+    expect(loadedSmall.emoji, '💧');
+
+    final customFour = types.skip(2).take(4).toList();
+    await HomeWidgetBridge.saveMediumTypes(customFour);
+    final loadedMedium = await HomeWidgetBridge.loadMediumTypes(types);
+    expect(loadedMedium.map((e) => e.id).toList(), customFour.map((e) => e.id).toList());
   });
 }

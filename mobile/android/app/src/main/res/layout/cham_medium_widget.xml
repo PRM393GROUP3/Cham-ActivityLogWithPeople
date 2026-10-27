@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/medium_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card_bg"
+    android:orientation="vertical"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="8dp">
+
+    <!-- Top Header Row: Coral Dot + "HÔM NAY" + Green Progress Pill -->
+    <LinearLayout
+        android:id="@+id/medium_widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_coral_dot" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:letterSpacing="0.05"
+            android:text="HÔM NAY"
+            android:textColor="#423B37"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/medium_widget_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_badge_green"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:text="✓ 3/4"
+            android:textColor="#2E7D32"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Middle Row: 4 Quick-Log Action Buttons with Count Above & Under-Glow Aura -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginVertical="2dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <!-- Item 1 -->
+        <LinearLayout
+            android:id="@+id/medium_btn_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/medium_count_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="1dp"
+                android:background="@drawable/widget_count_pill_active"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="1 chấm"
+                android:textColor="#B53216"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:layout_width="62dp"
+                android:layout_height="62dp">
+
+                <!-- Under-glow aura radiating from beneath the icon -->
+                <ImageView
+                    android:id="@+id/medium_pulse_ring_1"
+                    android:layout_width="62dp"
+                    android:layout_height="62dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitXY"
+                    android:visibility="gone" />
+
+                <FrameLayout
+                    android:id="@+id/medium_icon_box_1"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/widget_btn_1_bg">
+
+                    <TextView
+                        android:id="@+id/medium_emoji_1"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="☕"
+                        android:textSize="20sp" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/medium_title_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:text="Cà phê"
+                android:textColor="#2C2523"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Item 2 -->
+        <LinearLayout
+            android:id="@+id/medium_btn_2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/medium_count_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="1dp"
+                android:background="@drawable/widget_count_pill_active"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="1 chấm"
+                android:textColor="#B53216"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:layout_width="62dp"
+                android:layout_height="62dp">
+
+                <!-- Under-glow aura radiating from beneath the icon -->
+                <ImageView
+                    android:id="@+id/medium_pulse_ring_2"
+                    android:layout_width="62dp"
+                    android:layout_height="62dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitXY"
+                    android:visibility="gone" />
+
+                <FrameLayout
+                    android:id="@+id/medium_icon_box_2"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/widget_btn_2_bg">
+
+                    <TextView
+                        android:id="@+id/medium_emoji_2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="🏃"
+                        android:textSize="20sp" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/medium_title_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:text="Chạy bộ"
+                android:textColor="#2C2523"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Item 3 -->
+        <LinearLayout
+            android:id="@+id/medium_btn_3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/medium_count_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="1dp"
+                android:background="@drawable/widget_count_pill_active"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="1 chấm"
+                android:textColor="#B53216"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:layout_width="62dp"
+                android:layout_height="62dp">
+
+                <!-- Under-glow aura radiating from beneath the icon -->
+                <ImageView
+                    android:id="@+id/medium_pulse_ring_3"
+                    android:layout_width="62dp"
+                    android:layout_height="62dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitXY"
+                    android:visibility="gone" />
+
+                <FrameLayout
+                    android:id="@+id/medium_icon_box_3"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/widget_btn_3_bg">
+
+                    <TextView
+                        android:id="@+id/medium_emoji_3"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="📖"
+                        android:textSize="20sp" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/medium_title_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:text="Đọc sách"
+                android:textColor="#2C2523"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Item 4 -->
+        <LinearLayout
+            android:id="@+id/medium_btn_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/medium_count_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="1dp"
+                android:background="@drawable/widget_count_pill_zero"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="0 chấm"
+                android:textColor="#7D726A"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:layout_width="62dp"
+                android:layout_height="62dp">
+
+                <!-- Under-glow aura radiating from beneath the icon -->
+                <ImageView
+                    android:id="@+id/medium_pulse_ring_4"
+                    android:layout_width="62dp"
+                    android:layout_height="62dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:scaleType="fitXY"
+                    android:visibility="gone" />
+
+                <FrameLayout
+                    android:id="@+id/medium_icon_box_4"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/widget_btn_4_bg">
+
+                    <TextView
+                        android:id="@+id/medium_emoji_4"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="🧘"
+                        android:textSize="20sp" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/medium_title_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:text="Thiền"
+                android:textColor="#2C2523"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom Row: Status Dots + Streak & Today Total -->
+    <LinearLayout
+        android:id="@+id/medium_widget_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/medium_dot_1"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:layout_marginEnd="5dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_dot_active" />
+
+        <ImageView
+            android:id="@+id/medium_dot_2"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:layout_marginEnd="5dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_dot_active" />
+
+        <ImageView
+            android:id="@+id/medium_dot_3"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:layout_marginEnd="5dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_dot_active" />
+
+        <ImageView
+            android:id="@+id/medium_dot_4"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_dot_inactive" />
+
+        <TextView
+            android:id="@+id/medium_widget_streak"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="end"
+            android:maxLines="1"
+            android:text="⚡ Chuỗi 1 ngày · 4 chấm hôm nay"
+            android:textColor="#6E6662"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>

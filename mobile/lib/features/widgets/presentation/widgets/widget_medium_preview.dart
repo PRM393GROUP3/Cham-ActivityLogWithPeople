@@ -13,12 +13,37 @@ class WidgetMediumPreview extends StatefulWidget {
   State<WidgetMediumPreview> createState() => _WidgetMediumPreviewState();
 }
 
-class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
+class _WidgetMediumPreviewState extends State<WidgetMediumPreview>
+    with SingleTickerProviderStateMixin {
   late List<QuickLogItem> _items;
+  int? _animatingIndex;
+  late final AnimationController _glowController;
+  late final Animation<double> _glowCurve;
+
+  static const _glowAccents = <Color>[
+    Color(0xFFFF5722),
+    Color(0xFF2ECC71),
+    Color(0xFF8E44AD),
+    Color(0xFF2980B9),
+  ];
 
   @override
   void initState() {
     super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 680),
+    );
+    _glowCurve = CurvedAnimation(
+      parent: _glowController,
+      curve: Curves.easeOutCubic,
+    );
+    _glowController.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        setState(() => _animatingIndex = null);
+      }
+    });
+
     _items = [
       const QuickLogItem(
         id: 'coffee',
@@ -28,6 +53,7 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
         iconColor: Colors.white,
         dotColor: Color(0xFFE85835),
         isCompleted: true,
+        todayCount: 2,
       ),
       const QuickLogItem(
         id: 'running',
@@ -37,6 +63,7 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
         iconColor: Color(0xFF236928),
         dotColor: Color(0xFF43A047),
         isCompleted: true,
+        todayCount: 1,
       ),
       const QuickLogItem(
         id: 'reading',
@@ -46,6 +73,7 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
         iconColor: Color(0xFF533F7B),
         dotColor: Color(0xFF7E57C2),
         isCompleted: true,
+        todayCount: 1,
       ),
       const QuickLogItem(
         id: 'meditation',
@@ -55,38 +83,45 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
         iconColor: Color(0xFF5D534B),
         dotColor: Color(0xFFD6CFC7),
         isCompleted: false,
+        todayCount: 0,
       ),
     ];
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
   }
 
   void _toggleItem(int index) {
     setState(() {
       final current = _items[index];
+      final nextCount = current.todayCount + 1;
+      _animatingIndex = index;
       _items[index] = current.copyWith(
-        isCompleted: !current.isCompleted,
-        dotColor: !current.isCompleted
-            ? (current.id == 'meditation'
-                ? const Color(0xFF8D6E63)
-                : current.backgroundColor)
-            : const Color(0xFFD6CFC7),
+        isCompleted: true,
+        todayCount: nextCount,
+        dotColor: current.id == 'meditation'
+            ? const Color(0xFF8D6E63)
+            : current.backgroundColor,
       );
     });
+    _glowController.forward(from: 0.0);
 
     final item = _items[index];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(
-              item.isCompleted ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+            const Icon(
+              Icons.check_circle_rounded,
               color: Colors.white,
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
-              item.isCompleted
-                  ? 'Đã ghi nhận "${item.title}" thành công!'
-                  : 'Đã hủy ghi nhận "${item.title}"',
+              'Đã ghi nhận "${item.title}" (${item.todayCount} chấm hôm nay)!',
             ),
           ],
         ),
@@ -209,21 +244,29 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
                   ],
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
                 // 4 Action Buttons Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(_items.length, (index) {
-                    final item = _items[index];
-                    return _buildActionButton(
-                      item: item,
-                      onTap: () => _toggleItem(index),
+                AnimatedBuilder(
+                  animation: _glowCurve,
+                  builder: (context, _) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(_items.length, (index) {
+                        final item = _items[index];
+                        return _buildActionButton(
+                          index: index,
+                          item: item,
+                          isAnimating: _animatingIndex == index,
+                          progress: _glowCurve.value,
+                          onTap: () => _toggleItem(index),
+                        );
+                      }),
                     );
-                  }),
+                  },
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
                 // Bottom Indicator Bar: Dots + Streak
                 Row(
@@ -300,29 +343,83 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
   }
 
   Widget _buildActionButton({
+    required int index,
     required QuickLogItem item,
+    required bool isAnimating,
+    required double progress,
     required VoidCallback onTap,
   }) {
+    final hasLogs = item.todayCount > 0;
+    final glowColor = _glowAccents[index % _glowAccents.length];
+    // Bell-shaped intensity curve: peaks quickly then softly fades out
+    final glowIntensity = isAnimating
+        ? (progress < 0.35 ? progress / 0.35 : (1.0 - progress) / 0.65).clamp(0.0, 1.0)
+        : 0.0;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Today count pill above each habit icon
+        Container(
+          margin: const EdgeInsets.only(bottom: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+          decoration: BoxDecoration(
+            color: hasLogs ? const Color(0xFFFFF0E6) : const Color(0xFFF4EFEA),
+            borderRadius: BorderRadius.circular(8),
+            border: hasLogs
+                ? Border.all(color: const Color(0xFFF5C7B3), width: 0.8)
+                : null,
+          ),
+          child: Text(
+            '${item.todayCount} chấm',
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: hasLogs ? const Color(0xFFB53216) : const Color(0xFF7D726A),
+            ),
+          ),
+        ),
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             splashColor: Colors.black.withValues(alpha: 0.12),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
+            child: Container(
               width: 54,
               height: 54,
               decoration: BoxDecoration(
                 color: item.backgroundColor,
                 borderRadius: BorderRadius.circular(16),
-                border: item.isCompleted
-                    ? Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1.2)
-                    : null,
+                border: glowIntensity > 0.05
+                    ? Border.all(
+                        color: Color.lerp(
+                          const Color(0xFFFF9E44),
+                          glowColor,
+                          0.5,
+                        )!.withValues(alpha: (0.4 + 0.6 * glowIntensity).clamp(0.0, 1.0)),
+                        width: 1.5 + 1.5 * glowIntensity,
+                      )
+                    : item.isCompleted
+                        ? Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1.2)
+                        : null,
                 boxShadow: [
+                  if (glowIntensity > 0.02) ...[
+                    // Diffused backlight radiating from underneath the icon
+                    BoxShadow(
+                      color: glowColor.withValues(alpha: 0.55 * glowIntensity),
+                      blurRadius: 18 * glowIntensity + 6,
+                      spreadRadius: 4 * glowIntensity,
+                      offset: const Offset(0, 4),
+                    ),
+                    // Warm inner aura around the border
+                    BoxShadow(
+                      color: const Color(0xFFFF9E44).withValues(alpha: 0.45 * glowIntensity),
+                      blurRadius: 10 * glowIntensity + 2,
+                      spreadRadius: 1.5 * glowIntensity,
+                      offset: Offset.zero,
+                    ),
+                  ],
                   BoxShadow(
                     color: item.backgroundColor.withValues(alpha: 0.3),
                     blurRadius: 8,
@@ -338,7 +435,7 @@ class _WidgetMediumPreviewState extends State<WidgetMediumPreview> {
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5),
         SizedBox(
           width: 58,
           child: Text(

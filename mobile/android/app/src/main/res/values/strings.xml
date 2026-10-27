@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Chăm</string>
+    <string name="widget_small_label">Chấm Nhỏ (2×2)</string>
+    <string name="widget_small_desc">Ghi nhận nhanh 1 chạm ngay ngoài màn hình chính</string>
+    <string name="widget_medium_label">Chấm Vừa (4×2)</string>
+    <string name="widget_medium_desc">4 thói quen yêu thích &amp; chuỗi ngày duy trì</string>
+</resources>
+

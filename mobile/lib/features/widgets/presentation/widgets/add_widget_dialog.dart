@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/home_widget_bridge.dart';
 import '../../domain/widget_config.dart';
 
 class AddWidgetModal extends StatelessWidget {
@@ -15,6 +16,31 @@ class AddWidgetModal extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddWidgetModal(selectedSize: size),
+    );
+  }
+
+  Future<void> _handlePinAndClose(BuildContext context) async {
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final pinned = await HomeWidgetBridge.pinWidget(selectedSize);
+    await HomeWidgetBridge.updateWidgets();
+    if (nav.canPop()) {
+      nav.pop();
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          pinned
+              ? 'Đã gửi yêu cầu ghim Widget ${selectedSize.label} ra màn hình chính!'
+              : 'Đã lưu cấu hình Widget ${selectedSize.label}!',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFFB53216),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
     );
   }
 
@@ -46,8 +72,8 @@ class AddWidgetModal extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFBF0EC),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFBF0EC),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -92,7 +118,7 @@ class AddWidgetModal extends StatelessWidget {
               children: [
                 _buildStep(
                   step: '1',
-                  text: 'Nhấn và giữ khoảng trống trên màn hình chính của điện thoại.',
+                  text: 'Nhấn nút bên dưới để ghim trực tiếp, hoặc nhấn giữ khoảng trống trên màn hình chính của điện thoại.',
                 ),
                 const SizedBox(height: 10),
                 _buildStep(
@@ -110,27 +136,12 @@ class AddWidgetModal extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          // Close / Confirm button
+          // Close / Confirm & Pin button
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Đã lưu cấu hình Widget ${selectedSize.label}!',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: const Color(0xFFB53216),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-              },
+              onPressed: () => _handlePinAndClose(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFB53216),
                 foregroundColor: Colors.white,

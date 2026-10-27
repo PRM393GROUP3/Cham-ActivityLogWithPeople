@@ -18,6 +18,7 @@ class QuickLogItem {
   final Color iconColor;
   final Color dotColor;
   final bool isCompleted;
+  final int todayCount;
 
   const QuickLogItem({
     required this.id,
@@ -27,6 +28,7 @@ class QuickLogItem {
     required this.iconColor,
     required this.dotColor,
     this.isCompleted = false,
+    this.todayCount = 0,
   });
 
   QuickLogItem copyWith({
@@ -37,6 +39,7 @@ class QuickLogItem {
     Color? iconColor,
     Color? dotColor,
     bool? isCompleted,
+    int? todayCount,
   }) {
     return QuickLogItem(
       id: id ?? this.id,
@@ -46,6 +49,7 @@ class QuickLogItem {
       iconColor: iconColor ?? this.iconColor,
       dotColor: dotColor ?? this.dotColor,
       isCompleted: isCompleted ?? this.isCompleted,
+      todayCount: todayCount ?? this.todayCount,
     );
   }
 }
