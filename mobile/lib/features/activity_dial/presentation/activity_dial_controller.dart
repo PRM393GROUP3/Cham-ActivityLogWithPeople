@@ -104,35 +104,45 @@ class ActivityDialController extends Notifier<ActivityDialState> {
 
     // Nếu chưa có bản ghi nào, tạo sẵn 4 bản ghi mẫu hôm nay để khớp chính xác thiết kế "4 chấm"
     if (storedLogs.isEmpty) {
-      final now = DateTime.now();
+      final now = DateTime.now().toUtc();
+      final vnNow = VnTime.of(now);
+      final startOfVnTodayUtc = DateTime.utc(vnNow.year, vnNow.month, vnNow.day)
+          .subtract(VnTime.offset);
+
+      DateTime todayTime(Duration ago, int fallbackMinutesAfterMidnight) {
+        final candidate = now.subtract(ago);
+        if (!candidate.isBefore(startOfVnTodayUtc)) return candidate;
+        return startOfVnTodayUtc.add(Duration(minutes: fallbackMinutesAfterMidnight));
+      }
+
       final seedLogs = [
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'coffee',
           name: 'Cà phê',
           emoji: '☕',
-          occurredAt: now.subtract(const Duration(minutes: 45)),
+          occurredAt: todayTime(const Duration(minutes: 45), 4),
         ),
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'water',
           name: 'Nước',
           emoji: '💧',
-          occurredAt: now.subtract(const Duration(hours: 2, minutes: 10)),
+          occurredAt: todayTime(const Duration(hours: 2, minutes: 10), 3),
         ),
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'focus',
           name: 'Tập trung',
           emoji: '💻',
-          occurredAt: now.subtract(const Duration(hours: 3)),
+          occurredAt: todayTime(const Duration(hours: 3), 2),
         ),
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'reading',
           name: 'Đọc sách',
           emoji: '📖',
-          occurredAt: now.subtract(const Duration(hours: 4, minutes: 30)),
+          occurredAt: todayTime(const Duration(hours: 4, minutes: 30), 1),
         ),
       ];
       await _storage.saveLogs(seedLogs);
