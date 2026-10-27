@@ -9,6 +9,7 @@ import '../../sharing/data/share_api.dart';
 import '../../sharing/data/share_outbox.dart';
 import '../../sharing/domain/share_op.dart';
 import '../../social/presentation/controllers/feed_controller.dart';
+import '../../widgets/data/home_widget_bridge.dart';
 import '../data/activity_local_storage.dart';
 import '../data/event_type_storage.dart';
 import '../domain/activity_event_type.dart';
@@ -75,12 +76,23 @@ class ActivityDialController extends Notifier<ActivityDialState> {
 
   @override
   ActivityDialState build() {
+    HomeWidgetBridge.registerOnWidgetLogged(() {
+      reloadFromExternal();
+    });
     Future.microtask(_init);
     return const ActivityDialState(
       logs: [],
       eventTypes: ActivityEventType.defaultTypes,
       isLoading: true,
     );
+  }
+
+  /// Đọc lại danh sách bản ghi từ SharedPreferences khi người dùng vừa chấm từ Widget ngoài màn hình chính (WID-01).
+  Future<void> reloadFromExternal() async {
+    final storedLogs = await _storage.loadLogs(reloadPlatform: true);
+    if (storedLogs.isNotEmpty) {
+      state = state.copyWith(logs: storedLogs, isLoading: false);
+    }
   }
 
   Future<void> _init() async {
@@ -92,35 +104,45 @@ class ActivityDialController extends Notifier<ActivityDialState> {
 
     // Nếu chưa có bản ghi nào, tạo sẵn 4 bản ghi mẫu hôm nay để khớp chính xác thiết kế "4 chấm"
     if (storedLogs.isEmpty) {
-      final now = DateTime.now();
+      final now = DateTime.now().toUtc();
+      final vnNow = VnTime.of(now);
+      final startOfVnTodayUtc = DateTime.utc(vnNow.year, vnNow.month, vnNow.day)
+          .subtract(VnTime.offset);
+
+      DateTime todayTime(Duration ago, int fallbackMinutesAfterMidnight) {
+        final candidate = now.subtract(ago);
+        if (!candidate.isBefore(startOfVnTodayUtc)) return candidate;
+        return startOfVnTodayUtc.add(Duration(minutes: fallbackMinutesAfterMidnight));
+      }
+
       final seedLogs = [
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'coffee',
           name: 'Cà phê',
           emoji: '☕',
-          occurredAt: now.subtract(const Duration(minutes: 45)),
+          occurredAt: todayTime(const Duration(minutes: 45), 4),
         ),
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'water',
           name: 'Nước',
           emoji: '💧',
-          occurredAt: now.subtract(const Duration(hours: 2, minutes: 10)),
+          occurredAt: todayTime(const Duration(hours: 2, minutes: 10), 3),
         ),
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'focus',
           name: 'Tập trung',
           emoji: '💻',
-          occurredAt: now.subtract(const Duration(hours: 3)),
+          occurredAt: todayTime(const Duration(hours: 3), 2),
         ),
         ActivityLog(
           id: uuidV4(),
           eventTypeId: 'reading',
           name: 'Đọc sách',
           emoji: '📖',
-          occurredAt: now.subtract(const Duration(hours: 4, minutes: 30)),
+          occurredAt: todayTime(const Duration(hours: 4, minutes: 30), 1),
         ),
       ];
       await _storage.saveLogs(seedLogs);
@@ -129,6 +151,7 @@ class ActivityDialController extends Notifier<ActivityDialState> {
     }
 
     state = state.copyWith(logs: storedLogs, isLoading: false);
+    await HomeWidgetBridge.updateWidgets();
 
     // Gửi nốt những thay đổi chia sẻ còn tồn từ lần mở app trước (DAT-03).
     await syncShares();
@@ -205,6 +228,7 @@ class ActivityDialController extends Notifier<ActivityDialState> {
   Future<void> _saveTypes(List<ActivityEventType> types) async {
     state = state.copyWith(eventTypes: types);
     await ref.read(eventTypeStorageProvider).save(types);
+    await HomeWidgetBridge.updateWidgets();
   }
 
   /// Viết / sửa ghi chú của một bản ghi (NOTE-01). Chuỗi rỗng = xoá ghi chú.

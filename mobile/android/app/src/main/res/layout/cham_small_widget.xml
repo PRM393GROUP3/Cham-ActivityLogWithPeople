@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/small_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card_bg"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Top Header: Coral dot + Selected habit label + Emoji -->
+    <LinearLayout
+        android:id="@+id/small_widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_coral_dot" />
+
+        <TextView
+            android:id="@+id/small_widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Chấm log"
+            android:textColor="#2C2523"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/small_widget_habit_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="☕"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Center Big Coral "+" Button (One-Tap Quick Log) with under-glow aura -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Soft diffused glow underneath the button -->
+        <ImageView
+            android:id="@+id/small_pulse_ring"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/small_widget_plus_btn"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_gravity="center"
+            android:background="@drawable/widget_plus_circle">
+
+            <TextView
+                android:id="@+id/small_widget_plus_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="+"
+                android:textColor="#FFFFFF"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <!-- Bottom Row: Today Count -->
+    <TextView
+        android:id="@+id/small_widget_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="4 chấm hôm nay"
+        android:textColor="#2C2523"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

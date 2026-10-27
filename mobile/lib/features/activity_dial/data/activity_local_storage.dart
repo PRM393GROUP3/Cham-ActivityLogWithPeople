@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../widgets/data/home_widget_bridge.dart';
 import '../domain/activity_log.dart';
 
 final activityLocalStorageProvider = Provider<ActivityLocalStorage>((ref) {
@@ -15,8 +16,13 @@ class ActivityLocalStorage {
 
   static final _legacyHexId = RegExp(r'^[0-9a-f]{32}$');
 
-  Future<List<ActivityLog>> loadLogs() async {
+  Future<List<ActivityLog>> loadLogs({bool reloadPlatform = false}) async {
     final prefs = await SharedPreferences.getInstance();
+    if (reloadPlatform && HomeWidgetBridge.isRealAndroidApp) {
+      try {
+        await prefs.reload();
+      } catch (_) {}
+    }
     final raw = prefs.getString(_keyLogs);
     if (raw == null || raw.isEmpty) return [];
 
@@ -33,6 +39,7 @@ class ActivityLocalStorage {
     final prefs = await SharedPreferences.getInstance();
     final raw = jsonEncode(logs.map((e) => e.toJson()).toList());
     await prefs.setString(_keyLogs, raw);
+    await HomeWidgetBridge.updateWidgets();
   }
 
   /// Bản cũ sinh id 32 ký tự hex không có dấu gạch; server chỉ nhận UUID chuẩn.

@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../activity_dial/data/event_type_storage.dart';
+import '../../../activity_dial/domain/activity_event_type.dart';
+import '../../../activity_dial/presentation/activity_dial_controller.dart';
+import '../../data/home_widget_bridge.dart';
 import '../../domain/widget_config.dart';
 import '../widgets/add_widget_dialog.dart';
 import '../widgets/widget_medium_preview.dart';
@@ -13,6 +19,177 @@ class WidgetSelectionPage extends StatefulWidget {
 
 class _WidgetSelectionPageState extends State<WidgetSelectionPage> {
   WidgetSize _selectedSize = WidgetSize.small;
+  List<ActivityEventType> _availableTypes = ActivityEventType.defaultTypes;
+  ActivityEventType _smallType = ActivityEventType.defaultTypes.first;
+  List<ActivityEventType> _mediumTypes =
+      ActivityEventType.defaultTypes.take(4).toList();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig();
+  }
+
+  Future<void> _loadConfig() async {
+    final types = await EventTypeStorage().load();
+    final small = await HomeWidgetBridge.loadSmallType(types);
+    final medium = await HomeWidgetBridge.loadMediumTypes(types);
+    if (!mounted) return;
+    setState(() {
+      _availableTypes = types;
+      _smallType = small;
+      _mediumTypes = medium;
+    });
+  }
+
+  void _logFromPreview(ActivityEventType type) {
+    try {
+      final container = ProviderScope.containerOf(context, listen: false);
+      container.read(activityDialControllerProvider.notifier).quickLog(type);
+    } catch (_) {
+      // Standalone widget test without ProviderScope
+    }
+  }
+
+  Future<void> _showCustomizeEventPicker() async {
+    if (_selectedSize == WidgetSize.small) {
+      final picked = await showModalBottomSheet<ActivityEventType>(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Chọn sự kiện cho Widget Nhỏ (2×2)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2C2523),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final t in _availableTypes)
+                          ChoiceChip(
+                            label: Text('${t.emoji} ${t.name}'),
+                            selected: t.id == _smallType.id,
+                            selectedColor: const Color(0xFFFADCD9),
+                            onSelected: (_) => Navigator.of(ctx).pop(t),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (picked != null && mounted) {
+        setState(() => _smallType = picked);
+        await HomeWidgetBridge.saveSmallType(picked);
+      }
+    } else {
+      final currentIds = _mediumTypes.map((e) => e.id).toSet();
+      final result = await showModalBottomSheet<List<ActivityEventType>>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (ctx) {
+          final selectedIds = {...currentIds};
+          return StatefulBuilder(
+            builder: (ctx, setModalState) => SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Chọn 4 sự kiện cho Widget Vừa (4×2) (${selectedIds.length}/4)',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2C2523),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      child: SingleChildScrollView(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final t in _availableTypes)
+                              FilterChip(
+                                label: Text('${t.emoji} ${t.name}'),
+                                selected: selectedIds.contains(t.id),
+                                selectedColor: const Color(0xFFFADCD9),
+                                onSelected: (val) {
+                                  setModalState(() {
+                                    if (val) {
+                                      if (selectedIds.length < 4) {
+                                        selectedIds.add(t.id);
+                                      }
+                                    } else if (selectedIds.length > 1) {
+                                      selectedIds.remove(t.id);
+                                    }
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: selectedIds.length == 4
+                            ? () {
+                                final chosen = _availableTypes
+                                    .where((t) => selectedIds.contains(t.id))
+                                    .take(4)
+                                    .toList();
+                                Navigator.of(ctx).pop(chosen);
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFB53216),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Lưu 4 nút sự kiện'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      if (result != null && result.length == 4 && mounted) {
+        setState(() => _mediumTypes = result);
+        await HomeWidgetBridge.saveMediumTypes(result);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +205,6 @@ class _WidgetSelectionPageState extends State<WidgetSelectionPage> {
             color: Color(0xFF2C2523),
           ),
           onPressed: () {
-            // In case there is a navigator stack or root
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             } else {
@@ -53,6 +229,11 @@ class _WidgetSelectionPageState extends State<WidgetSelectionPage> {
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            tooltip: 'Chọn nút sự kiện trên Widget',
+            icon: const Icon(Icons.tune_rounded, color: Color(0xFF2C2523)),
+            onPressed: _showCustomizeEventPicker,
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Material(
@@ -116,7 +297,10 @@ class _WidgetSelectionPageState extends State<WidgetSelectionPage> {
                         );
                       },
                       child: _selectedSize == WidgetSize.small
-                          ? const WidgetSmallPreview(key: ValueKey('small_widget'))
+                          ? WidgetSmallPreview(
+                              key: const ValueKey('small_widget'),
+                              onLog: () => _logFromPreview(_smallType),
+                            )
                           : const WidgetMediumPreview(key: ValueKey('medium_widget')),
                     ),
                   ),
@@ -252,3 +436,4 @@ class _WidgetSelectionPageState extends State<WidgetSelectionPage> {
     );
   }
 }
+
