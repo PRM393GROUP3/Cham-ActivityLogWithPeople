@@ -1,0 +1,53 @@
+{
+  "voices": {
+    "thu": { "voice": "vi-VN-HoaiMyNeural", "rate": "+2%" },
+    "khoa": { "voice": "vi-VN-NamMinhNeural", "rate": "+2%" }
+  },
+  "defaultSpeaker": "thu",
+  "scenes": {
+    "00-mo": {
+      "lines": [
+        { "id": "sc00.1", "text": "Mỗi ngày, mình làm hàng chục việc nhỏ. Ăn sáng, đi làm, một ly cà phê lúc ba giờ chiều." },
+        { "id": "sc00.2", "text": "Những việc nhỏ đến mức chẳng ai biết. Kể cả những người mình thương nhất." }
+      ]
+    },
+    "01-xa": {
+      "lines": [
+        { "id": "sc01.1", "text": "Tháng ba, mình vào Sài Gòn đi làm. Khoa ở lại Hà Nội. Hơn một nghìn cây số." },
+        { "id": "sc01.2", "text": "Mình gõ dạo này sao rồi, rồi lại xóa. Hỏi thì dễ, kể lại cả một ngày mới khó." },
+        { "id": "sc01.3", "speaker": "khoa", "text": "Mình cũng vậy. Mở tin nhắn của Thư, đọc lại, rồi tắt màn hình." },
+        { "id": "sc01.4", "text": "Rồi tụi mình im lặng. Không phải vì hết thương, chỉ là không biết bắt đầu từ đâu." }
+      ]
+    },
+    "02-tu-giu-minh": {
+      "lines": [
+        { "id": "sc02.1", "text": "Rồi mình tìm thấy Chấm. Mỗi việc trong ngày là một biểu tượng trên vòng tròn này." },
+        { "id": "sc02.2", "text": "Ăn sáng, chạm một cái. Đi làm, chạm thêm cái nữa. Không cần viết, không cần chụp ảnh." },
+        { "id": "sc02.3", "text": "Có hôm muốn nhớ kỹ hơn, mình mở tờ giấy nhỏ và viết vài dòng." },
+        { "id": "sc02.4", "text": "Tất cả chỉ nằm trên máy mình. Riêng tư là mặc định." },
+        { "id": "sc02.5", "text": "Cuối tuần nhìn lại: năm ngày đi làm, ngủ muộn, và mười lăm ly cà phê." }
+      ]
+    },
+    "03-gap-lai": {
+      "lines": [
+        { "id": "sc03.1", "text": "Tháng sáu, Khoa vào Sài Gòn công tác. Tụi mình hẹn nhau ở quán cà phê, như hồi sinh viên." },
+        { "id": "sc03.2", "speaker": "khoa", "text": "Mình cài Chấm ngay tại bàn. Đặt tên, chọn một chú gấu làm gương mặt, xong." },
+        { "id": "sc03.3", "text": "Mình mở mã QR. Khoa đưa máy lên quét. Một giây thôi." },
+        { "id": "sc03.4", "speaker": "khoa", "text": "Không số điện thoại, không tìm tên. Chỉ cần ngồi cạnh nhau là đủ." }
+      ]
+    },
+    "04-gan": {
+      "lines": [
+        { "id": "sc04.1", "text": "Về lại hai đầu đất nước. Sáng nay mình chạy bộ, và lần này mình bật Công khai." },
+        { "id": "sc04.2", "speaker": "khoa", "text": "Ở Hà Nội, mình thấy Thư chạy bộ trên bảng tin. Gửi một trái tim vào." },
+        { "id": "sc04.3", "text": "Mình thấy trái tim của Khoa. Không ai nhắn một chữ, nhưng mình biết cậu ấy vẫn ổn." }
+      ]
+    },
+    "05-ket": {
+      "lines": [
+        { "id": "sc05.1", "speaker": "khoa", "text": "Có những người không cần nói chuyện mỗi ngày. Chỉ cần biết họ vẫn đang sống tốt." },
+        { "id": "sc05.2", "text": "Chấm. Chia sẻ một ngày, chỉ bằng một chạm." }
+      ]
+    }
+  }
+}

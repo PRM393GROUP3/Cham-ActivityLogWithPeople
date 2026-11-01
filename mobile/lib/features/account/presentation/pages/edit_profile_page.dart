@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/avatar.dart';
 import '../account_controller.dart';
+import '../widgets/avatar_emoji_grid.dart';
 import '../widgets/user_avatar.dart';
 
 /// Đặt tên hiển thị và avatar emoji — bạn bè thấy trong danh sách bạn bè, feed và reaction.
@@ -105,30 +106,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               ),
             ],
           ),
-          GridView.extent(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            maxCrossAxisExtent: 52,
-            mainAxisSpacing: 4,
-            crossAxisSpacing: 4,
-            children: [
-              for (final e in avatarEmojiChoices)
-                InkWell(
-                  key: ValueKey('avatar-$e'),
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _pick(e),
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _emoji == e ? const Color(0xFFFDEEE8) : null,
-                      border: _emoji == e ? Border.all(color: const Color(0xFFB53216), width: 1.5) : null,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(e, style: const TextStyle(fontSize: 24)),
-                  ),
-                ),
-            ],
-          ),
+          AvatarEmojiGrid(selected: _emoji, onPick: _pick),
           const SizedBox(height: 12),
           TextField(
             key: const ValueKey('profile-custom-emoji'),

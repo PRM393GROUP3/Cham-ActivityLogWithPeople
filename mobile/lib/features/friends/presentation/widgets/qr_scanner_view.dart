@@ -45,6 +45,12 @@ class _QrScannerViewState extends State<QrScannerView>
   /// Đang xử lý một mã (hộp xác nhận / gọi API): bỏ qua các lần đọc khác.
   bool _busy = false;
 
+  /// Mã vừa xử lý xong và lúc xong: camera vẫn chĩa vào đúng mã đó sau khi kết bạn, không hỏi lại
+  /// "Kết bạn?" ngay lập tức với cùng người.
+  String? _lastRaw;
+  DateTime? _lastDoneAt;
+  static const _repeatCooldown = Duration(seconds: 30);
+
   @override
   void initState() {
     super.initState();
@@ -77,11 +83,22 @@ class _QrScannerViewState extends State<QrScannerView>
     }
   }
 
+  Future<void> _handleCamera(String raw) async {
+    if (_busy) return;
+    await _handle(raw);
+    _lastRaw = raw;
+    _lastDoneAt = DateTime.now();
+  }
+
   void _onDetect(BarcodeCapture capture) {
+    // Màn khác đang che màn quét (vd. Danh sách bạn bè): camera vẫn chạy nhưng không hỏi gì.
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
       if (raw != null && raw.isNotEmpty) {
-        _handle(raw);
+        final done = _lastDoneAt;
+        if (raw == _lastRaw && done != null && DateTime.now().difference(done) < _repeatCooldown) return;
+        _handleCamera(raw);
         return;
       }
     }

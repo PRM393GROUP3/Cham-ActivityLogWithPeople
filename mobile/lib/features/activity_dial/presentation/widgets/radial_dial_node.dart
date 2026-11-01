@@ -24,9 +24,12 @@ class RadialDialNode extends StatefulWidget {
 }
 
 class _RadialDialNodeState extends State<RadialDialNode>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _animController;
   late final Animation<double> _scaleAnimation;
+
+  /// Hiệu ứng sau mỗi lần chấm: vòng màu lan ra và "+1" bay lên rồi mờ dần.
+  late final AnimationController _burstController;
 
   @override
   void initState() {
@@ -38,10 +41,15 @@ class _RadialDialNodeState extends State<RadialDialNode>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.82).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
+    _burstController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
   }
 
   @override
   void dispose() {
+    _burstController.dispose();
     _animController.dispose();
     super.dispose();
   }
@@ -51,6 +59,7 @@ class _RadialDialNodeState extends State<RadialDialNode>
     _animController.forward().then((_) {
       _animController.reverse();
     });
+    _burstController.forward(from: 0);
     widget.onTap();
   }
 
@@ -65,7 +74,16 @@ class _RadialDialNodeState extends State<RadialDialNode>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Vòng tròn chứa icon màu pastel
+            // Vòng tròn chứa icon màu pastel, cùng hiệu ứng sau mỗi lần chấm
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                _BurstRing(
+                  animation: _burstController,
+                  size: widget.circleRadius * 2,
+                  color: widget.type.accentColor,
+                ),
             Container(
               width: widget.circleRadius * 2,
               height: widget.circleRadius * 2,
@@ -97,6 +115,13 @@ class _RadialDialNodeState extends State<RadialDialNode>
                       ),
               ),
             ),
+                _PlusOne(
+                  animation: _burstController,
+                  color: widget.type.accentColor,
+                  lift: widget.circleRadius * 1.9,
+                ),
+              ],
+            ),
             const SizedBox(height: 2.5),
             // Nhãn chữ bên dưới
             SizedBox(
@@ -116,6 +141,68 @@ class _RadialDialNodeState extends State<RadialDialNode>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Vòng màu lan rộng gấp 2,4 lần nút rồi mờ đi.
+class _BurstRing extends AnimatedWidget {
+  const _BurstRing({
+    required Animation<double> animation,
+    required this.size,
+    required this.color,
+  }) : super(listenable: animation);
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = (listenable as Animation<double>).value;
+    if (t == 0 || t == 1) return const SizedBox.shrink();
+    return IgnorePointer(
+      child: Transform.scale(
+        scale: 1 + 1.4 * Curves.easeOutCubic.transform(t),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color.withValues(alpha: 0.18 * (1 - t)),
+            border: Border.all(color: color.withValues(alpha: 0.7 * (1 - t)), width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "+1" bay lên phía trên nút rồi mờ dần.
+class _PlusOne extends AnimatedWidget {
+  const _PlusOne({
+    required Animation<double> animation,
+    required this.color,
+    required this.lift,
+  }) : super(listenable: animation);
+
+  final Color color;
+  final double lift;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = (listenable as Animation<double>).value;
+    if (t == 0 || t == 1) return const SizedBox.shrink();
+    return Positioned(
+      top: -lift * Curves.easeOutCubic.transform(t),
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: t < 0.5 ? 1 : (1 - t) * 2,
+          child: Text(
+            '+1',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color),
+          ),
         ),
       ),
     );

@@ -7,6 +7,7 @@ import '../../domain/feed_share.dart';
 import '../../domain/story_user.dart';
 import '../controllers/feed_controller.dart';
 import '../widgets/feed_card.dart';
+import '../widgets/friend_day_dial.dart';
 import '../widgets/header_bar.dart';
 import '../widgets/stories_bar.dart';
 
@@ -88,12 +89,24 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                   final visible = _selectedUserId == null
                       ? shares
                       : shares.where((s) => s.ownerId == _selectedUserId).toList();
+                  // Chọn một người: "Ngày của …" (SOC-08) đứng đầu danh sách bài của người đó.
+                  final selected = storyUsers.where((u) => u.id == _selectedUserId).firstOrNull;
+                  final dayDial = selected == null
+                      ? null
+                      : FriendDayDial(
+                          key: ValueKey('day-${selected.id}'),
+                          user: selected,
+                          shares: sharesOfToday(shares, selected.id),
+                          isMe: selected.id == me?.id,
+                        );
                   return RefreshIndicator(
                     onRefresh: _refresh,
                     child: visible.isEmpty
                         ? ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
+                            padding: dayDial == null ? null : const EdgeInsets.fromLTRB(16, 12, 16, 24),
                             children: [
+                              if (dayDial != null) ...[dayDial, const SizedBox(height: 12)],
                               _Message(
                                 icon: Icons.inbox_outlined,
                                 text: friends.isEmpty
@@ -107,9 +120,13 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                         : ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                            itemCount: visible.length,
+                            itemCount: visible.length + (dayDial == null ? 0 : 1),
                             separatorBuilder: (_, _) => const SizedBox(height: 12),
                             itemBuilder: (context, index) {
+                              if (dayDial != null) {
+                                if (index == 0) return dayDial;
+                                index--;
+                              }
                               final share = visible[index];
                               return FeedCard(
                                 share: share,

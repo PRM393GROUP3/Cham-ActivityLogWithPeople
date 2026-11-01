@@ -197,6 +197,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
+          tooltip: 'Quay lại',
           icon: const Icon(
             Icons.arrow_back,
             color: Color(0xFF2C2523),
