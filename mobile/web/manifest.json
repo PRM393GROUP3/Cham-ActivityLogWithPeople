@@ -1,11 +1,11 @@
 {
-    "name": "cham",
-    "short_name": "cham",
+    "name": "Chấm",
+    "short_name": "Chấm",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1C1512",
+    "theme_color": "#1C1512",
+    "description": "Chấm — chia sẻ một ngày, chỉ bằng một chạm.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
