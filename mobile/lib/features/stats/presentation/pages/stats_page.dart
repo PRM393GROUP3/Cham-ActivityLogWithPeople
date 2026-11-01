@@ -1,12 +1,18 @@
+import 'dart:ui' show ImageByteFormat;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/time/vn_time.dart';
+import '../../../../core/utils/image_saver/image_saver.dart';
+import '../../../account/presentation/account_controller.dart';
 import '../../../activity_dial/presentation/activity_dial_controller.dart';
 import '../../../activity_dial/presentation/widgets/log_tile.dart';
 import '../../domain/activity_stats.dart';
 import '../widgets/bar_chart.dart';
+import '../widgets/recap_card.dart';
 
 /// Lịch sử theo ngày / tuần / tháng và thống kê quy luật sinh hoạt (HIS-01, HIS-02, STA-01).
 /// Tính theo giờ Việt Nam; tuần bắt đầu Thứ Hai; khung giờ 1 tiếng. Hoạt động offline.
@@ -47,6 +53,78 @@ class _StatsPageState extends ConsumerState<StatsPage> {
     return index >= 0 && index < _range.dayCount ? index : null;
   }
 
+  /// Xem trước thẻ tóm tắt khoảng đang xem và lưu thành ảnh PNG (STA-02).
+  void _openRecap(ActivityStats stats) {
+    final account = ref.read(accountControllerProvider).value;
+    final cardKey = GlobalKey();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFFFFDF9),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FittedBox(
+                child: RepaintBoundary(
+                  key: cardKey,
+                  child: RecapCard(
+                    stats: stats,
+                    rangeLabel: _rangeLabel,
+                    displayName: account?.displayName ?? AccountController.defaultDisplayName,
+                    avatarEmoji: account?.avatarEmoji,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFB53216),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                  ),
+                  icon: const Icon(Icons.download_rounded),
+                  label: const Text('Lưu ảnh'),
+                  onPressed: () => _saveRecap(sheetContext, cardKey),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveRecap(BuildContext sheetContext, GlobalKey cardKey) async {
+    final messenger = ScaffoldMessenger.of(context);
+    String message;
+    try {
+      final boundary = cardKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3);
+      final png = await image.toByteData(format: ImageByteFormat.png);
+      image.dispose();
+      final period = switch (_range.period) {
+        StatsPeriod.day => 'ngay',
+        StatsPeriod.week => 'tuan',
+        StatsPeriod.month => 'thang',
+      };
+      message = await ref.read(pngSaverProvider)(
+        png!.buffer.asUint8List(),
+        fileName: 'cham-$period-${DateFormat('yyyyMMdd').format(_range.start)}',
+      );
+      if (sheetContext.mounted) Navigator.pop(sheetContext);
+    } on StateError catch (e) {
+      message = e.message;
+    } catch (_) {
+      message = 'Không lưu được ảnh.';
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message), behavior: SnackBarBehavior.floating));
+  }
+
   @override
   Widget build(BuildContext context) {
     final allLogs = ref.watch(activityDialControllerProvider).logs;
@@ -58,6 +136,14 @@ class _StatsPageState extends ConsumerState<StatsPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFAF6F0),
         title: const Text('Lịch sử & thống kê', style: TextStyle(fontWeight: FontWeight.w800)),
+        actions: [
+          IconButton(
+            key: const ValueKey('open-recap'),
+            tooltip: 'Tạo ảnh tóm tắt',
+            icon: const Icon(Icons.auto_awesome_mosaic_outlined),
+            onPressed: stats.total == 0 ? null : () => _openRecap(stats),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
@@ -70,7 +156,11 @@ class _StatsPageState extends ConsumerState<StatsPage> {
             ],
             selected: {_range.period},
             showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() => _range = StatsRange.containing(s.first, _range.start)),
+            // Đổi Ngày/Tuần/Tháng giữ nguyên ngày đang xem; nếu đang xem khoảng chứa hôm nay thì lấy
+            // hôm nay (tuần 26/10–01/11 chuyển sang Tháng phải là tháng 11, không phải tháng 10).
+            onSelectionChanged: (s) => setState(
+              () => _range = StatsRange.containing(s.first, _range.isCurrentOrFuture ? VnTime.now() : _range.start),
+            ),
           ),
           const SizedBox(height: 8),
           Row(

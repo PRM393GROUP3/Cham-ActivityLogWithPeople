@@ -4,6 +4,7 @@ import '../../../../core/time/vn_time.dart';
 import '../../../account/presentation/widgets/user_avatar.dart';
 import '../../domain/feed_share.dart';
 import '../../domain/reaction.dart';
+import 'reaction_burst.dart';
 
 /// Thẻ một bản ghi Public của bạn bè, kèm thanh 7 reaction (SOC-05).
 class FeedCard extends StatelessWidget {
@@ -204,11 +205,17 @@ class FeedCard extends StatelessWidget {
 
     return Tooltip(
       message: reaction.label,
-      child: GestureDetector(
+      child: Builder(
+        builder: (buttonContext) => GestureDetector(
         // Không tự thả cảm xúc cho bài của mình (server cũng chặn): chạm thì mở danh sách người thả.
-        onTap: () => share.isMine
-            ? (share.reactors.isEmpty ? null : _showReactors(context))
-            : onReactionTap(reaction.emoji),
+        onTap: () {
+          if (share.isMine) {
+            if (share.reactors.isNotEmpty) _showReactors(context);
+            return;
+          }
+          if (!isSelected) showReactionBurst(buttonContext, reaction.emoji);
+          onReactionTap(reaction.emoji);
+        },
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
@@ -232,6 +239,7 @@ class FeedCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

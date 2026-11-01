@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/time/vn_time.dart';
 import '../activity_dial_controller.dart';
 import '../../../account/presentation/account_controller.dart';
 import '../../../account/presentation/widgets/user_avatar.dart';
@@ -33,7 +34,7 @@ class ActivityDialPage extends ConsumerWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Đã chấm: ${type.name} (+1 chấm)',
+                'Đã chấm ${type.name} lúc ${VnTime.hm(DateTime.now())}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,

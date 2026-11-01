@@ -54,7 +54,13 @@ class StoriesBar extends StatelessWidget {
   Widget _buildAllItem() {
     final isSelected = selectedUserId == null;
 
-    return GestureDetector(
+    // Một nhãn gọn cho trình đọc màn hình (và cho script quay video), thay vì emoji + tên rời rạc.
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: 'Tất cả',
+      excludeSemantics: true,
+      child: GestureDetector(
       onTap: () => onSelectUser(null),
       behavior: HitTestBehavior.opaque,
       child: Column(
@@ -116,13 +122,20 @@ class StoriesBar extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
   Widget _buildUserItem(StoryUser user) {
     final isSelected = selectedUserId == user.id;
 
-    return GestureDetector(
+    // Một nhãn gọn cho trình đọc màn hình (và cho script quay video), thay vì emoji + tên rời rạc.
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: user.name,
+      excludeSemantics: true,
+      child: GestureDetector(
       onTap: () => onSelectUser(user.id),
       behavior: HitTestBehavior.opaque,
       child: Column(
@@ -179,6 +192,7 @@ class StoriesBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

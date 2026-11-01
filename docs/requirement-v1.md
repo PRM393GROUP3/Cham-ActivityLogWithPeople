@@ -1,6 +1,6 @@
 # SRS ứng dụng ghi nhật ký sinh hoạt
 
-Phiên bản 0.10  |  Ngày 26 tháng 10 năm 2026
+Phiên bản 0.11  |  Ngày 1 tháng 11 năm 2026
 
 ## 1 Mục đích và phạm vi
 
@@ -26,9 +26,12 @@ Người dùng quản lý nhật ký của mình; bạn bè chỉ xem các bản
 | LOG-01 | Mỗi loại sự kiện phải có emoji hoặc sticker và tên sự kiện. |
 | LOG-02 | Khi chọn emoji, hệ thống điền tên mặc định theo tên emoji; người dùng được đổi tên trước khi lưu loại sự kiện. |
 | LOG-03 | Chạm nút sự kiện phải tạo ngay một bản ghi Private với thời điểm hiện tại, không mở form và không yêu cầu nhập thêm. |
+| LOG-06 | Chạm nút trên vòng Dial có **phản hồi tức thì**: nút nảy, một vòng màu của loại đó lan ra, "+1" bay lên, và thông báo "Đã chấm <tên> lúc HH:mm" (giờ Việt Nam). |
+| ONB-01 | Lần đầu mở app hiện **màn chào** 3 trang (ghi một chạm, riêng tư mặc định, kết bạn và reaction) và trang cuối đặt tên hiển thị + avatar emoji (SOC-06). Bỏ qua được ở mọi trang; đặt hồ sơ cần mạng, mất mạng thì báo và cho "Để sau". Chỉ hiện một lần; máy đã có dữ liệu từ bản trước (tài khoản hoặc nhật ký) không hiện. |
 | LOG-04 | Không cung cấp Undo. Với bản ghi đã tạo, chỉ cho phép Delete; không sửa nội dung hoặc thời điểm. |
 | LOG-05 | Trong **Cài đặt → Loại sự kiện**, người dùng **thêm, sửa (emoji, tên), xoá và kéo thả sắp xếp** mọi loại sự kiện, kể cả 19 loại mặc định. Thứ tự quyết định vị trí: **mọi loại đều nằm trên vòng Dial**: các loại đầu danh sách ở vòng trong, rồi vòng giữa, rồi vòng ngoài (6 / 6 / 7 với 19 loại; từ loại thứ 20, loại mới vào vòng đang thưa nhất so với chu vi — thường là vòng ngoài rồi vòng giữa), các nút trên mỗi vòng chia đều; tối đa 36 loại. Sửa hoặc xoá chỉ áp dụng cho lần chạm sau: **bản ghi cũ giữ emoji và tên lúc ghi** và vẫn nằm trong lịch sử (bản đã Công khai vẫn được chia sẻ). Phải còn ít nhất một loại. |
 | NOTE-01 | Mỗi bản ghi có thể có một **ghi chú** dạng văn bản nhiều dòng. Chạm icon ghi chú trên bản ghi trong lịch sử để mở **tờ giấy ghi chú**; ghi chú được lưu khi rời trang hoặc bấm Lưu, được sửa hay xoá (để trống) bất cứ lúc nào. Ghi chú **chỉ lưu trên máy**, không gửi lên server kể cả khi bản ghi Công khai. Ghi chú không thay đổi thời điểm hay loại sự kiện của bản ghi (LOG-04). |
+| STA-02 | Trong Lịch sử & thống kê có nút **Tạo ảnh tóm tắt** cho kỳ đang xem (Ngày / Tuần / Tháng của tôi): tổng số chấm, 3 loại nhiều nhất, biểu đồ nhỏ theo giờ (Ngày) hoặc theo ngày (Tuần, Tháng), tên và avatar. **Lưu ảnh** PNG: Android vào thư viện ảnh, Web tải file xuống. Kỳ không có bản ghi thì nút bị tắt. |
 | HIS-01 | Hiển thị lịch sử theo ngày và lần ghi gần nhất của từng loại sự kiện. Mỗi bản ghi hiển thị chế độ chia sẻ (Private / Public), trạng thái gửi và dòng đầu của ghi chú (nếu có). |
 | HIS-02 | Cho phép xóa bản ghi trong lịch sử; lịch sử, lần ghi gần nhất và thống kê phải được cập nhật tương ứng. |
 | STA-01 | Trang **Lịch sử & thống kê** (nút 📊 trên trang chủ, hoặc "Xem lịch sử & thống kê" trong Nhật ký hôm nay) có 3 chế độ **Ngày / Tuần / Tháng**, lùi / tiến từng kỳ (không tiến quá kỳ hiện tại). Mỗi kỳ hiển thị: tổng số lần ghi; số lần theo từng loại sự kiện kèm lần ghi gần nhất của loại đó; số lần theo từng ngày (chế độ Tuần, Tháng); phân bố theo **khung 1 giờ**; danh sách các lần ghi (xoá / ghi chú / đổi chế độ chia sẻ ngay tại đây). Tuần bắt đầu **Thứ Hai**; mọi mốc ngày giờ theo giờ Việt Nam. Chỉ thống kê những gì đã ghi, hoạt động offline. |
@@ -43,6 +46,8 @@ Người dùng quản lý nhật ký của mình; bạn bè chỉ xem các bản
 | SOC-03 | Chia sẻ **theo từng bản ghi**, chỉ có 2 chế độ: **Private** (mặc định) và **Public** (tất cả bạn bè). Người dùng đổi chế độ trên bản ghi trong lịch sử. Không hỗ trợ chọn từng người nhận. |
 | SOC-04 | Chuyển bản ghi từ Public về Private, hoặc xóa bản ghi Public, phải **thu hồi** sự kiện chia sẻ: không bạn bè nào còn xem được, reaction trên đó bị xóa. |
 | SOC-05 | Feed gồm sự kiện Public của bạn bè **và của chính mình**, mới nhất trước. Người dùng thả reaction vào sự kiện của bạn bè; trên sự kiện của mình thì không tự thả được, nhưng xem được số đếm và **danh sách ai đã thả cảm xúc gì** (avatar, tên, emoji, thời gian). Bộ reaction giống Facebook: 👍 Thích, ❤️ Yêu thích, 🥰 Thương thương, 😆 Haha, 😮 Wow, 😢 Buồn, 😡 Phẫn nộ. Mỗi người tối đa **1 reaction** trên mỗi sự kiện, được đổi hoặc gỡ. |
+| SOC-07 | **Cập nhật thời gian thực**: khi app mở và máy đã có tài khoản, app giữ kết nối WebSocket với server. Bạn bè chia sẻ / thu hồi bản ghi, kết bạn / huỷ kết bạn → feed và danh sách bạn bè tự tải lại. Bạn bè thả cảm xúc vào bài của mình → thông báo trượt xuống đầu màn hình "<tên> đã thả <emoji> vào <bài> của bạn", ở mọi màn hình. Gỡ cảm xúc không báo. Mất kết nối thì tự nối lại (1, 2, 4… tối đa 30 giây). Thả cảm xúc trong feed có hiệu ứng emoji bay lên từ nút. |
+| SOC-08 | **Ngày của bạn bè**: chọn một người (hoặc "Bạn") trên thanh phía trên feed → đầu danh sách hiện vòng Dial thu nhỏ gồm các bản ghi Công khai **hôm nay** (giờ VN) của người đó, sớm nhất ở vòng trong; giữ một chấm để xem tên và giờ. Không có bản Công khai nào hôm nay thì báo như vậy. |
 | WID-01 | Cho phép chọn các nút sự kiện đưa lên widget. Chạm nút trên widget tạo bản ghi Private với thời điểm hiện tại, theo cùng quy tắc ghi nhanh trong app. |
 | DAT-01 | Nhật ký cá nhân phải lưu local và dùng được offline. Chỉ bản ghi Public mới gửi online; không tự tải toàn bộ nhật ký lên máy chủ. |
 | DAT-02 | Thời gian hiển thị, lịch sử theo ngày và thống kê dùng **múi giờ Việt Nam (UTC+7)**. Máy chủ lưu thời điểm dạng ISO 8601 có offset. |
@@ -115,6 +120,14 @@ AC-12 — Đổi tên và chọn avatar emoji trong Hồ sơ → sau khi lưu, t
 
 AC-13 — Chuyển một bản ghi sang Công khai → bản ghi xuất hiện trong feed của chính mình với nhãn "Bạn". Khi bạn bè thả cảm xúc, bài đó hiện số đếm và "N người đã thả cảm xúc · Xem"; mở ra thấy đúng người và emoji. Không thả được cảm xúc cho bài của mình.
 
+AC-14 — Hai máy là bạn bè, cùng mở app: máy B thả ❤️ vào bài Công khai của máy A → trong vài giây máy A hiện "B đã thả ❤️ vào … của bạn" mà không cần làm mới; feed của A cập nhật số đếm. Tắt mạng rồi bật lại: thông báo vẫn đến (app tự nối lại).
+
+AC-15 — Chọn một người bạn trên thanh phía trên feed → thấy "Ngày của <tên>" với đúng các bản Công khai hôm nay của người đó; bản của hôm qua không có. Chọn "Tất cả" → vòng Dial biến mất.
+
+AC-16 — Cài mới: thấy màn chào; đặt tên "Khoa" + 🐻 rồi "Bắt đầu chấm" → trang chủ hiện avatar 🐻, mở lại app không thấy màn chào nữa. Cập nhật từ bản cũ có dữ liệu: vào thẳng trang chủ.
+
+AC-17 — Tuần có 3 lần Cà phê và 1 lần Chạy bộ → ảnh tóm tắt "Tuần của tôi" ghi 4 chấm, Cà phê đứng đầu với "3 lần"; Lưu ảnh tạo được file PNG.
+
 ## 9 Quyết định sản phẩm
 
 ### 9.1 Đã chốt
@@ -131,6 +144,7 @@ AC-13 — Chuyển một bản ghi sang Công khai → bản ghi xuất hiện t
 | Bản ghi | Chỉ tạo và xóa; không sửa, không Undo |
 | Múi giờ | Việt Nam (UTC+7) |
 | Reaction | Bộ 7 reaction giống Facebook, mỗi người 1 reaction trên mỗi sự kiện |
+| Thời gian thực | Feed, bạn bè và thông báo reaction cập nhật qua WebSocket; server chỉ gửi gợi ý, app tải lại qua API |
 
 ### 9.2 Còn mở
 

@@ -1,0 +1,7 @@
+demo-out/
+.tts-venv/
+.auth/
+demo.env
+music/
+node_modules/
+app-build/

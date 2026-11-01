@@ -139,7 +139,13 @@ class _VisibilityChip extends StatelessWidget {
       message: isPublic
           ? 'Chuyển về Riêng tư (thu hồi)'
           : 'Chia sẻ Công khai cho bạn bè',
-      child: InkWell(
+      // Nút riêng cho trình đọc màn hình, không bị gộp vào cả dòng bản ghi.
+      child: Semantics(
+        container: true,
+        button: true,
+        label: isPublic ? 'Công khai' : 'Riêng tư',
+        excludeSemantics: true,
+        child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
@@ -172,6 +178,7 @@ class _VisibilityChip extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
