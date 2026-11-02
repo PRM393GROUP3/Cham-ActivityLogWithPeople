@@ -64,6 +64,13 @@
       "when": 1793640459325,
       "tag": "0008_user_username",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793642884843,
+      "tag": "0009_drop_invite_code",
+      "breakpoints": true
     }
   ]
 }

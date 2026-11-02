@@ -3,7 +3,7 @@ import { z } from "zod";
 const displayName = z.string().trim().min(1).max(50);
 
 /** 3–20 chars of `a-z 0-9 . _`, case-insensitive (stored lowercase); no leading/trailing or doubled dot. */
-const username = z
+export const username = z
   .string()
   .trim()
   .toLowerCase()

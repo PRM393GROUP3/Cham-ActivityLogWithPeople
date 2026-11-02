@@ -12,7 +12,10 @@ const updatedAt = integer("updated_at", { mode: "timestamp_ms" })
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   displayName: text("display_name").notNull(),
-  /** Unique handle (`[a-z0-9._]`, stored lowercase). Null until the user picks one. */
+  /**
+   * Unique handle (`[a-z0-9._]`, stored lowercase). Null until the user picks one. Friends add you
+   * by it, typed or scanned from your QR.
+   */
   username: text("username").unique(),
   /**
    * Avatar is either an uploaded image (R2 object key, see AvatarStorage) or a single emoji; setting
@@ -21,8 +24,6 @@ export const users = sqliteTable("users", {
   avatarEmoji: text("avatar_emoji"),
   avatarKey: text("avatar_key"),
   tokenHash: text("token_hash").notNull().unique(),
-  /** Encoded in the personal QR; rotating it invalidates old QR codes. */
-  inviteCode: text("invite_code").notNull().unique(),
   createdAt,
   updatedAt,
 });

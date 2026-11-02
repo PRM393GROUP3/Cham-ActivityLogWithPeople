@@ -1,5 +1,5 @@
 import { AppError, ConflictError, NotFoundError } from "../../shared/errors/app-error";
-import { generateInviteCode, generateToken, hashToken } from "../../shared/utils/crypto";
+import { generateToken, hashToken } from "../../shared/utils/crypto";
 import { detectImageFormat } from "../../shared/utils/image";
 import { avatarUrl, MAX_AVATAR_BYTES, type AvatarStorage } from "./avatar.storage";
 import type { UserRepository } from "./user.repository";
@@ -16,7 +16,6 @@ export const toPublicUserDto = (row: PublicUserRow): PublicUserDto => ({
 
 const toMeDto = (row: UserRow): MeDto => ({
   ...toPublicUserDto(row),
-  inviteCode: row.inviteCode,
   createdAt: row.createdAt.toISOString(),
 });
 
@@ -35,7 +34,6 @@ export class UserService {
       displayName: input.displayName,
       avatarEmoji: input.avatarEmoji ?? null,
       tokenHash: await hashToken(token),
-      inviteCode: generateInviteCode(),
       createdAt: now,
       updatedAt: now,
     });
@@ -77,11 +75,6 @@ export class UserService {
   /** Back to the name's first letter. Idempotent. */
   async removeAvatar(id: string): Promise<MeDto> {
     return this.replaceAvatar(id, { avatarEmoji: null, avatarKey: null });
-  }
-
-  /** Invalidates the old QR: anyone holding the previous code can no longer add you. */
-  async rotateInviteCode(id: string): Promise<MeDto> {
-    return this.save(id, { inviteCode: generateInviteCode() });
   }
 
   /** Saves the new avatar fields, then deletes the previous image (if it was replaced). */

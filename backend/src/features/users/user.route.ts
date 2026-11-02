@@ -46,8 +46,6 @@ export const meRoutes = new Hono<AppEnv>()
 
   .delete("/avatar", async (c) => c.json({ data: await userService(c).removeAvatar(c.var.user.id) }))
 
-  .post("/invite-code", async (c) => c.json({ data: await userService(c).rotateInviteCode(c.var.user.id) }))
-
   // WebSocket (`?token=` allowed): receives RealtimeEvent hints for the current user.
   .get("/ws", (c) => getUserRoom(c.env, c.var.user.id).fetch(c.req.raw));
 

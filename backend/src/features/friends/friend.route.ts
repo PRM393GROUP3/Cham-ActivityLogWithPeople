@@ -19,9 +19,9 @@ export const friendRoutes = new Hono<AppEnv>()
 
   .get("/", async (c) => c.json({ data: await friendService(c).list(c.var.user.id) }))
 
-  // Body is the invite code read from the other user's QR. 201 if new, 200 if already friends.
+  // Body is the other user's username, typed or read from their QR. 201 if new, 200 if already friends.
   .post("/", validate("json", addFriendSchema), async (c) => {
-    const { friend, created } = await friendService(c).addByInviteCode(c.var.user.id, c.req.valid("json").inviteCode);
+    const { friend, created } = await friendService(c).addByUsername(c.var.user.id, c.req.valid("json").username);
     return c.json({ data: friend }, created ? 201 : 200);
   })
 

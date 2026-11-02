@@ -1,6 +1,6 @@
 import { exports } from "cloudflare:workers";
 
-export type TestUser = { id: string; token: string; inviteCode: string; displayName: string };
+export type TestUser = { id: string; token: string; username: string; displayName: string };
 
 export const api = (path: string, init: RequestInit & { token?: string } = {}) => {
   const { token, ...rest } = init;
@@ -16,14 +16,19 @@ export const api = (path: string, init: RequestInit & { token?: string } = {}) =
 
 export const json = async <T = any>(res: Response) => ((await res.json()) as { data: T }).data;
 
+/** A new user with a unique username (friends are added by it). */
 export const register = async (displayName = "User"): Promise<TestUser> => {
   const res = await api("/auth/register", { method: "POST", body: JSON.stringify({ displayName }) });
-  const { user, token } = await json<{ user: { id: string; inviteCode: string }; token: string }>(res);
-  return { id: user.id, inviteCode: user.inviteCode, token, displayName };
+  const { user, token } = await json<{ user: { id: string }; token: string }>(res);
+  const username = `u_${user.id.replace(/-/g, "").slice(0, 16)}`;
+  await api("/me", { method: "PATCH", token, body: JSON.stringify({ username }) });
+  return { id: user.id, username, token, displayName };
 };
 
-export const befriend = (a: TestUser, b: TestUser) =>
-  api("/friends", { method: "POST", token: a.token, body: JSON.stringify({ inviteCode: b.inviteCode }) });
+export const addFriend = (a: TestUser, username: string) =>
+  api("/friends", { method: "POST", token: a.token, body: JSON.stringify({ username }) });
+
+export const befriend = (a: TestUser, b: TestUser) => addFriend(a, b.username);
 
 export const share = (
   owner: TestUser,

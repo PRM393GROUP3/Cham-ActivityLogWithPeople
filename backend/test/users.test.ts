@@ -5,7 +5,7 @@ describe("auth & me", () => {
   it("registers an anonymous user and authenticates with the returned token", async () => {
     const u = await register("An");
     const me = await json(await api("/me", { token: u.token }));
-    expect(me).toMatchObject({ id: u.id, displayName: "An", inviteCode: u.inviteCode });
+    expect(me).toMatchObject({ id: u.id, displayName: "An", username: u.username });
 
     const renamed = await json(
       await api("/me", { method: "PATCH", token: u.token, body: JSON.stringify({ displayName: "An Nguyễn" }) }),
@@ -55,7 +55,8 @@ describe("auth & me", () => {
     const patch = (u: { token: string }, body: object) =>
       api("/me", { method: "PATCH", token: u.token, body: JSON.stringify(body) });
 
-    expect((await json(await api("/me", { token: a.token }))).username).toBeNull();
+    const fresh = await json(await api("/auth/register", { method: "POST", body: JSON.stringify({ displayName: "D" }) }));
+    expect(fresh.user.username).toBeNull();
     expect(await json(await patch(a, { username: " Khoa.Nguyen ", displayName: "Khoa" }))).toMatchObject({
       username: "khoa.nguyen",
       displayName: "Khoa",

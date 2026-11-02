@@ -3,7 +3,7 @@ import type { users } from "../../infrastructure/db/schema";
 export type UserRow = typeof users.$inferSelect;
 export type NewUserRow = typeof users.$inferInsert;
 
-/** The caller's own profile. `inviteCode` is what the personal QR encodes. */
+/** The caller's own profile. The personal QR encodes `username`. */
 export type MeDto = {
   id: string;
   displayName: string;
@@ -11,7 +11,6 @@ export type MeDto = {
   avatarEmoji: string | null;
   /** Uploaded avatar image path (`/api/avatars/...`); takes precedence over `avatarEmoji`. */
   avatarUrl: string | null;
-  inviteCode: string;
   createdAt: string;
 };
 

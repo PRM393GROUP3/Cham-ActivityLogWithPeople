@@ -23,10 +23,6 @@ export class UserRepository {
     return this.db.select().from(users).where(eq(users.username, username)).get();
   }
 
-  findByInviteCode(inviteCode: string): Promise<UserRow | undefined> {
-    return this.db.select().from(users).where(eq(users.inviteCode, inviteCode)).get();
-  }
-
   async create(data: NewUserRow): Promise<UserRow> {
     const [row] = await this.db.insert(users).values(data).returning();
     return row!;

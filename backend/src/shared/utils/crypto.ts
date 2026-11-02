@@ -9,10 +9,3 @@ export const generateToken = () => toBase64Url(crypto.getRandomValues(new Uint8A
 
 export const hashToken = async (token: string) =>
   toHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token)));
-
-// No 0/O/1/I so the code can also be typed by hand if scanning fails.
-const INVITE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-
-/** 10 chars × 5 bits = 50 bits: unguessable enough for a code that only grants a friendship. */
-export const generateInviteCode = () =>
-  Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => INVITE_ALPHABET[b % 32]).join("");
