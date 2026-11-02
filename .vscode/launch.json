@@ -7,7 +7,9 @@
       "request": "launch",
       "cwd": "mobile",
       "program": "lib/main.dart",
-      "args": ["--dart-define-from-file=env/dev.json"]
+      "args": [
+        "--dart-define-from-file=env/dev.json"
+      ]
     },
     {
       "name": "mobile (prod)",
@@ -16,7 +18,19 @@
       "cwd": "mobile",
       "program": "lib/main.dart",
       "flutterMode": "release",
-      "args": ["--dart-define-from-file=env/prod.json"]
+      "args": [
+        "--dart-define-from-file=env/prod.json"
+      ]
+    },
+    {
+      "name": "mobile (prod-2)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "mobile",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define-from-file=env/prod2.json"
+      ]
     }
   ]
 }
