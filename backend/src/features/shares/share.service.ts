@@ -1,5 +1,6 @@
 import type { Notify } from "../../infrastructure/realtime/realtime";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../shared/errors/app-error";
+import { toPublicUserDto } from "../users/user.service";
 import type { FeedRow, ShareRepository } from "./share.repository";
 import type { PageQuery, UpsertShareInput } from "./share.schema";
 import type { Cursor, FeedShareDto, OwnShareDto, Page, ShareRow } from "./share.types";
@@ -127,7 +128,7 @@ export class ShareService {
       name: r.name,
       occurredAt: r.occurredAt.toISOString(),
       reactions: (reactionsByShare.get(r.id) ?? []).map((x) => ({
-        user: x.user,
+        user: toPublicUserDto(x.user),
         emoji: x.emoji,
         reactedAt: x.reactedAt.toISOString(),
       })),
@@ -145,7 +146,7 @@ export class ShareService {
 
     return rows.map(({ share, owner }) => ({
       id: share.id,
-      owner,
+      owner: toPublicUserDto(owner),
       emoji: share.emoji,
       name: share.name,
       occurredAt: share.occurredAt.toISOString(),

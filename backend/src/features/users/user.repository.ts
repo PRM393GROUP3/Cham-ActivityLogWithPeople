@@ -3,6 +3,14 @@ import type { Database } from "../../infrastructure/db/client";
 import { users } from "../../infrastructure/db/schema";
 import type { NewUserRow, UserRow } from "./user.types";
 
+/** Drizzle selection for a PublicUserRow, shared by every query that joins `users`. */
+export const publicUserColumns = {
+  id: users.id,
+  displayName: users.displayName,
+  avatarEmoji: users.avatarEmoji,
+  avatarKey: users.avatarKey,
+};
+
 export class UserRepository {
   constructor(private readonly db: Database) {}
 

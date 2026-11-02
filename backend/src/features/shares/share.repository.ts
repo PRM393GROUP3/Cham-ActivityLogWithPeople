@@ -1,9 +1,11 @@
 import { and, count, desc, eq, exists, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 import type { Database } from "../../infrastructure/db/client";
 import { friendships, reactions, shares, users } from "../../infrastructure/db/schema";
+import { publicUserColumns } from "../users/user.repository";
+import type { PublicUserRow } from "../users/user.types";
 import type { Cursor, NewShareRow, ShareRow } from "./share.types";
 
-export type FeedRow = { share: ShareRow; owner: { id: string; displayName: string; avatarEmoji: string | null } };
+export type FeedRow = { share: ShareRow; owner: PublicUserRow };
 
 export class ShareRepository {
   constructor(private readonly db: Database) {}
@@ -60,7 +62,7 @@ export class ShareRepository {
 
   private feedQuery() {
     return this.db
-      .select({ share: shares, owner: { id: users.id, displayName: users.displayName, avatarEmoji: users.avatarEmoji } })
+      .select({ share: shares, owner: publicUserColumns })
       .from(shares)
       .innerJoin(users, eq(users.id, shares.ownerId));
   }
@@ -118,7 +120,7 @@ export class ShareRepository {
         shareId: reactions.shareId,
         emoji: reactions.emoji,
         reactedAt: reactions.updatedAt,
-        user: { id: users.id, displayName: users.displayName, avatarEmoji: users.avatarEmoji },
+        user: publicUserColumns,
       })
       .from(reactions)
       .innerJoin(users, eq(users.id, reactions.userId))

@@ -25,5 +25,10 @@ export const updateMeSchema = z
     message: "At least one of 'displayName' or 'avatarEmoji' is required",
   });
 
+export const avatarParamSchema = z.object({
+  userId: z.uuid(),
+  file: z.string().regex(/^[0-9a-f-]{36}\.(jpg|png|webp)$/),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type UpdateMeInput = z.infer<typeof updateMeSchema>;

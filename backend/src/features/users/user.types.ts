@@ -8,6 +8,8 @@ export type MeDto = {
   id: string;
   displayName: string;
   avatarEmoji: string | null;
+  /** Uploaded avatar image path (`/api/avatars/...`); takes precedence over `avatarEmoji`. */
+  avatarUrl: string | null;
   inviteCode: string;
   createdAt: string;
 };
@@ -17,4 +19,8 @@ export type PublicUserDto = {
   id: string;
   displayName: string;
   avatarEmoji: string | null;
+  avatarUrl: string | null;
 };
+
+/** The `users` columns behind a PublicUserDto; select these and map with `toPublicUserDto`. */
+export type PublicUserRow = { id: string; displayName: string; avatarEmoji: string | null; avatarKey: string | null };

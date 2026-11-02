@@ -21,6 +21,13 @@
 			"migrations_dir": "migrations"
 		}
 	],
+	"r2_buckets": [
+		{
+			// Uploaded avatar images, served through GET /api/avatars/* (the bucket stays private).
+			"binding": "AVATARS",
+			"bucket_name": "cham-avatars"
+		}
+	],
 	"durable_objects": {
 		"bindings": [
 			{

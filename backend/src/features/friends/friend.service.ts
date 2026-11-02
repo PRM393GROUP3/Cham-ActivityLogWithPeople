@@ -1,15 +1,11 @@
 import type { Notify } from "../../infrastructure/realtime/realtime";
 import { AppError, NotFoundError } from "../../shared/errors/app-error";
 import type { UserRepository } from "../users/user.repository";
+import { toPublicUserDto } from "../users/user.service";
 import type { FriendRepository, FriendRow } from "./friend.repository";
 import type { FriendDto } from "./friend.types";
 
-const toDto = (row: FriendRow): FriendDto => ({
-  id: row.id,
-  displayName: row.displayName,
-  avatarEmoji: row.avatarEmoji,
-  since: row.since.toISOString(),
-});
+const toDto = (row: FriendRow): FriendDto => ({ ...toPublicUserDto(row), since: row.since.toISOString() });
 
 export class FriendService {
   constructor(

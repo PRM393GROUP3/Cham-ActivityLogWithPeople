@@ -12,8 +12,12 @@ const updatedAt = integer("updated_at", { mode: "timestamp_ms" })
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   displayName: text("display_name").notNull(),
-  /** Avatar is a single emoji chosen by the user; null = show the name's first letter. */
+  /**
+   * Avatar is either an uploaded image (R2 object key, see AvatarStorage) or a single emoji; setting
+   * one clears the other. Both null = show the name's first letter.
+   */
   avatarEmoji: text("avatar_emoji"),
+  avatarKey: text("avatar_key"),
   tokenHash: text("token_hash").notNull().unique(),
   /** Encoded in the personal QR; rotating it invalidates old QR codes. */
   inviteCode: text("invite_code").notNull().unique(),
