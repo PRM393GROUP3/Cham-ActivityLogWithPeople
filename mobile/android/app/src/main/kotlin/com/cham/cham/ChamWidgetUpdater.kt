@@ -227,6 +227,14 @@ object ChamWidgetUpdater {
         views.setTextViewText(R.id.small_widget_count, "${stats.todayCount} chấm hôm nay")
 
         views.setViewVisibility(R.id.small_widget_header, if (isCompact) View.GONE else View.VISIBLE)
+
+        val lastToday = latestLogToday(logsArray)
+        if (lastToday != null && !isCompact) {
+            views.setTextViewText(R.id.small_widget_last, "Bạn vừa chấm ${lastToday.emoji} ${lastToday.name}")
+            views.setViewVisibility(R.id.small_widget_last, View.VISIBLE)
+        } else {
+            views.setViewVisibility(R.id.small_widget_last, View.GONE)
+        }
         views.setTextViewTextSize(
             R.id.small_widget_title,
             TypedValue.COMPLEX_UNIT_SP,
@@ -626,6 +634,30 @@ object ChamWidgetUpdater {
         }
         prefs.edit().putString(KEY_LOGS, arr.toString()).apply()
         return arr
+    }
+
+    /** Lần chấm mới nhất trong hôm nay (giờ VN), `null` nếu hôm nay chưa chấm. */
+    private fun latestLogToday(logsArray: JSONArray): WidgetHabitItem? {
+        val todayVn = LocalDate.now(VN_ZONE)
+        var latest: Instant? = null
+        var item: WidgetHabitItem? = null
+        for (i in 0 until logsArray.length()) {
+            val obj = logsArray.optJSONObject(i) ?: continue
+            try {
+                val instant = Instant.parse(obj.optString("occurredAt", ""))
+                if (instant.atZone(VN_ZONE).toLocalDate() != todayVn) continue
+                if (latest == null || instant.isAfter(latest)) {
+                    latest = instant
+                    item = WidgetHabitItem(
+                        obj.optString("eventTypeId", ""),
+                        obj.optString("name", ""),
+                        obj.optString("emoji", "")
+                    )
+                }
+            } catch (_: Exception) {
+            }
+        }
+        return item
     }
 
     private data class WidgetStats(

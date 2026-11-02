@@ -79,6 +79,20 @@
         </FrameLayout>
     </FrameLayout>
 
+    <!-- Lần chấm gần nhất hôm nay: "Bạn vừa chấm ☕ Cà phê" -->
+    <TextView
+        android:id="@+id/small_widget_last"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="Bạn vừa chấm ☕ Cà phê"
+        android:textColor="#7A6C63"
+        android:textSize="10.5sp"
+        android:visibility="gone" />
+
     <!-- Bottom Row: Today Count -->
     <TextView
         android:id="@+id/small_widget_count"
