@@ -6,6 +6,7 @@ import '../activity_dial_controller.dart';
 import '../../../account/presentation/account_controller.dart';
 import '../../../account/presentation/widgets/user_avatar.dart';
 import '../../domain/activity_event_type.dart';
+import '../widgets/add_activity_dialog.dart';
 import '../widgets/orbital_dial_widget.dart';
 import '../widgets/today_logs_sheet.dart';
 import '../widgets/today_summary_card.dart';
@@ -98,13 +99,7 @@ class ActivityDialPage extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('• Chế độ: Local-First (DAT-01)'),
-            const SizedBox(height: 6),
-            const Text('• Ghi 1-chạm: Bật tức thì (LOG-03)'),
-            const SizedBox(height: 6),
-            const Text('• Đồng bộ Server: Tự động khi có mạng (DAT-03)'),
-            const SizedBox(height: 6),
-            const Text('• Phiên bản: v1.0.0 (PRM393)'),
+            const Text('Phiên bản: v1.0.0 (PRM393)'),
             const SizedBox(height: 14),
             const Divider(color: Color(0xFFE5DDD5)),
             const SizedBox(height: 6),
@@ -249,7 +244,8 @@ class ActivityDialPage extends ConsumerWidget {
                             ),
                             // Lịch sử & thống kê (HIS-01, STA-01)
                             IconButton(
-                              onPressed: () => Navigator.pushNamed(context, '/stats'),
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/stats'),
                               icon: const Icon(
                                 Icons.bar_chart_rounded,
                                 color: Color(0xFF4A403A),
@@ -317,7 +313,7 @@ class ActivityDialPage extends ConsumerWidget {
                           _showFeedbackToast(context, type);
                         }
                       },
-                      onTapCenter: () => _openTodayLogsSheet(context),
+                      onTapCenter: () => showAddActivityDialog(context),
                     ),
                   ],
                 ),

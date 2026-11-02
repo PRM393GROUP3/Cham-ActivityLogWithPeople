@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Nút tròn nổi bật "+ CHẤM" ở chính giữa tâm các vòng quỹ đạo
+/// Nút tròn nổi bật "+" ở chính giữa tâm các vòng quỹ đạo: thêm hoạt động tự tạo
 class CenterChamHub extends StatefulWidget {
-  const CenterChamHub({
-    super.key,
-    required this.onTap,
-    this.diameter = 86.0,
-  });
+  const CenterChamHub({super.key, required this.onTap, this.diameter = 86.0});
 
   final VoidCallback onTap;
   final double diameter;
@@ -28,9 +24,10 @@ class _CenterChamHubState extends State<CenterChamHub>
       vsync: this,
       duration: const Duration(milliseconds: 160),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.90).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.90,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
   }
 
   @override
@@ -73,10 +70,7 @@ class _CenterChamHubState extends State<CenterChamHub>
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFFF8A6B),
-                    Color(0xFFFF694A),
-                  ],
+                  colors: [Color(0xFFFF8A6B), Color(0xFFFF694A)],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -87,26 +81,11 @@ class _CenterChamHubState extends State<CenterChamHub>
                   ),
                 ],
               ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  SizedBox(height: 1),
-                  Text(
-                    'CHẤM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
+              child: Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: widget.diameter * 0.52,
+                semanticLabel: 'Thêm hoạt động',
               ),
             ),
           ],

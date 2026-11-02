@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -34,20 +35,28 @@ class _RadialDialNodeState extends State<RadialDialNode>
   late final AnimationController _burstController;
 
   /// Rung rung định kỳ khi nghỉ: mỗi chu kỳ icon lắc nhẹ vài nhịp rồi đứng yên.
-  /// Chu kỳ và pha lệch theo từng loại để các nút không rung cùng lúc.
+  /// Mọi nút chung một chu kỳ nhưng lệch pha theo từng loại để không rung cùng lúc.
   late final AnimationController _idleController;
+
+  /// Chu kỳ chung của cả vòng Dial. Mỗi nút chỉ chạy đoạn đầu (rung + gợn sóng, 36% chu kỳ)
+  /// sau độ lệch tối đa [_idleMaxOffset], nên cuối mỗi chu kỳ cả vòng nghỉ ~1,7 giây không vẽ
+  /// khung hình nào (đỡ tốn pin, `pumpAndSettle` trong test vẫn dừng được).
+  static const _idleCycle = Duration(milliseconds: 5000);
+  static const _idleMaxOffset = Duration(milliseconds: 1500);
+  static const _idleActiveEnd = 0.36;
+  Timer? _idleTimer;
 
   @override
   void initState() {
     super.initState();
     final seed = widget.type.id.hashCode.abs();
-    _idleController =
-        AnimationController(
-            vsync: this,
-            duration: Duration(milliseconds: 3400 + seed % 1600),
-          )
-          ..value = (seed % 1000) / 1000
-          ..repeat();
+    const cycle = _idleCycle;
+    _idleController = AnimationController(vsync: this, duration: cycle)
+      ..value = _idleActiveEnd;
+    _idleTimer = Timer(_idleMaxOffset * ((seed % 1000) / 1000), () {
+      _playIdle();
+      _idleTimer = Timer.periodic(cycle, (_) => _playIdle());
+    });
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 140),
@@ -61,8 +70,18 @@ class _RadialDialNodeState extends State<RadialDialNode>
     );
   }
 
+  void _playIdle() {
+    if (!mounted || MediaQuery.maybeDisableAnimationsOf(context) == true) {
+      return;
+    }
+    _idleController
+      ..value = 0
+      ..animateTo(_idleActiveEnd);
+  }
+
   @override
   void dispose() {
+    _idleTimer?.cancel();
     _idleController.dispose();
     _burstController.dispose();
     _animController.dispose();

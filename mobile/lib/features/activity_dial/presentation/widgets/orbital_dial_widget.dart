@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../domain/activity_event_type.dart';
@@ -7,7 +8,7 @@ import 'orbital_dial_painter.dart';
 import 'radial_dial_node.dart';
 
 /// Vòng xoay các quỹ đạo hoạt động (Radial Orbital Dial)
-/// Đặt 19 loại sự kiện trên 3 đường tròn đồng tâm nét đứt quanh nút + CHẤM
+/// Đặt 19 loại sự kiện trên 3 đường tròn đồng tâm nét đứt quanh nút + (thêm hoạt động)
 class OrbitalDialWidget extends StatelessWidget {
   const OrbitalDialWidget({
     super.key,
@@ -48,14 +49,10 @@ class OrbitalDialWidget extends StatelessWidget {
               // 1. Vẽ 3 đường tròn đồng tâm nét đứt + Vầng sáng
               CustomPaint(
                 size: dialSize,
-                painter: OrbitalDialPainter(
-                  r1: r1,
-                  r2: r2,
-                  r3: r3,
-                ),
+                painter: OrbitalDialPainter(r1: r1, r2: r2, r3: r3),
               ),
 
-              // 2. Nút tròn trung tâm "+ CHẤM"
+              // 2. Nút tròn trung tâm "+" thêm hoạt động
               Center(
                 child: CenterChamHub(
                   diameter: centerDiameter,
