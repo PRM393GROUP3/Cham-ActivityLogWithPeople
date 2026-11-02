@@ -3,12 +3,14 @@ import type { users } from "../../infrastructure/db/schema";
 export type UserRow = typeof users.$inferSelect;
 export type NewUserRow = typeof users.$inferInsert;
 
-/** The caller's own profile. `inviteCode` is what the personal QR encodes. */
+/** The caller's own profile. The personal QR encodes `username`. */
 export type MeDto = {
   id: string;
   displayName: string;
+  username: string | null;
   avatarEmoji: string | null;
-  inviteCode: string;
+  /** Uploaded avatar image path (`/api/avatars/...`); takes precedence over `avatarEmoji`. */
+  avatarUrl: string | null;
   createdAt: string;
 };
 
@@ -16,5 +18,16 @@ export type MeDto = {
 export type PublicUserDto = {
   id: string;
   displayName: string;
+  username: string | null;
   avatarEmoji: string | null;
+  avatarUrl: string | null;
+};
+
+/** The `users` columns behind a PublicUserDto; select these and map with `toPublicUserDto`. */
+export type PublicUserRow = {
+  id: string;
+  displayName: string;
+  username: string | null;
+  avatarEmoji: string | null;
+  avatarKey: string | null;
 };

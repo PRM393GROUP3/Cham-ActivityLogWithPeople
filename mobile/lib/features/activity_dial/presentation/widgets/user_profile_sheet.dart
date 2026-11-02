@@ -5,19 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../account/presentation/account_controller.dart';
 import '../../../account/presentation/widgets/user_avatar.dart';
 
-/// Bottom Sheet hiển thị hồ sơ người dùng ẩn danh và mã mời kết bạn (SOC-01).
-/// Tài khoản chỉ được tạo khi dùng tính năng xã hội lần đầu, nên có thể chưa có mã mời.
+/// Bottom Sheet hiển thị hồ sơ người dùng ẩn danh và nickname để kết bạn (SOC-01).
+/// Nickname có thể chưa đặt (bỏ qua onboarding, tài khoản cũ): chạm để đặt.
 class UserProfileSheet extends ConsumerWidget {
   const UserProfileSheet({super.key});
 
-  static const _noCode = 'Chưa có';
-
-  void _copyInviteCode(BuildContext context, String inviteCode) {
-    if (inviteCode == _noCode) return;
-    Clipboard.setData(ClipboardData(text: inviteCode));
+  void _copyUsername(BuildContext context, String username) {
+    Clipboard.setData(ClipboardData(text: '@$username'));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Đã sao chép mã mời: $inviteCode'),
+        content: Text('Đã sao chép nickname: @$username'),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -27,8 +24,9 @@ class UserProfileSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final account = ref.watch(accountControllerProvider).value;
-    final displayName = account?.displayName ?? AccountController.defaultDisplayName;
-    final inviteCode = account?.inviteCode ?? _noCode;
+    final displayName =
+        account?.displayName ?? AccountController.defaultDisplayName;
+    final username = account?.username;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -63,7 +61,12 @@ class UserProfileSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            child: UserAvatar(name: displayName, emoji: account?.avatarEmoji, radius: 33),
+            child: UserAvatar(
+              name: displayName,
+              emoji: account?.avatarEmoji,
+              imageUrl: account?.avatarUrl,
+              radius: 33,
+            ),
           ),
           TextButton.icon(
             onPressed: () {
@@ -85,15 +88,12 @@ class UserProfileSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Mã mời: $inviteCode',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF8A7C72),
-            ),
+            username != null ? '@$username' : 'Chưa đặt nickname',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF8A7C72)),
           ),
           const SizedBox(height: 18),
 
-          // Thẻ mã QR & mã mời kết bạn (SOC-01)
+          // Thẻ mã QR & nickname để kết bạn (SOC-01)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -106,10 +106,14 @@ class UserProfileSheet extends ConsumerWidget {
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.qr_code_2_rounded, color: Color(0xFFA93B24), size: 22),
+                    Icon(
+                      Icons.qr_code_2_rounded,
+                      color: Color(0xFFA93B24),
+                      size: 22,
+                    ),
                     SizedBox(width: 8),
                     Text(
-                      'MÃ MỜI KẾT BẠN (SOC-01)',
+                      'KẾT BẠN',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -121,9 +125,17 @@ class UserProfileSheet extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: () => _copyInviteCode(context, inviteCode),
+                  onTap: () {
+                    if (username != null)
+                      return _copyUsername(context, username);
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/profile');
+                  },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -133,17 +145,18 @@ class UserProfileSheet extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          inviteCode,
+                          username != null ? '@$username' : 'Đặt nickname',
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 2.0,
                             color: Color(0xFFA93B24),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(
-                          Icons.copy_rounded,
+                        Icon(
+                          username != null
+                              ? Icons.copy_rounded
+                              : Icons.edit_outlined,
                           size: 16,
                           color: Color(0xFF8A7C72),
                         ),
@@ -153,12 +166,9 @@ class UserProfileSheet extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Quét mã này để kết bạn hai chiều. Mã QR không chứa nhật ký cá nhân.',
+                  'Bạn bè quét mã QR hoặc nhập nickname này để kết bạn hai chiều. Mã QR không chứa nhật ký cá nhân.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF7E7268),
-                  ),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF7E7268)),
                 ),
                 const SizedBox(height: 14),
 
@@ -226,7 +236,9 @@ class UserProfileSheet extends ConsumerWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF2E241F),
                 side: const BorderSide(color: Color(0xFFD6C9BA)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 13),
               ),
               onPressed: () => Navigator.pop(context),

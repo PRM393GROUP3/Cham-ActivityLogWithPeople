@@ -26,7 +26,7 @@ Future<Uint8List> renderAppQr(WidgetTester tester, String data) async {
 }
 
 void main() {
-  final code = InviteQr.encode('H4R7N2Q8ZK');
+  final code = InviteQr.encode('khoa.nguyen');
 
   group('decodeQrFromImage (Web + Android)', () {
     testWidgets('reads the app own QR from a screenshot-like PNG', (tester) async {

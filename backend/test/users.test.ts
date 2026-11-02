@@ -5,7 +5,7 @@ describe("auth & me", () => {
   it("registers an anonymous user and authenticates with the returned token", async () => {
     const u = await register("An");
     const me = await json(await api("/me", { token: u.token }));
-    expect(me).toMatchObject({ id: u.id, displayName: "An", inviteCode: u.inviteCode });
+    expect(me).toMatchObject({ id: u.id, displayName: "An", username: u.username });
 
     const renamed = await json(
       await api("/me", { method: "PATCH", token: u.token, body: JSON.stringify({ displayName: "An Nguyễn" }) }),
@@ -47,6 +47,36 @@ describe("auth & me", () => {
       expect((await patch({ avatarEmoji })).status, avatarEmoji).toBe(400);
     }
     expect((await patch({})).status).toBe(400);
+  });
+
+  it("sets a unique, case-insensitive username", async () => {
+    const a = await register("A");
+    const b = await register("B");
+    const patch = (u: { token: string }, body: object) =>
+      api("/me", { method: "PATCH", token: u.token, body: JSON.stringify(body) });
+
+    const fresh = await json(await api("/auth/register", { method: "POST", body: JSON.stringify({ displayName: "D" }) }));
+    expect(fresh.user.username).toBeNull();
+    expect(await json(await patch(a, { username: " Khoa.Nguyen ", displayName: "Khoa" }))).toMatchObject({
+      username: "khoa.nguyen",
+      displayName: "Khoa",
+    });
+
+    const taken = await patch(b, { username: "KHOA.NGUYEN" });
+    expect(taken.status).toBe(409);
+    expect((await taken.json()) as object).toMatchObject({ error: { code: "USERNAME_TAKEN" } });
+
+    expect((await patch(a, { username: "khoa.nguyen" })).status).toBe(200); // already yours
+    expect((await json(await patch(a, { username: "khoa_2" }))).username).toBe("khoa_2");
+    expect((await patch(b, { username: "khoa.nguyen" })).status).toBe(200); // freed by the rename
+  });
+
+  it("rejects malformed usernames", async () => {
+    const u = await register("C");
+    const patch = (body: object) => api("/me", { method: "PATCH", token: u.token, body: JSON.stringify(body) });
+    for (const username of ["ab", "a".repeat(21), "khoa nguyen", "khoa-n", "khoá", ".khoa", "khoa.", "kh..oa", ""]) {
+      expect((await patch({ username })).status, username).toBe(400);
+    }
   });
 
   it("friends and feed show the friend's avatar emoji", async () => {

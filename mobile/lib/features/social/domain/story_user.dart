@@ -4,6 +4,7 @@ class StoryUser {
     required this.id,
     required this.name,
     this.avatarEmoji,
+    this.avatarUrl,
   });
 
   final String id;
@@ -11,4 +12,7 @@ class StoryUser {
 
   /// Avatar emoji; chưa có thì hiển thị chữ cái đầu của tên.
   final String? avatarEmoji;
+
+  /// Ảnh avatar, ưu tiên hơn [avatarEmoji].
+  final String? avatarUrl;
 }

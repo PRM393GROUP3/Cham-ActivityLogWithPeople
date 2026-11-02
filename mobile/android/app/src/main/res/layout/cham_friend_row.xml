@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Một dòng bạn bè trong Widget 4×2: avatar (emoji việc vừa làm ở góc), tên, hoạt động, thời gian, tim -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/row_root"
+    android:layout_width="match_parent"
+    android:layout_height="38dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <FrameLayout
+        android:layout_width="30dp"
+        android:layout_height="30dp">
+
+        <TextView
+            android:id="@+id/row_avatar"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center"
+            android:background="@drawable/widget_avatar_bg"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/row_badge"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/widget_badge_bg"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:textSize="8.5sp" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/row_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:maxLines="1"
+        android:textColor="#2C2523"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/row_act"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="#857469"
+        android:textSize="11.5sp" />
+
+    <TextView
+        android:id="@+id/row_ago"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:maxLines="1"
+        android:textColor="#857469"
+        android:textSize="10.5sp" />
+
+    <!-- Vùng chạm 34dp cho nút tim -->
+    <TextView
+        android:id="@+id/row_heart"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginStart="2dp"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="♡"
+        android:textColor="#857469"
+        android:textSize="15sp" />
+</LinearLayout>

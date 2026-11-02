@@ -11,7 +11,7 @@ typedef QrImagePicker = Future<XFile?> Function();
 
 Future<XFile?> _pickFromGallery() => ImagePicker().pickImage(source: ImageSource.gallery);
 
-/// Quét mã QR kết bạn bằng camera (SOC-01), kèm bật đèn, quét từ ảnh (Android và Web) và nhập mã tay.
+/// Quét mã QR kết bạn bằng camera (SOC-01), kèm bật đèn, quét từ ảnh (Android và Web) và nhập nickname.
 /// Mỗi lần chỉ xử lý một mã: trong lúc [onCodeScanned] chưa xong, các lần đọc tiếp bị bỏ qua.
 class QrScannerView extends StatefulWidget {
   const QrScannerView({
@@ -22,7 +22,7 @@ class QrScannerView extends StatefulWidget {
     this.pickImage = _pickFromGallery,
   });
 
-  /// Nhận nội dung thô (QR hoặc mã gõ tay); bên gọi giải mã bằng [InviteQr.decode].
+  /// Nhận nội dung thô (QR hoặc nickname gõ tay); bên gọi giải mã bằng [InviteQr.decode].
   final Future<void> Function(String raw) onCodeScanned;
   final bool animateLaser;
 
@@ -191,7 +191,7 @@ class _QrScannerViewState extends State<QrScannerView>
               ),
               const SizedBox(height: 18),
               const Text(
-                'Nhập Mã Kết Bạn',
+                'Nhập Nickname',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -201,7 +201,7 @@ class _QrScannerViewState extends State<QrScannerView>
               ),
               const SizedBox(height: 8),
               const Text(
-                'Nhập mã mời 10 ký tự từ mã QR của bạn bè.',
+                'Nhập nickname của bạn bè (vd. @khoa.nguyen).',
                 style: TextStyle(
                   fontSize: 13,
                   color: Color(0xFF756E68),
@@ -212,9 +212,11 @@ class _QrScannerViewState extends State<QrScannerView>
               TextField(
                 controller: textController,
                 autofocus: true,
-                textCapitalization: TextCapitalization.characters,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.visiblePassword, // bàn phím không gợi ý / tự viết hoa
                 decoration: InputDecoration(
-                  hintText: 'VD: K7M2P9XQ4R',
+                  hintText: 'VD: khoa.nguyen',
                   hintStyle: const TextStyle(color: Color(0xFFAAA29B)),
                   filled: true,
                   fillColor: const Color(0xFFFAF7F2),
@@ -223,7 +225,7 @@ class _QrScannerViewState extends State<QrScannerView>
                     borderSide: BorderSide.none,
                   ),
                   prefixIcon: const Icon(
-                    Icons.tag_rounded,
+                    Icons.alternate_email_rounded,
                     color: Color(0xFFB53216),
                   ),
                 ),
@@ -299,8 +301,8 @@ class _QrScannerViewState extends State<QrScannerView>
                       onDetect: _onDetect,
                       errorBuilder: (context, error) => _CameraMessage(
                         error.errorCode == MobileScannerErrorCode.permissionDenied
-                            ? 'Chưa được cấp quyền camera.\nHãy cho phép trong cài đặt, hoặc dùng "Nhập mã".'
-                            : 'Không mở được camera.\nHãy dùng "Nhập mã".',
+                            ? 'Chưa được cấp quyền camera.\nHãy cho phép trong cài đặt, hoặc dùng "Nhập nickname".'
+                            : 'Không mở được camera.\nHãy dùng "Nhập nickname".',
                       ),
                     ),
                   )
@@ -391,7 +393,7 @@ class _QrScannerViewState extends State<QrScannerView>
               Expanded(
                 child: _ScannerOptionButton(
                   icon: Icons.keyboard_alt_outlined,
-                  label: 'Nhập mã',
+                  label: 'Nhập nickname',
                   onTap: _openManualCodeDialog,
                 ),
               ),

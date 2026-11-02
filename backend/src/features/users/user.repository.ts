@@ -3,6 +3,15 @@ import type { Database } from "../../infrastructure/db/client";
 import { users } from "../../infrastructure/db/schema";
 import type { NewUserRow, UserRow } from "./user.types";
 
+/** Drizzle selection for a PublicUserRow, shared by every query that joins `users`. */
+export const publicUserColumns = {
+  id: users.id,
+  displayName: users.displayName,
+  username: users.username,
+  avatarEmoji: users.avatarEmoji,
+  avatarKey: users.avatarKey,
+};
+
 export class UserRepository {
   constructor(private readonly db: Database) {}
 
@@ -10,8 +19,8 @@ export class UserRepository {
     return this.db.select().from(users).where(eq(users.id, id)).get();
   }
 
-  findByInviteCode(inviteCode: string): Promise<UserRow | undefined> {
-    return this.db.select().from(users).where(eq(users.inviteCode, inviteCode)).get();
+  findByUsername(username: string): Promise<UserRow | undefined> {
+    return this.db.select().from(users).where(eq(users.username, username)).get();
   }
 
   async create(data: NewUserRow): Promise<UserRow> {

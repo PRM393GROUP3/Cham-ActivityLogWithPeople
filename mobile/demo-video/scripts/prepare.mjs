@@ -21,8 +21,9 @@ async function call(method, path, body, token) {
 }
 
 const reg = await call('POST', '/auth/register', { displayName: 'Thư' });
-await call('PATCH', '/me', { displayName: 'Thư', avatarEmoji: '🌸' }, reg.token);
-const account = { id: reg.user.id, displayName: 'Thư', avatarEmoji: '🌸', inviteCode: reg.user.inviteCode, token: reg.token };
+const username = `thu_${Date.now().toString(36)}`; // duy nhất qua các lần chạy trên cùng DB local
+await call('PATCH', '/me', { displayName: 'Thư', username, avatarEmoji: '🌸' }, reg.token);
+const account = { id: reg.user.id, displayName: 'Thư', username, avatarEmoji: '🌸', token: reg.token };
 
 // --- Một tuần (Thứ Hai -> hôm nay) theo giờ VN: 5 ngày Tập trung, ngủ muộn, 15 ly cà phê ---
 const VN = 7 * 3600e3;
@@ -65,10 +66,10 @@ fs.writeFileSync(`${OUT}/seed.json`, JSON.stringify(seed, null, 2));
 
 // --- QR + camera giả ---
 const qrPng = `${OUT}/thu-qr.png`;
-await QRCode.toFile(qrPng, `CHAM:${account.inviteCode}`, { width: 360, margin: 2, errorCorrectionLevel: 'H' });
+await QRCode.toFile(qrPng, `CHAM:@${account.username}`, { width: 360, margin: 2, errorCorrectionLevel: 'H' });
 // Khung 640x480: QR trên nền giấy, lắc nhẹ như tay cầm điện thoại.
 execFileSync('ffmpeg', ['-y', '-v', 'error', '-loop', '1', '-i', qrPng, '-f', 'lavfi', '-i', 'color=c=0xEDE6DC:s=760x600:d=20',
   '-filter_complex', "[1][0]overlay=x='200+14*sin(t*1.7)':y='120+10*cos(t*1.3)':shortest=1,crop=640:480:60:60,format=yuv420p",
   '-r', '30', '-t', '20', `${OUT}/qr-camera.y4m`]);
 
-console.log(`Thư: ${account.inviteCode} · ${activityLogs.length} bản ghi (${coffees} cà phê) -> ${OUT}`);
+console.log(`Thư: @${account.username} · ${activityLogs.length} bản ghi (${coffees} cà phê) -> ${OUT}`);

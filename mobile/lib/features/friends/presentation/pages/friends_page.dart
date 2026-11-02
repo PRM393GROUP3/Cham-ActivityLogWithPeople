@@ -75,7 +75,7 @@ class FriendsPage extends ConsumerWidget {
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
-                    _Message(text: 'Chưa có bạn bè nào.\nBấm "Thêm bạn" để quét mã QR hoặc nhập mã mời.'),
+                    _Message(text: 'Chưa có bạn bè nào.\nBấm "Thêm bạn" để quét mã QR hoặc nhập nickname.'),
                   ],
                 )
               : ListView.separated(
@@ -111,7 +111,7 @@ class _FriendTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          UserAvatar(name: friend.displayName, emoji: friend.avatarEmoji),
+          UserAvatar(name: friend.displayName, emoji: friend.avatarEmoji, imageUrl: friend.avatarUrl),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

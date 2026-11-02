@@ -8,7 +8,6 @@ import '../../domain/story_user.dart';
 import '../controllers/feed_controller.dart';
 import '../widgets/feed_card.dart';
 import '../widgets/friend_day_dial.dart';
-import '../widgets/header_bar.dart';
 import '../widgets/stories_bar.dart';
 
 /// Feed các bản ghi Public của bạn bè (SOC-05). Lọc theo từng người bằng thanh phía trên.
@@ -33,6 +32,43 @@ class _FeedPageState extends ConsumerState<FeedPage> {
         ref.read(friendsControllerProvider.notifier).refresh(),
       ]);
 
+  /// Đã về Trang chủ trong lần kéo này (chỉ gọi một lần mỗi lần kéo).
+  bool _leaving = false;
+
+  /// Quãng ngón tay đã kéo xuống khi danh sách đang ở đầu (chưa trừ ma sát bật nảy).
+  double _pull = 0;
+  static const _pullToHome = 56.0;
+
+  /// Trong shell: kéo xuống quá đầu danh sách thì về Trang chủ (Trang chủ nằm phía trên),
+  /// làm mới bằng nút trên header. Đứng riêng thì kéo xuống để làm mới như thường.
+  Widget _pullable(Widget list) {
+    final onHome = widget.onNavigateToHome;
+    if (onHome == null) return RefreshIndicator(onRefresh: _refresh, child: list);
+    return NotificationListener<ScrollNotification>(
+      onNotification: (n) {
+        if (n is ScrollStartNotification) {
+          _leaving = false;
+          _pull = 0;
+        }
+        final drag = switch (n) {
+          ScrollUpdateNotification(:final dragDetails?) => dragDetails,
+          OverscrollNotification(:final dragDetails?) => dragDetails,
+          _ => null,
+        };
+        if (drag != null) {
+          final atTop = n.metrics.pixels <= n.metrics.minScrollExtent;
+          _pull = atTop ? _pull + drag.delta.dy : 0;
+          if (!_leaving && _pull > _pullToHome) {
+            _leaving = true;
+            onHome();
+          }
+        }
+        return false;
+      },
+      child: list,
+    );
+  }
+
   Future<void> _onReactionTap(FeedShare share, String emoji) async {
     try {
       await ref.read(feedControllerProvider.notifier).toggleReaction(share.id, emoji);
@@ -51,8 +87,8 @@ class _FeedPageState extends ConsumerState<FeedPage> {
     final me = ref.watch(accountControllerProvider).value;
     final storyUsers = [
       // "Bạn": lọc bài Công khai của chính mình để xem bạn bè đã thả cảm xúc gì.
-      if (me != null) StoryUser(id: me.id, name: 'Bạn', avatarEmoji: me.avatarEmoji),
-      for (final f in friends) StoryUser(id: f.id, name: f.displayName, avatarEmoji: f.avatarEmoji),
+      if (me != null) StoryUser(id: me.id, name: 'Bạn', avatarEmoji: me.avatarEmoji, avatarUrl: me.avatarUrl),
+      for (final f in friends) StoryUser(id: f.id, name: f.displayName, avatarEmoji: f.avatarEmoji, avatarUrl: f.avatarUrl),
     ];
 
     return Scaffold(
@@ -60,13 +96,29 @@ class _FeedPageState extends ConsumerState<FeedPage> {
       body: SafeArea(
         child: Column(
           children: [
-            HeaderBar(
-              onBackPressed: widget.onNavigateToHome ??
-                  (Navigator.of(context).canPop()
-                      ? () => Navigator.of(context).pop()
-                      : null),
-              onSettingsPressed: () => Navigator.pushNamed(context, '/widgets'),
-              onProfilePressed: () => Navigator.pushNamed(context, '/add-qr'),
+            if (widget.onNavigateToHome != null) _HomeGrip(onTap: widget.onNavigateToHome!),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 8, 6),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Bạn bè',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1E1B18)),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Làm mới',
+                    icon: const Icon(Icons.refresh_rounded, color: Color(0xFF5C4033)),
+                    onPressed: _refresh,
+                  ),
+                  IconButton(
+                    tooltip: 'Mã QR kết bạn',
+                    icon: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF5C4033)),
+                    onPressed: () => Navigator.pushNamed(context, '/add-qr'),
+                  ),
+                ],
+              ),
             ),
 
             StoriesBar(
@@ -99,11 +151,10 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                           shares: sharesOfToday(shares, selected.id),
                           isMe: selected.id == me?.id,
                         );
-                  return RefreshIndicator(
-                    onRefresh: _refresh,
-                    child: visible.isEmpty
+                  return _pullable(
+                    visible.isEmpty
                         ? ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
+                            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                             padding: dayDial == null ? null : const EdgeInsets.fromLTRB(16, 12, 16, 24),
                             children: [
                               if (dayDial != null) ...[dayDial, const SizedBox(height: 12)],
@@ -139,6 +190,43 @@ class _FeedPageState extends ConsumerState<FeedPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Thanh kéo trên cùng: vuốt xuống (hoặc bấm) để về Trang chủ.
+class _HomeGrip extends StatelessWidget {
+  const _HomeGrip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Trang chủ',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        onVerticalDragEnd: (d) {
+          if ((d.primaryVelocity ?? 0) > 0) onTap();
+        },
+        child: SizedBox(
+          height: 22,
+          width: double.infinity,
+          child: Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCCFC3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cham/core/network/api_exception.dart';
 import 'package:cham/features/account/data/account_api.dart';
 import 'package:cham/features/account/domain/account.dart';
@@ -10,34 +12,59 @@ import 'package:cham/features/social/domain/feed_share.dart';
 
 const offline = ApiException('NETWORK_ERROR', 'offline');
 
-const testAccount = Account(id: 'me', displayName: 'Bạn', inviteCode: 'MYCODE', token: 't0k3n');
+const testAccount = Account(id: 'me', displayName: 'Bạn', token: 't0k3n');
 
 class FakeAccountApi implements AccountApi {
   int calls = 0;
   bool online = true;
 
+  /// Tài khoản `register` trả về.
+  Account account = testAccount;
+
   @override
   Future<Account> register(String displayName) async {
     calls++;
     if (!online) throw offline;
-    return testAccount;
+    return account;
   }
 
-  String nextInviteCode = 'B3T8WQ2N6M';
+  final profileUpdates = <({String? displayName, String? username, String? avatarEmoji, bool clearAvatar})>[];
 
-  final profileUpdates = <({String? displayName, String? avatarEmoji, bool clearAvatar})>[];
+  /// Nickname (chữ thường) đã thuộc về người khác.
+  final takenUsernames = <String>{};
 
   @override
-  Future<Profile> updateProfile({String? displayName, String? avatarEmoji, bool clearAvatar = false}) async {
+  Future<Profile> updateProfile({
+    String? displayName,
+    String? username,
+    String? avatarEmoji,
+    bool clearAvatar = false,
+  }) async {
     if (!online) throw offline;
-    profileUpdates.add((displayName: displayName, avatarEmoji: avatarEmoji, clearAvatar: clearAvatar));
-    return (displayName: displayName ?? testAccount.displayName, avatarEmoji: clearAvatar ? null : avatarEmoji);
+    if (username != null && takenUsernames.contains(username.toLowerCase())) {
+      throw const ApiException('USERNAME_TAKEN', 'Nickname này đã có người dùng.', statusCode: 409);
+    }
+    profileUpdates.add(
+      (displayName: displayName, username: username, avatarEmoji: avatarEmoji, clearAvatar: clearAvatar),
+    );
+    return (
+      displayName: displayName ?? testAccount.displayName,
+      username: username?.toLowerCase(),
+      avatarEmoji: clearAvatar ? null : avatarEmoji,
+      avatarUrl: avatarEmoji != null || clearAvatar ? null : avatarUrl,
+    );
   }
 
+  /// Ảnh avatar hiện tại trên "server".
+  String? avatarUrl;
+  final avatarUploads = <Uint8List>[];
+
   @override
-  Future<String> rotateInviteCode() async {
+  Future<Profile> uploadAvatar(Uint8List bytes) async {
     if (!online) throw offline;
-    return nextInviteCode;
+    avatarUploads.add(bytes);
+    avatarUrl = '/api/avatars/me/${avatarUploads.length}.jpg';
+    return (displayName: testAccount.displayName, username: null, avatarEmoji: null, avatarUrl: avatarUrl);
   }
 }
 
@@ -91,9 +118,11 @@ class FakeFriendsApi implements FriendsApi {
   Future<List<Friend>> list() async => List.of(friends);
 
   @override
-  Future<Friend> add(String inviteCode) async {
-    if (inviteCode == 'BAD') throw const ApiException('NOT_FOUND', 'Mã mời không tồn tại', statusCode: 404);
-    final friend = Friend(id: 'f-$inviteCode', displayName: 'Bạn $inviteCode', since: DateTime.utc(2026, 10, 1));
+  Future<Friend> add(String username) async {
+    if (username == 'nobody') {
+      throw const ApiException('USER_NOT_FOUND', 'Không tìm thấy ai có nickname này.', statusCode: 404);
+    }
+    final friend = Friend(id: 'f-$username', displayName: 'Bạn $username', since: DateTime.utc(2026, 10, 1));
     friends.add(friend);
     return friend;
   }

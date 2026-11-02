@@ -49,6 +49,30 @@
                 android:resource="@xml/cham_small_widget_info" />
         </receiver>
 
+        <!-- Vòng chọn hoạt động mở từ dấu + của Widget 2x2: trong suốt, không hiện trong Gần đây -->
+        <activity
+            android:name=".ChamDialPickerActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="com.cham.cham.dialpicker"
+            android:theme="@style/ChamDialPickerTheme" />
+
+        <!-- Thao tác trên danh sách bạn bè của Widget 4x2 (thả tim, mở app): đóng ngay, không hiện gì -->
+        <activity
+            android:name=".ChamWidgetActionActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="com.cham.cham.widgetaction"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- Cấp các dòng cho danh sách cuộn của Widget 4x2 -->
+        <service
+            android:name=".ChamFriendsWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
         <!-- Native Android Home Screen Widget 4x2 (WID-01) -->
         <receiver
             android:name=".ChamMediumWidgetProvider"

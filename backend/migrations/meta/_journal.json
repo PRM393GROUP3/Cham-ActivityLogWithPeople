@@ -50,6 +50,27 @@
       "when": 1792994415541,
       "tag": "0006_user_avatar_emoji",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793638966209,
+      "tag": "0007_user_avatar_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793640459325,
+      "tag": "0008_user_username",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793642884843,
+      "tag": "0009_drop_invite_code",
+      "breakpoints": true
     }
   ]
 }

@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/fakes.dart';
 
-const _demoQr = QrCodeData(displayName: 'Hà My (Tôi)', username: '@hamy_cham', inviteCode: 'CHAM-8F3K9M');
+const _demoQr = QrCodeData(displayName: 'Hà My (Tôi)', username: 'hamy_cham');
 
 void main() {
   testWidgets('AddQrPage renders My QR tab and switches to Scan QR tab correctly',
@@ -37,14 +37,14 @@ void main() {
       find.text('Đưa mã này để bạn bè quét kết nối một chạm.'),
       findsOneWidget,
     );
-    expect(find.text('Sao chép mã'), findsOneWidget);
-    expect(find.text('Đổi mã mời'), findsNothing, reason: 'fixed demo data has no account to rotate');
+    expect(find.text('Chấm · @hamy_cham'), findsOneWidget);
+    expect(find.text('Sao chép nickname'), findsOneWidget);
 
-    // Tap "Sao chép mã"
-    await tester.ensureVisible(find.text('Sao chép mã'));
-    await tester.tap(find.text('Sao chép mã'));
+    // Tap "Sao chép nickname"
+    await tester.ensureVisible(find.text('Sao chép nickname'));
+    await tester.tap(find.text('Sao chép nickname'));
     await tester.pumpAndSettle();
-    expect(find.text('Đã sao chép mã mời: CHAM-8F3K9M'), findsOneWidget);
+    expect(find.text('Đã sao chép nickname: @hamy_cham'), findsOneWidget);
 
     // Switch to "Quét mã QR" tab
     await tester.tap(find.text('Quét mã QR'));
@@ -57,7 +57,7 @@ void main() {
     );
     expect(find.text('Bật đèn'), findsOneWidget);
     expect(find.text('Chọn ảnh'), findsOneWidget);
-    expect(find.text('Nhập mã'), findsOneWidget);
+    expect(find.text('Nhập nickname'), findsOneWidget);
 
     // Toggle Flashlight
     await tester.tap(find.text('Bật đèn'));
@@ -65,13 +65,13 @@ void main() {
     expect(find.text('Tắt đèn'), findsOneWidget);
 
     // Open Manual code bottom sheet
-    await tester.tap(find.text('Nhập mã'));
+    await tester.tap(find.text('Nhập nickname'));
     await tester.pumpAndSettle();
-    expect(find.text('Nhập Mã Kết Bạn'), findsOneWidget);
+    expect(find.text('Nhập Nickname'), findsOneWidget);
     expect(find.text('Kết nối bạn bè'), findsOneWidget);
 
     // Dismiss bottom sheet
-    Navigator.of(tester.element(find.text('Nhập Mã Kết Bạn'))).pop();
+    Navigator.of(tester.element(find.text('Nhập Nickname'))).pop();
     await tester.pumpAndSettle();
 
     // Switch back to "Mã QR của tôi"
@@ -83,25 +83,43 @@ void main() {
   group('with the real account (SOC-01)', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    Widget app(FakeFriendsApi friendsApi, {bool online = true}) => ProviderScope(
+    Widget app(FakeFriendsApi friendsApi, {bool online = true, String? username = 'toi.cham'}) => ProviderScope(
           overrides: [
-            accountApiProvider.overrideWithValue(FakeAccountApi()..online = online),
+            accountApiProvider.overrideWithValue(FakeAccountApi()
+              ..online = online
+              ..account = username == null ? testAccount : testAccount.copyWith(username: username)),
             friendsApiProvider.overrideWithValue(friendsApi),
           ],
           child: MaterialApp(
-            routes: {'/friends': (_) => const Scaffold(body: Text('friends-route'))},
+            routes: {
+              '/friends': (_) => const Scaffold(body: Text('friends-route')),
+              '/profile': (_) => const Scaffold(body: Text('profile-route')),
+            },
             home: const AddQrPage(animateLaser: false, enableCamera: false),
           ),
         );
 
-    testWidgets('shows the invite code of the anonymous account', (tester) async {
+    testWidgets('shows the account username', (tester) async {
       tester.view.physicalSize = const Size(420, 920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(app(FakeFriendsApi()));
       await tester.pumpAndSettle();
-      expect(find.text('Mã mời: MYCODE'), findsOneWidget);
+      expect(find.text('@toi.cham'), findsOneWidget);
+    });
+
+    testWidgets('without a username there is no QR, only a way to set one', (tester) async {
+      tester.view.physicalSize = const Size(420, 920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(app(FakeFriendsApi(), username: null));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('my_qr_card')), findsNothing);
+      await tester.tap(find.text('Đặt nickname'));
+      await tester.pumpAndSettle();
+      expect(find.text('profile-route'), findsOneWidget);
     });
 
     testWidgets('asks to retry when offline on first use', (tester) async {
@@ -111,7 +129,7 @@ void main() {
       expect(find.text('Thử lại'), findsOneWidget);
     });
 
-    testWidgets('entering an invite code makes friends immediately', (tester) async {
+    testWidgets('entering a username makes friends immediately', (tester) async {
       tester.view.physicalSize = const Size(420, 920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -121,16 +139,16 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Quét mã QR'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Nhập mã'));
+      await tester.tap(find.text('Nhập nickname'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'h4r7 n2q8zk');
+      await tester.enterText(find.byType(TextField), ' @Khoa.Nguyen ');
       await tester.tap(find.text('Kết nối bạn bè'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Kết bạn'));
       await tester.pumpAndSettle();
-      expect(find.text('Đã kết bạn với Bạn H4R7N2Q8ZK!'), findsOneWidget);
-      expect(friendsApi.friends.single.id, 'f-H4R7N2Q8ZK', reason: 'manual entry is normalised');
+      expect(find.text('Đã kết bạn với Bạn khoa.nguyen!'), findsOneWidget);
+      expect(friendsApi.friends.single.id, 'f-khoa.nguyen', reason: 'manual entry is normalised');
     });
   });
 }

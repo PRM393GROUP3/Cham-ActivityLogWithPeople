@@ -1,0 +1,4 @@
+{
+  "APP_ENV": "dev",
+  "API_BASE_URL": "https://cham-backend.ntt-a5k62-cbh.workers.dev"
+}

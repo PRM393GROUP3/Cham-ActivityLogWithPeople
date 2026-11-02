@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ tự vẽ splash riêng (mặc định là icon app trên nền trắng). Chỉ để nền kem trơn:
+         chấm đỏ của logo do Flutter vẽ ngay frame đầu, nên không bị nhảy giữa hai lớp splash. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/cham_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    </style>
+</resources>

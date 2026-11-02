@@ -14,12 +14,14 @@ class RecapCard extends StatelessWidget {
     required this.rangeLabel,
     required this.displayName,
     this.avatarEmoji,
+    this.avatarUrl,
   });
 
   final ActivityStats stats;
   final String rangeLabel;
   final String displayName;
   final String? avatarEmoji;
+  final String? avatarUrl;
 
   static const size = Size(340, 460);
   static const _weekdays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -116,7 +118,13 @@ class RecapCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  UserAvatar(name: displayName, emoji: avatarEmoji, radius: 14, backgroundColor: Colors.white),
+                  UserAvatar(
+                    name: displayName,
+                    emoji: avatarEmoji,
+                    imageUrl: avatarUrl,
+                    radius: 14,
+                    backgroundColor: Colors.white,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

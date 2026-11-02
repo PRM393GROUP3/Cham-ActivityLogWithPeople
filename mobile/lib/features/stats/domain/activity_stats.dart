@@ -100,6 +100,27 @@ class ActivityStats {
     }
     return buckets;
   }
+
+  /// Số lần ghi trung bình mỗi ngày, chỉ tính tới hôm nay nếu khoảng chưa kết thúc.
+  double get averagePerDay {
+    final today = VnTime.now();
+    final elapsed = DateTime.utc(today.year, today.month, today.day).difference(range.start).inDays + 1;
+    return total / elapsed.clamp(1, range.dayCount);
+  }
+
+  /// Khung giờ có nhiều lần ghi nhất, `null` nếu khoảng trống.
+  int? get peakHour => _argMax(byHour);
+
+  /// Vị trí ngày có nhiều lần ghi nhất trong khoảng, `null` nếu khoảng trống.
+  int? get peakDay => _argMax(byDay);
+
+  static int? _argMax(List<int> values) {
+    var best = 0;
+    for (var i = 1; i < values.length; i++) {
+      if (values[i] > values[best]) best = i;
+    }
+    return values.isEmpty || values[best] == 0 ? null : best;
+  }
 }
 
 /// Lần ghi gần nhất của từng loại sự kiện trên toàn bộ lịch sử (HIS-01), theo id loại.

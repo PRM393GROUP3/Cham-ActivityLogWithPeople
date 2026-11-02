@@ -3,7 +3,7 @@ For PRM393
 
 | Thư mục    | Stack                                                                                           |
 | ---------- | ----------------------------------------------------------------------------------------------- |
-| `backend/` | Cloudflare Workers + Hono, D1 + Drizzle ORM, Durable Objects (WebSocket)              |
+| `backend/` | Cloudflare Workers + Hono, D1 + Drizzle ORM, Durable Objects (WebSocket), R2 (avatar) |
 | `mobile/`  | Flutter (Android + Web), Riverpod, Dio, web_socket_channel                                       |
 
 Cả backend và mobile đều tổ chức theo **feature** (`features/<tên>/...`). Nghiệp vụ: [`docs/requirement-v1.md`](docs/requirement-v1.md).
@@ -73,7 +73,7 @@ flutter run -d emulator-5554 --dart-define-from-file=env/dev.json
 |                   | **dev** (local)                                   | **prod** (Cloudflare thật)                              |
 | ----------------- | ------------------------------------------------- | ------------------------------------------------------- |
 | Backend chạy ở    | máy của bạn – `npm run dev` → `http://localhost:8787` | Cloudflare – `npm run deploy` → `https://cham-backend.<subdomain>.workers.dev` |
-| D1 / Durable Object | **giả lập**, dữ liệu ở `backend/.wrangler/state` | resource thật trên Cloudflare (id trong `wrangler.jsonc`) |
+| D1 / Durable Object / R2 | **giả lập**, dữ liệu ở `backend/.wrangler/state` | resource thật trên Cloudflare (id / tên bucket trong `wrangler.jsonc`) |
 | Secret            | `backend/.dev.vars`                               | `npx wrangler secret put <TÊN>`                         |
 | Migration DB      | `npm run db:migrate:local`                        | `npm run db:migrate:remote`                             |
 | File env của app  | `mobile/env/dev.json`                             | `mobile/env/prod.json`                                  |
@@ -136,7 +136,7 @@ npx wrangler tail            # log realtime của Worker trên Cloudflare
 | Biến thường (vd. `CORS_ORIGIN`)        | `"vars"` trong `backend/wrangler.jsonc`      | ✅      |
 | Secret khi dev local                   | `backend/.dev.vars` (copy từ `.dev.vars.example`) | ❌  |
 | Secret production                      | `npx wrangler secret put <TÊN>`              | ❌      |
-| Bindings (D1, Durable Object)          | `backend/wrangler.jsonc`                     | ✅      |
+| Bindings (D1, Durable Object, R2)      | `backend/wrangler.jsonc`                     | ✅      |
 
 Sau khi thêm/sửa biến hoặc binding: `npm run cf-typegen` để cập nhật type `Env`. Trong code đọc bằng `c.env.<TÊN>`.
 
@@ -313,6 +313,9 @@ không cần tài khoản (DAT-01).
 | POST   | `/api/auth/register`     | `{ displayName, avatarEmoji? }` | `201 { data: { user: Me, token } }`        |
 | GET    | `/api/me`                |                              | `{ data: Me }`                             |
 | PATCH  | `/api/me`                | `{ displayName?, avatarEmoji? }` (ít nhất 1; `avatarEmoji: null` = bỏ) | `{ data: Me }`         |
+| PUT    | `/api/me/avatar`         | bytes ảnh JPEG / PNG / WebP (≤ 2 MB), nhận dạng theo nội dung | `{ data: Me }` — xoá emoji + ảnh cũ · `415 UNSUPPORTED_IMAGE` · `413 AVATAR_TOO_LARGE` |
+| DELETE | `/api/me/avatar`         |                              | `{ data: Me }` — bỏ avatar (cả ảnh lẫn emoji) |
+| GET    | `/api/avatars/:userId/:file` | *(không cần token)*      | ảnh, `Cache-Control: immutable` / 404      |
 | POST   | `/api/me/invite-code`    |                              | `{ data: Me }` — mã mới, QR cũ hết hiệu lực |
 | WS     | `/api/me/ws?token=…`     | gửi `"ping"` → nhận `"pong"` | sự kiện JSON (bên dưới)                    |
 
@@ -346,11 +349,13 @@ Công khai = **tất cả bạn bè hiện tại** xem được; không có ch�
 | DELETE | `/api/feed/:id/reaction`  |                                         | `204`                              |
 
 ```ts
-Me        = { id, displayName, avatarEmoji, inviteCode, createdAt }   // avatarEmoji: đúng 1 emoji hoặc null
-Friend    = { id, displayName, avatarEmoji, since }
+User      = { id, displayName, avatarEmoji, avatarUrl }   // avatarEmoji: đúng 1 emoji hoặc null
+                                                          // avatarUrl: "/api/avatars/…" (ghép với origin API) hoặc null
+Me        = User & { inviteCode, createdAt }
+Friend    = User & { since }
 OwnShare  = { id, emoji, name, occurredAt,
-              reactions: { user: { id, displayName, avatarEmoji }, emoji, reactedAt }[], createdAt, updatedAt }
-FeedShare = { id, owner: { id, displayName, avatarEmoji }, emoji, name, occurredAt,
+              reactions: { user: User, emoji, reactedAt }[], createdAt, updatedAt }
+FeedShare = { id, owner: User, emoji, name, occurredAt,
               reactions: { emoji, count }[], myReaction: string | null }
 ```
 
@@ -418,7 +423,7 @@ Workflow: `.github/workflows/backend.yml` — chỉ chạy khi có thay đổi t
 ### Cài đặt một lần
 
 1. **Tạo API token** trên Cloudflare: *My Profile → API Tokens → Create Token → template "Edit Cloudflare Workers"*,
-   bấm thêm quyền **Account → D1 → Edit**, phần *Account Resources* chọn đúng account → Create, copy token.
+   bấm thêm quyền **Account → D1 → Edit** và **Account → Workers R2 Storage → Edit**, phần *Account Resources* chọn đúng account → Create, copy token.
 2. **Lấy Account ID**: `npx wrangler whoami` (hoặc trang Workers & Pages trên dashboard).
 3. **Thêm secret vào repo**: GitHub → *Settings → Secrets and variables → Actions → New repository secret*:
    - `CLOUDFLARE_API_TOKEN`
@@ -448,5 +453,8 @@ tạo nhánh → code → mở PR ──▶ CI chạy check ──▶ review + m
 - `compatibility_date` trong `wrangler.jsonc` không được mới hơn ngày mà runtime của test pool hỗ trợ — nếu `npm test` báo lỗi compatibility date thì lùi ngày lại.
 - `backend/.npmrc` bật `legacy-peer-deps` vì npm 10 lỗi khi resolve peer deps của `@cloudflare/vitest-pool-workers`.
 - Durable Object dùng SQLite backend (`new_sqlite_classes`) — bắt buộc với gói Free.
-- Không dùng R2 vì Cloudflare yêu cầu liên kết thẻ thanh toán để bật R2. Khi cần lưu file, cân nhắc lại.
+- Avatar ảnh lưu ở R2 (bucket `cham-avatars`, binding `AVATARS`). Bật R2 cần liên kết thẻ thanh toán (gói free vẫn
+  0đ trong hạn mức 10 GB). Tạo bucket một lần trước lần deploy đầu: `npx wrangler r2 bucket create cham-avatars`.
+  Bucket để private; ảnh đi qua `GET /api/avatars/*` của Worker. Ảnh và emoji loại trừ nhau; ảnh bị thay/bỏ được
+  xoá khỏi R2 ngay.
 - Không thêm `"remote": true` vào binding trong `wrangler.jsonc` — nó làm `npm run dev` đọc/ghi thẳng dữ liệu production.

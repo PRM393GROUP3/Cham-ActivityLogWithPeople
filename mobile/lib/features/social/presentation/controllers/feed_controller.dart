@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../account/presentation/account_controller.dart';
+import '../../../widgets/data/home_widget_bridge.dart';
 import '../../data/feed_api.dart';
 import '../../domain/feed_share.dart';
 
@@ -14,12 +17,18 @@ class FeedController extends AsyncNotifier<List<FeedShare>> {
   @override
   Future<List<FeedShare>> build() async {
     final me = await ref.read(accountControllerProvider.notifier).ensure();
+    // Tim bấm trên widget lúc app chưa mở: gửi trước để feed tải về đã đúng
+    await HomeWidgetBridge.flushPendingReactions(
+      (shareId, emoji) => emoji == null ? _api.unreact(shareId) : _api.react(shareId, emoji),
+    );
     final (friends, own) = await (_api.fetch(), _api.fetchOwn()).wait;
-    return [
+    final feed = [
       ...friends,
       for (final json in own)
-        FeedShare.fromOwnJson(json, ownerId: me.id, ownerName: me.displayName, ownerAvatarEmoji: me.avatarEmoji),
+        FeedShare.fromOwnJson(json, ownerId: me.id, ownerName: me.displayName, ownerAvatarEmoji: me.avatarEmoji, ownerAvatarUrl: me.avatarUrl),
     ]..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    unawaited(HomeWidgetBridge.saveFriendsSnapshot(feed));
+    return feed;
   }
 
   Future<void> refresh() async {
@@ -50,6 +59,8 @@ class FeedController extends AsyncNotifier<List<FeedShare>> {
   void _replace(FeedShare updated) {
     final current = state.value;
     if (current == null) return;
-    state = AsyncData([for (final s in current) s.id == updated.id ? updated : s]);
+    final next = [for (final s in current) s.id == updated.id ? updated : s];
+    state = AsyncData(next);
+    unawaited(HomeWidgetBridge.saveFriendsSnapshot(next));
   }
 }

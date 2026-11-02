@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dòng cuối danh sách bạn bè của Widget 4×2 -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/footer_root"
+    android:layout_width="match_parent"
+    android:layout_height="36dp"
+    android:gravity="center"
+    android:text="Xem tất cả trong app  ›"
+    android:textColor="#D9482B"
+    android:textSize="11.5sp"
+    android:textStyle="bold" />

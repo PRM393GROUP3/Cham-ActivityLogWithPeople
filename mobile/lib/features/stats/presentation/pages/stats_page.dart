@@ -8,18 +8,21 @@ import 'package:intl/intl.dart';
 import '../../../../core/time/vn_time.dart';
 import '../../../../core/utils/image_saver/image_saver.dart';
 import '../../../account/presentation/account_controller.dart';
+import '../../../activity_dial/domain/activity_log.dart';
 import '../../../activity_dial/presentation/activity_dial_controller.dart';
-import '../../../activity_dial/presentation/widgets/log_tile.dart';
 import '../../domain/activity_stats.dart';
 import '../widgets/bar_chart.dart';
 import '../widgets/recap_card.dart';
 
-/// Lịch sử theo ngày / tuần / tháng và thống kê quy luật sinh hoạt (HIS-01, HIS-02, STA-01).
-/// Tính theo giờ Việt Nam; tuần bắt đầu Thứ Hai; khung giờ 1 tiếng. Hoạt động offline.
+/// Màn Phân tích: quy luật sinh hoạt theo ngày / tuần / tháng (STA-01, STA-02). Chỉ có số liệu
+/// tổng hợp; từng lần chấm nằm ở màn Lịch sử. Tính theo giờ Việt Nam; tuần bắt đầu Thứ Hai.
 class StatsPage extends ConsumerStatefulWidget {
-  const StatsPage({super.key, this.initialPeriod = StatsPeriod.day});
+  const StatsPage({super.key, this.initialPeriod = StatsPeriod.week, this.onNavigateToHome});
 
   final StatsPeriod initialPeriod;
+
+  /// Có khi nằm trong shell vuốt: nút ở góc phải đưa về Trang chủ.
+  final VoidCallback? onNavigateToHome;
 
   @override
   ConsumerState<StatsPage> createState() => _StatsPageState();
@@ -76,6 +79,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                     rangeLabel: _rangeLabel,
                     displayName: account?.displayName ?? AccountController.defaultDisplayName,
                     avatarEmoji: account?.avatarEmoji,
+                    avatarUrl: account?.avatarUrl,
                   ),
                 ),
               ),
@@ -129,13 +133,14 @@ class _StatsPageState extends ConsumerState<StatsPage> {
   Widget build(BuildContext context) {
     final allLogs = ref.watch(activityDialControllerProvider).logs;
     final stats = ActivityStats(_range, allLogs);
-    final latest = latestByType(allLogs);
+    final previous = ActivityStats(_range.previous(), allLogs);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFAF6F0),
-        title: const Text('Lịch sử & thống kê', style: TextStyle(fontWeight: FontWeight.w800)),
+        automaticallyImplyLeading: widget.onNavigateToHome == null,
+        title: const Text('Phân tích', style: TextStyle(fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
             key: const ValueKey('open-recap'),
@@ -143,6 +148,12 @@ class _StatsPageState extends ConsumerState<StatsPage> {
             icon: const Icon(Icons.auto_awesome_mosaic_outlined),
             onPressed: stats.total == 0 ? null : () => _openRecap(stats),
           ),
+          if (widget.onNavigateToHome != null)
+            IconButton(
+              tooltip: 'Trang chủ',
+              icon: const Icon(Icons.chevron_right_rounded),
+              onPressed: widget.onNavigateToHome,
+            ),
         ],
       ),
       body: ListView(
@@ -184,36 +195,31 @@ class _StatsPageState extends ConsumerState<StatsPage> {
               ),
             ],
           ),
-          _Card(
-            child: Row(
-              children: [
-                Text(
-                  '${stats.total}',
-                  style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: Color(0xFFB53216)),
+          if (stats.total == 0)
+            const _Card(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'Chưa có lần chấm nào',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Color(0xFF6E6259)),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    stats.total == 0 ? 'Chưa có lần chấm nào' : 'lần chấm · ${stats.byType.length} loại sự kiện',
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF6E6259)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (stats.total > 0) ...[
+              ),
+            )
+          else ...[
+            _kpis(stats, previous),
+            _highlights(stats, previous, allLogs),
             _Section(
-              title: 'Theo loại sự kiện',
+              title: 'Theo loại',
               child: Column(
                 children: [
-                  for (final t in stats.byType)
-                    _TypeRow(type: t, max: stats.byType.first.count, latest: latest[t.eventTypeId]?.occurredAt),
+                  for (final t in stats.byType) _TypeRow(type: t, max: stats.byType.first.count),
                 ],
               ),
             ),
             if (_range.period != StatsPeriod.day)
               _Section(
-                title: _range.period == StatsPeriod.week ? 'Theo ngày trong tuần' : 'Theo ngày trong tháng',
+                title: 'Theo ngày',
                 child: SimpleBarChart(
                   values: stats.byDay,
                   highlightIndex: _todayIndex,
@@ -223,22 +229,10 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                 ),
               ),
             _Section(
-              title: 'Theo khung giờ',
+              title: 'Theo giờ',
               child: SimpleBarChart(
                 values: stats.byHour,
                 labels: [for (var h = 0; h < 24; h++) h % 6 == 0 ? '${h}h' : null],
-              ),
-            ),
-            _Section(
-              title: 'Các lần chấm',
-              child: Column(
-                children: [
-                  for (final log in stats.logs)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: LogTile(log: log, showDate: _range.period != StatsPeriod.day),
-                    ),
-                ],
               ),
             ),
           ],
@@ -246,14 +240,148 @@ class _StatsPageState extends ConsumerState<StatsPage> {
       ),
     );
   }
+
+  /// Bốn ô số liệu: tổng (so với kỳ trước), trung bình / ngày, giờ cao điểm, ngày hoặc loại nổi bật.
+  Widget _kpis(ActivityStats stats, ActivityStats previous) {
+    final String delta;
+    if (previous.total == 0) {
+      delta = 'kỳ trước: 0';
+    } else {
+      final pct = ((stats.total - previous.total) * 100 / previous.total).round();
+      delta = pct == 0 ? '= kỳ trước' : '${pct > 0 ? '+' : ''}$pct% kỳ trước';
+    }
+    final hour = stats.peakHour!;
+    final day = stats.peakDay!;
+    final (lastValue, lastLabel) = switch (_range.period) {
+      StatsPeriod.day => (stats.byType.first.emoji, 'nhiều nhất'),
+      StatsPeriod.week => (_weekdayNames[day], 'ngày bận nhất'),
+      StatsPeriod.month => ('Ngày ${day + 1}', 'ngày bận nhất'),
+    };
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 2.1,
+        children: [
+          _Kpi(value: '${stats.total}', label: 'lần chấm · $delta', accent: true),
+          _Kpi(value: stats.averagePerDay.toStringAsFixed(1).replaceAll('.', ','), label: 'mỗi ngày'),
+          _Kpi(value: '${hour}h–${hour + 1}h', label: 'giờ cao điểm'),
+          _Kpi(value: lastValue, label: lastLabel),
+        ],
+      ),
+    );
+  }
+
+  /// Tối đa 3 dòng ngắn: loại nhiều nhất, loại tăng mạnh nhất so với kỳ trước, loại lâu chưa chấm.
+  Widget _highlights(ActivityStats stats, ActivityStats previous, List<ActivityLog> allLogs) {
+    final rows = <(String, String, String)>[];
+    final top = stats.byType.first;
+    rows.add((top.emoji, top.name, 'nhiều nhất'));
+
+    final before = {for (final t in previous.byType) t.eventTypeId: t.count};
+    TypeCount? rising;
+    var rise = 0;
+    for (final t in stats.byType) {
+      final d = t.count - (before[t.eventTypeId] ?? 0);
+      if (d > rise && t.eventTypeId != top.eventTypeId) (rising, rise) = (t, d);
+    }
+    if (rising != null) rows.add((rising.emoji, rising.name, '+$rise'));
+
+    if (_range.isCurrentOrFuture) {
+      final today = VnTime.now();
+      ActivityLog? stale;
+      var staleDays = 0;
+      for (final l in latestByType(allLogs).values) {
+        final at = VnTime.of(l.occurredAt);
+        final days = DateTime.utc(today.year, today.month, today.day)
+            .difference(DateTime.utc(at.year, at.month, at.day))
+            .inDays;
+        if (days >= 3 && days <= 30 && days > staleDays) (stale, staleDays) = (l, days);
+      }
+      if (stale != null) rows.add((stale.emoji, stale.name, '$staleDays ngày chưa chấm'));
+    }
+
+    return _Section(
+      title: 'Điểm nhấn',
+      child: Column(
+        children: [
+          for (final (emoji, name, note) in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                children: [
+                  SizedBox(width: 30, child: Text(emoji, style: const TextStyle(fontSize: 18))),
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Text(note, style: const TextStyle(fontSize: 12.5, color: Color(0xFF8A7E74))),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Kpi extends StatelessWidget {
+  const _Kpi({required this.value, required this.label, this.accent = false});
+
+  final String value;
+  final String label;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFDF9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEDE4D6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: accent ? 26 : 18,
+                fontWeight: FontWeight.w900,
+                color: accent ? const Color(0xFFB53216) : const Color(0xFF2E241F),
+              ),
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11.5, color: Color(0xFF8A7E74)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _TypeRow extends StatelessWidget {
-  const _TypeRow({required this.type, required this.max, required this.latest});
+  const _TypeRow({required this.type, required this.max});
 
   final TypeCount type;
   final int max;
-  final DateTime? latest;
 
   @override
   Widget build(BuildContext context) {
@@ -289,13 +417,6 @@ class _TypeRow extends StatelessWidget {
                     color: const Color(0xFFF08A6E),
                   ),
                 ),
-                if (latest != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Gần nhất: ${VnTime.relative(latest!)}',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF8A7E74)),
-                  ),
-                ],
               ],
             ),
           ),

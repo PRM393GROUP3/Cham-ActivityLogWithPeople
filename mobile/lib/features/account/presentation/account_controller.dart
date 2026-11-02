@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/account_api.dart';
@@ -28,24 +30,36 @@ class AccountController extends AsyncNotifier<Account?> {
     return _registering ??= _register().whenComplete(() => _registering = null);
   }
 
-  /// Đặt tên hiển thị và avatar emoji (`null` = bỏ avatar). Tự đăng ký ở lần đầu (cần mạng).
-  Future<Account> updateProfile({required String displayName, required String? avatarEmoji}) async {
-    final account = await ensure();
-    final profile = await ref.read(accountApiProvider).updateProfile(
+  /// Đặt tên hiển thị và — nếu truyền — nickname và avatar emoji (`() => null` = bỏ avatar,
+  /// kể cả ảnh; không truyền = giữ avatar hiện tại). Tự đăng ký ở lần đầu (cần mạng).
+  Future<Account> updateProfile({
+    required String displayName,
+    String? username,
+    String? Function()? avatarEmoji,
+  }) async {
+    await ensure();
+    final emoji = avatarEmoji?.call();
+    return _apply(await ref.read(accountApiProvider).updateProfile(
           displayName: displayName,
-          avatarEmoji: avatarEmoji,
-          clearAvatar: avatarEmoji == null,
-        );
-    final updated = account.copyWith(displayName: profile.displayName, avatarEmoji: () => profile.avatarEmoji);
-    await ref.read(accountStorageProvider).save(updated);
-    state = AsyncData(updated);
-    return updated;
+          username: username,
+          avatarEmoji: emoji,
+          clearAvatar: avatarEmoji != null && emoji == null,
+        ));
   }
 
-  /// Đổi mã mời: người đã có mã cũ / ảnh QR cũ không kết bạn được nữa (bạn bè hiện có giữ nguyên).
-  Future<Account> rotateInviteCode() async {
-    final account = await ensure();
-    final updated = account.copyWith(inviteCode: await ref.read(accountApiProvider).rotateInviteCode());
+  /// Tải ảnh lên làm avatar (thay emoji hoặc ảnh cũ). Tự đăng ký ở lần đầu (cần mạng).
+  Future<Account> uploadAvatarPhoto(Uint8List bytes) async {
+    await ensure();
+    return _apply(await ref.read(accountApiProvider).uploadAvatar(bytes));
+  }
+
+  Future<Account> _apply(Profile profile) async {
+    final updated = (await ensure()).copyWith(
+      displayName: profile.displayName,
+      username: profile.username,
+      avatarEmoji: () => profile.avatarEmoji,
+      avatarUrl: () => profile.avatarUrl,
+    );
     await ref.read(accountStorageProvider).save(updated);
     state = AsyncData(updated);
     return updated;

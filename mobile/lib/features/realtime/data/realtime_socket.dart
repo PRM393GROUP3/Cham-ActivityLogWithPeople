@@ -16,6 +16,9 @@ typedef RealtimeConnect = RealtimeSocket Function(Uri uri);
 final realtimeConnectProvider = Provider<RealtimeConnect>(
   (ref) => (uri) {
     final channel = WebSocketChannel.connect(uri);
+    // Handshake thất bại (401, mất mạng…) cũng báo lỗi qua `stream` → RealtimeController tự thử lại.
+    // Bỏ qua lỗi của `ready` để nó không thành Unhandled Exception.
+    channel.ready.ignore();
     return RealtimeSocket(messages: channel.stream, send: channel.sink.add, close: () async => channel.sink.close());
   },
 );

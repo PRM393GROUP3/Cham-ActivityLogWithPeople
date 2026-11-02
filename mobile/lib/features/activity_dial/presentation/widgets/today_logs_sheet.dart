@@ -10,7 +10,10 @@ import '../../domain/activity_log.dart';
 /// Cho phép xoá bản ghi (HIS-02, LOG-04: không Undo, chỉ Delete) và đổi chế độ chia sẻ
 /// Riêng tư / Công khai trên từng bản ghi (SOC-03, SOC-04).
 class TodayLogsSheet extends ConsumerWidget {
-  const TodayLogsSheet({super.key});
+  const TodayLogsSheet({super.key, this.onViewHistory});
+
+  /// Mở màn Lịch sử; mặc định mở route `/history`.
+  final VoidCallback? onViewHistory;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -150,10 +153,14 @@ class TodayLogsSheet extends ConsumerWidget {
             child: TextButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/stats');
+                if (onViewHistory != null) {
+                  onViewHistory!();
+                } else {
+                  Navigator.pushNamed(context, '/history');
+                }
               },
-              icon: const Icon(Icons.bar_chart_rounded, size: 18),
-              label: const Text('Xem lịch sử & thống kê'),
+              icon: const Icon(Icons.history_rounded, size: 18),
+              label: const Text('Xem lịch sử'),
             ),
           ),
         ],
