@@ -5,6 +5,7 @@ import 'package:cham/features/activity_dial/presentation/pages/activity_dial_pag
 import 'package:cham/features/friends/data/friends_api.dart';
 import 'package:cham/features/onboarding/presentation/app_start_gate.dart';
 import 'package:cham/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:cham/features/onboarding/presentation/startup_intro.dart';
 import 'package:cham/features/sharing/data/share_api.dart';
 import 'package:cham/features/social/data/feed_api.dart';
 import 'package:flutter/material.dart';
@@ -58,6 +59,17 @@ void main() {
     await pump(tester, {'cham_account_v1': jsonEncode(testAccount.toJson())});
     expect(find.byType(OnboardingPage), findsNothing);
     expect(find.byType(ActivityDialPage), findsOneWidget);
+  });
+
+  testWidgets('the opening logo hands over to the dial, then gets out of the way', (tester) async {
+    await pump(tester, {'cham_account_v1': jsonEncode(testAccount.toJson())});
+    final intro = find.descendant(of: find.byType(StartupIntro), matching: find.byType(AbsorbPointer));
+    expect(intro, findsNothing);
+    expect(find.text('Chấm'), findsOneWidget); // chỉ còn tiêu đề Trang chủ, logo đã thu về nút +
+
+    await tester.tap(find.byTooltip('Cài đặt'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsOneWidget);
   });
 
   testWidgets('the last page sets the name and emoji avatar, then opens the dial', (tester) async {

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Vị trí thật của nút + trên màn hình (đã tính cả thu phóng của vòng Dial), để màn mở app
+/// thu chấm đỏ của logo về đúng chỗ này.
+final centerHubRect = ValueNotifier<Rect?>(null);
+
 /// Nút tròn nổi bật "+" ở chính giữa tâm các vòng quỹ đạo: thêm hoạt động tự tạo
 class CenterChamHub extends StatefulWidget {
   const CenterChamHub({super.key, required this.onTap, this.diameter = 86.0});
@@ -16,6 +20,8 @@ class _CenterChamHubState extends State<CenterChamHub>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
+  final _circleKey = GlobalKey();
+  Rect? _reportedRect;
 
   @override
   void initState() {
@@ -32,8 +38,17 @@ class _CenterChamHubState extends State<CenterChamHub>
 
   @override
   void dispose() {
+    if (centerHubRect.value == _reportedRect) centerHubRect.value = null;
     _controller.dispose();
     super.dispose();
+  }
+
+  void _reportRect() {
+    if (!mounted) return;
+    final box = _circleKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize || !box.attached) return;
+    _reportedRect = MatrixUtils.transformRect(box.getTransformTo(null), Offset.zero & box.size);
+    centerHubRect.value = _reportedRect;
   }
 
   void _handleTap() {
@@ -44,6 +59,7 @@ class _CenterChamHubState extends State<CenterChamHub>
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportRect());
     return ScaleTransition(
       scale: _scaleAnimation,
       child: GestureDetector(
@@ -63,6 +79,7 @@ class _CenterChamHubState extends State<CenterChamHub>
             ),
             // Nút chính màu san hô rực rỡ
             Container(
+              key: _circleKey,
               width: widget.diameter,
               height: widget.diameter,
               decoration: BoxDecoration(
