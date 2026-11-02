@@ -43,7 +43,6 @@ object ChamWidgetUpdater {
     private const val PREFS_NAME = "FlutterSharedPreferences"
     private const val KEY_LOGS = "flutter.cham_activity_logs_v1"
     private const val KEY_EVENT_TYPES = "flutter.cham_event_types_v2"
-    private const val KEY_SMALL_TYPE = "flutter.cham_widget_small_type_v1"
     private const val KEY_MEDIUM_TYPES = "flutter.cham_widget_medium_types_v1"
 
     private val VN_ZONE: ZoneId = ZoneId.of("Asia/Ho_Chi_Minh")
@@ -78,6 +77,55 @@ object ChamWidgetUpdater {
         WidgetHabitItem("reading", "Đọc sách", "📖"),
         WidgetHabitItem("meditate", "Thiền", "🧘")
     )
+
+    // 19 loại mặc định của vòng Dial (khớp ActivityEventType.defaultTypes), dùng khi người dùng
+    // chưa từng chỉnh danh sách nên Flutter chưa lưu KEY_EVENT_TYPES.
+    private val ALL_DEFAULT_TYPES = listOf(
+        WidgetHabitItem("coffee", "Cà phê", "☕"),
+        WidgetHabitItem("water", "Nước", "💧"),
+        WidgetHabitItem("running", "Chạy bộ", "🏃"),
+        WidgetHabitItem("eating", "Ăn uống", "🍽️"),
+        WidgetHabitItem("focus", "Tập trung", "💻"),
+        WidgetHabitItem("reading", "Đọc sách", "📖"),
+        WidgetHabitItem("meditate", "Thiền", "🧘"),
+        WidgetHabitItem("walk", "Đi dạo", "🚶"),
+        WidgetHabitItem("sleep", "Ngủ", "🌙"),
+        WidgetHabitItem("clean", "Dọn dẹp", "🏠"),
+        WidgetHabitItem("music", "Nghe nhạc", "🎧"),
+        WidgetHabitItem("pet", "Thú cưng", "🐾"),
+        WidgetHabitItem("cook", "Nấu ăn", "🍲"),
+        WidgetHabitItem("plant", "Tưới cây", "🪴"),
+        WidgetHabitItem("gym", "Gym", "🏋️"),
+        WidgetHabitItem("movie", "Xem phim", "🎬"),
+        WidgetHabitItem("journal", "Nhật ký", "✏️"),
+        WidgetHabitItem("shopping", "Mua sắm", "🛍️"),
+        WidgetHabitItem("cycling", "Đạp xe", "🚲")
+    )
+
+    /**
+     * Các loại sự kiện cho vòng chọn của Widget 2×2: xếp theo số lần chấm trong 30 ngày gần nhất
+     * (nhiều trước), bằng nhau thì giữ thứ tự trên vòng Dial; lấy tối đa [limit] loại.
+     */
+    fun topTypesForPicker(context: Context, limit: Int): List<WidgetHabitItem> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val types = loadEventTypesOrDefaults(prefs)
+        val since = Instant.now().minus(30, ChronoUnit.DAYS)
+        val counts = mutableMapOf<String, Int>()
+        val logs = loadOrSeedLogsArray(prefs)
+        for (i in 0 until logs.length()) {
+            val obj = logs.optJSONObject(i) ?: continue
+            val id = obj.optString("eventTypeId", "")
+            if (id.isEmpty()) continue
+            try {
+                if (Instant.parse(obj.optString("occurredAt", "")).isBefore(since)) continue
+            } catch (_: Exception) {
+                continue
+            }
+            counts[id] = (counts[id] ?: 0) + 1
+        }
+        // sortedByDescending giữ nguyên thứ tự gốc khi bằng nhau
+        return types.sortedByDescending { counts[it.id] ?: 0 }.take(limit)
+    }
 
     fun handleQuickLogIntent(context: Context, intent: Intent) {
         if (intent.action != ACTION_QUICK_LOG) return
@@ -166,16 +214,16 @@ object ChamWidgetUpdater {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val logsArray = loadOrSeedLogsArray(prefs)
         val stats = computeStats(logsArray)
-        val habit = loadSmallHabit(prefs)
 
         val options = manager.getAppWidgetOptions(appWidgetId)
         val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 120)
         val isCompact = minHeight in 1..95
         val isLarge = minHeight >= 180
 
+        // Dấu + mở vòng chọn hoạt động thay vì chấm một loại cố định
         val views = RemoteViews(context.packageName, R.layout.cham_small_widget)
-        views.setTextViewText(R.id.small_widget_title, habit.name)
-        views.setTextViewText(R.id.small_widget_habit_emoji, habit.emoji)
+        views.setTextViewText(R.id.small_widget_title, "Chấm")
+        views.setViewVisibility(R.id.small_widget_habit_emoji, View.GONE)
         views.setTextViewText(R.id.small_widget_count, "${stats.todayCount} chấm hôm nay")
 
         views.setViewVisibility(R.id.small_widget_header, if (isCompact) View.GONE else View.VISIBLE)
@@ -190,7 +238,7 @@ object ChamWidgetUpdater {
             if (isLarge) 14f else if (isCompact) 10f else 12f
         )
 
-        val isAnimating = animatingEventId == habit.id && animStep > 0
+        val isAnimating = animatingEventId != null && animStep > 0
         if (isAnimating) {
             views.setImageViewBitmap(R.id.small_pulse_ring, getCircleUnderGlowBitmap(animStep))
             views.setViewVisibility(R.id.small_pulse_ring, View.VISIBLE)
@@ -202,12 +250,10 @@ object ChamWidgetUpdater {
         views.setOnClickPendingIntent(R.id.small_widget_header, openAppIntent)
         views.setOnClickPendingIntent(R.id.small_widget_count, openAppIntent)
 
-        val logIntent = createQuickLogPendingIntent(
-            context = context,
-            requestCode = appWidgetId * 10 + 1,
-            habit = habit
+        views.setOnClickPendingIntent(
+            R.id.small_widget_plus_btn,
+            createDialPickerPendingIntent(context, appWidgetId * 10 + 1)
         )
-        views.setOnClickPendingIntent(R.id.small_widget_plus_btn, logIntent)
 
         manager.updateAppWidget(appWidgetId, views)
     }
@@ -457,6 +503,17 @@ object ChamWidgetUpdater {
         return PendingIntent.getActivity(context, requestCode, intent, flags)
     }
 
+    private fun createDialPickerPendingIntent(context: Context, requestCode: Int): PendingIntent {
+        val intent = Intent(context, ChamDialPickerActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                Intent.FLAG_ACTIVITY_NO_ANIMATION
+        }
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+        return PendingIntent.getActivity(context, requestCode, intent, flags)
+    }
+
     private fun createQuickLogPendingIntent(
         context: Context,
         requestCode: Int,
@@ -471,23 +528,6 @@ object ChamWidgetUpdater {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         return PendingIntent.getBroadcast(context, requestCode, intent, flags)
-    }
-
-    private fun loadSmallHabit(prefs: android.content.SharedPreferences): WidgetHabitItem {
-        val raw = prefs.getString(KEY_SMALL_TYPE, null)
-        if (!raw.isNullOrEmpty()) {
-            try {
-                val obj = JSONObject(raw)
-                return WidgetHabitItem(
-                    id = obj.optString("id", "coffee"),
-                    name = obj.optString("name", "Cà phê"),
-                    emoji = obj.optString("emoji", "☕")
-                )
-            } catch (_: Exception) {
-            }
-        }
-        val allTypes = loadAvailableEventTypes(prefs)
-        return allTypes.firstOrNull() ?: DEFAULT_HABITS[0]
     }
 
     private fun loadMediumHabits(prefs: android.content.SharedPreferences): List<WidgetHabitItem> {
@@ -536,6 +576,23 @@ object ChamWidgetUpdater {
             }
         }
         return DEFAULT_HABITS
+    }
+
+    private fun loadEventTypesOrDefaults(prefs: android.content.SharedPreferences): List<WidgetHabitItem> {
+        val raw = prefs.getString(KEY_EVENT_TYPES, null)
+        if (!raw.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(raw)
+                val list = mutableListOf<WidgetHabitItem>()
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    list.add(WidgetHabitItem(obj.optString("id"), obj.optString("name"), obj.optString("emoji")))
+                }
+                if (list.isNotEmpty()) return list
+            } catch (_: Exception) {
+            }
+        }
+        return ALL_DEFAULT_TYPES
     }
 
     private fun loadOrSeedLogsArray(prefs: android.content.SharedPreferences): JSONArray {

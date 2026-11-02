@@ -49,6 +49,15 @@
                 android:resource="@xml/cham_small_widget_info" />
         </receiver>
 
+        <!-- Vòng chọn hoạt động mở từ dấu + của Widget 2x2: trong suốt, không hiện trong Gần đây -->
+        <activity
+            android:name=".ChamDialPickerActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="com.cham.cham.dialpicker"
+            android:theme="@style/ChamDialPickerTheme" />
+
         <!-- Native Android Home Screen Widget 4x2 (WID-01) -->
         <receiver
             android:name=".ChamMediumWidgetProvider"
