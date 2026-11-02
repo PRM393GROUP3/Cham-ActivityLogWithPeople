@@ -8,8 +8,7 @@ import 'features/friends/presentation/pages/add_qr_page.dart';
 import 'features/friends/presentation/pages/friends_page.dart';
 import 'features/onboarding/presentation/app_start_gate.dart';
 import 'features/realtime/presentation/widgets/realtime_host.dart';
-import 'features/social/presentation/pages/feed_page.dart';
-import 'features/stats/presentation/pages/stats_page.dart';
+import 'features/shell/presentation/pages/main_shell_page.dart';
 import 'features/widgets/presentation/pages/widget_selection_page.dart';
 
 class ChamApp extends StatelessWidget {
@@ -41,11 +40,13 @@ class ChamApp extends StatelessWidget {
       routes: {
         '/': (context) => const AppStartGate(),
         '/dial': (context) => const ActivityDialPage(),
-        '/feed': (context) => const FeedPage(),
+        // Mở shell ở đúng màn, để Back trong shell vẫn quay về Trang chủ.
+        '/feed': (context) => const MainShellPage(initialPane: ShellPane.feed),
+        '/analytics': (context) => const MainShellPage(initialPane: ShellPane.analytics),
+        '/history': (context) => const MainShellPage(initialPane: ShellPane.history),
         '/widgets': (context) => const WidgetSelectionPage(),
         '/add-qr': (context) => const AddQrPage(),
         '/event-types': (context) => const EventTypesPage(),
-        '/stats': (context) => const StatsPage(),
         '/friends': (context) => const FriendsPage(),
         '/profile': (context) => const EditProfilePage(),
       },

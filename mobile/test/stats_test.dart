@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:cham/features/account/data/account_api.dart';
 import 'package:cham/features/activity_dial/domain/activity_log.dart';
-import 'package:cham/features/activity_dial/presentation/activity_dial_controller.dart';
 import 'package:cham/features/sharing/data/share_api.dart';
 import 'package:cham/features/stats/domain/activity_stats.dart';
 import 'package:cham/features/stats/presentation/pages/stats_page.dart';
@@ -109,18 +108,21 @@ void main() {
         log('old', now.subtract(const Duration(days: 40))),
       ]);
 
+      // Mặc định xem Tuần này.
+      expect(find.textContaining('Tuần này'), findsOneWidget);
+      expect(find.text('Theo ngày'), findsOneWidget);
+      expect(find.text('T2'), findsOneWidget);
+
+      await tester.tap(find.text('Ngày'));
+      await tester.pumpAndSettle();
       expect(find.textContaining('Hôm nay,'), findsOneWidget);
-      expect(find.text('Theo loại sự kiện'), findsOneWidget);
-      expect(find.text('Theo khung giờ'), findsOneWidget);
+      expect(find.text('Theo loại'), findsOneWidget);
+      expect(find.text('Theo giờ'), findsOneWidget);
+      expect(find.text('Theo ngày'), findsNothing);
       expect(find.text('2'), findsWidgets); // tổng hôm nay
+      expect(find.text('Điểm nhấn'), findsOneWidget);
       expect(find.byTooltip('Sau').hitTestable(), findsOneWidget);
       expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_right_rounded)).onPressed, isNull);
-
-      await tester.tap(find.text('Tuần'));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Tuần này'), findsOneWidget);
-      expect(find.text('Theo ngày trong tuần'), findsOneWidget);
-      expect(find.text('T2'), findsOneWidget);
 
       await tester.tap(find.text('Tháng'));
       await tester.pumpAndSettle();
@@ -136,24 +138,16 @@ void main() {
       expect(oneBack || twoBack, isTrue);
     });
 
-    testWidgets('deleting from the history list updates the stats (HIS-02)', (tester) async {
-      final now = DateTime.now().toUtc();
-      final c = await pump(tester, [
-        log('t1', now.subtract(const Duration(minutes: 5))),
-        log('t2', now.subtract(const Duration(minutes: 1))),
-      ]);
-      expect(find.text('Các lần chấm'), findsOneWidget);
-
-      await tester.tap(find.byTooltip('Xóa bản ghi').first);
-      await tester.pumpAndSettle();
-      expect(c.read(activityDialControllerProvider).logs, hasLength(1));
-      expect(find.text('lần chấm · 1 loại sự kiện'), findsOneWidget);
+    testWidgets('only aggregates: no per-record list (that lives in Lịch sử)', (tester) async {
+      await pump(tester, [log('t1', DateTime.now().toUtc().subtract(const Duration(minutes: 5)))]);
+      expect(find.byTooltip('Xóa bản ghi'), findsNothing);
+      expect(find.text('giờ cao điểm'), findsOneWidget);
     });
 
     testWidgets('empty range says so', (tester) async {
-      await pump(tester, [log('old', DateTime.now().toUtc().subtract(const Duration(days: 3)))]);
+      await pump(tester, [log('old', DateTime.now().toUtc().subtract(const Duration(days: 40)))]);
       expect(find.text('Chưa có lần chấm nào'), findsOneWidget);
-      expect(find.text('Theo loại sự kiện'), findsNothing);
+      expect(find.text('Theo loại'), findsNothing);
     });
   });
 }

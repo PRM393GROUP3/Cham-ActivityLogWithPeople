@@ -15,9 +15,17 @@ import '../widgets/user_profile_sheet.dart';
 /// Màn hình chính "Chấm — Màn hình chính (Wear OS Dial)"
 /// Chuẩn xác 100% theo bản thiết kế mẫu và yêu cầu SRS (LOG-01 → 05, DAT-01).
 class ActivityDialPage extends ConsumerWidget {
-  const ActivityDialPage({super.key, this.onNavigateToFeed});
+  const ActivityDialPage({
+    super.key,
+    this.onNavigateToFeed,
+    this.onNavigateToAnalytics,
+    this.onNavigateToHistory,
+  });
 
+  /// Có khi nằm trong shell vuốt: hiện gợi ý vuốt tới màn tương ứng.
   final VoidCallback? onNavigateToFeed;
+  final VoidCallback? onNavigateToAnalytics;
+  final VoidCallback? onNavigateToHistory;
 
   void _showFeedbackToast(BuildContext context, ActivityEventType type) {
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -69,7 +77,7 @@ class ActivityDialPage extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const TodayLogsSheet(),
+      builder: (_) => TodayLogsSheet(onViewHistory: onNavigateToHistory),
     );
   }
 
@@ -185,151 +193,285 @@ class ActivityDialPage extends ConsumerWidget {
             ? const Center(
                 child: CircularProgressIndicator(color: Color(0xFFFF694A)),
               )
-            : SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // --- 1. APP HEADER: "Chấm •" + Feed, Settings & Avatar ---
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            : Stack(
+                children: [
+                  // Không cuộn: kéo dọc trên Trang chủ là để mở màn Bạn bè.
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      18,
+                      12,
+                      18,
+                      onNavigateToFeed == null ? 20 : 52,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Tiêu đề Chấm kèm dấu chấm san hô
+                        // --- 1. APP HEADER: "Chấm •" + Settings & Avatar ---
                         Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Chấm',
-                              style: TextStyle(
-                                fontSize: 27,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF1F1A17),
-                                letterSpacing: -0.6,
-                              ),
+                            // Tiêu đề Chấm kèm dấu chấm san hô
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                const Text(
+                                  'Chấm',
+                                  style: TextStyle(
+                                    fontSize: 27,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF1F1A17),
+                                    letterSpacing: -0.6,
+                                  ),
+                                ),
+                                const SizedBox(width: 3.5),
+                                Container(
+                                  width: 8.5,
+                                  height: 8.5,
+                                  margin: const EdgeInsets.only(bottom: 3),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFF6F52),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 3.5),
-                            Container(
-                              width: 8.5,
-                              height: 8.5,
-                              margin: const EdgeInsets.only(bottom: 3),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFF6F52),
-                                shape: BoxShape.circle,
-                              ),
+
+                            // Action icons góc phải. Phân tích / Lịch sử / Bạn bè mở bằng vuốt.
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () => _openSettingsDialog(context),
+                                  icon: const Icon(
+                                    Icons.settings_outlined,
+                                    color: Color(0xFF4A403A),
+                                    size: 23,
+                                  ),
+                                  tooltip: 'Cài đặt',
+                                ),
+                                const SizedBox(width: 4),
+                                InkWell(
+                                  onTap: () => _openProfileSheet(context),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: account?.avatarEmoji != null
+                                      ? Tooltip(
+                                          message: 'Hồ sơ',
+                                          child: UserAvatar(
+                                            name: account!.displayName,
+                                            emoji: account.avatarEmoji,
+                                            radius: 17,
+                                          ),
+                                        )
+                                      : Container(
+                                          width: 34,
+                                          height: 34,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFFA93B24),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.person_rounded,
+                                            size: 21,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
 
-                        // Action icons góc phải
-                        Row(
-                          children: [
-                            // Nút Bảng tin bạn bè (Feed)
-                            IconButton(
-                              onPressed: () {
-                                if (onNavigateToFeed != null) {
-                                  onNavigateToFeed!();
-                                } else {
-                                  Navigator.pushNamed(context, '/feed');
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.people_alt_outlined,
-                                color: Color(0xFF4A403A),
-                                size: 23,
+                        const SizedBox(height: 14),
+
+                        // --- 2. BANNER CARD: HÔM NAY + "4 chấm" badge ---
+                        TodaySummaryCard(
+                          todayCount: state.todayCount,
+                          onTap: () => _openTodayLogsSheet(context),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // --- 3. RADIAL ORBITAL DIAL (Wear OS Dial) ---
+                        // Thu nhỏ vừa phần còn lại của màn hình thay vì cuộn.
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) => FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topCenter,
+                              child: SizedBox(
+                                width: constraints.maxWidth,
+                                child: OrbitalDialWidget(
+                                  eventTypes: state.dialTypes,
+                                  onTapNode: (type) async {
+                                    await controller.quickLog(type);
+                                    if (context.mounted) {
+                                      _showFeedbackToast(context, type);
+                                    }
+                                  },
+                                  onTapCenter: () =>
+                                      showAddActivityDialog(context),
+                                ),
                               ),
-                              tooltip: 'Bảng tin bạn bè (Vuốt sang trái)',
                             ),
-                            // Lịch sử & thống kê (HIS-01, STA-01)
-                            IconButton(
-                              onPressed: () =>
-                                  Navigator.pushNamed(context, '/stats'),
-                              icon: const Icon(
-                                Icons.bar_chart_rounded,
-                                color: Color(0xFF4A403A),
-                                size: 24,
-                              ),
-                              tooltip: 'Lịch sử & thống kê',
-                            ),
-                            IconButton(
-                              onPressed: () => _openSettingsDialog(context),
-                              icon: const Icon(
-                                Icons.settings_outlined,
-                                color: Color(0xFF4A403A),
-                                size: 23,
-                              ),
-                              tooltip: 'Cài đặt',
-                            ),
-                            const SizedBox(width: 4),
-                            InkWell(
-                              onTap: () => _openProfileSheet(context),
-                              borderRadius: BorderRadius.circular(20),
-                              child: account?.avatarEmoji != null
-                                  ? Tooltip(
-                                      message: 'Hồ sơ',
-                                      child: UserAvatar(
-                                        name: account!.displayName,
-                                        emoji: account.avatarEmoji,
-                                        radius: 17,
-                                      ),
-                                    )
-                                  : Container(
-                                      width: 34,
-                                      height: 34,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFA93B24),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.person_rounded,
-                                        size: 21,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
+                  ),
 
-                    const SizedBox(height: 14),
-
-                    // --- 2. BANNER CARD: HÔM NAY + "4 chấm" badge ---
-                    TodaySummaryCard(
-                      todayCount: state.todayCount,
-                      onTap: () => _openTodayLogsSheet(context),
+                  // --- Gợi ý vuốt: Phân tích (trái), Lịch sử (phải), Bạn bè (dưới) ---
+                  if (onNavigateToAnalytics != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _EdgeHint(
+                        icon: Icons.chevron_left_rounded,
+                        label: 'Phân tích',
+                        onTap: onNavigateToAnalytics!,
+                      ),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // --- 3. RADIAL ORBITAL DIAL (Wear OS Dial) ---
-                    OrbitalDialWidget(
-                      eventTypes: state.dialTypes,
-                      onTapNode: (type) async {
-                        await controller.quickLog(type);
-                        if (context.mounted) {
-                          _showFeedbackToast(context, type);
-                        }
-                      },
-                      onTapCenter: () => showAddActivityDialog(context),
+                  if (onNavigateToHistory != null)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: _EdgeHint(
+                        icon: Icons.chevron_right_rounded,
+                        label: 'Lịch sử',
+                        onTap: onNavigateToHistory!,
+                      ),
                     ),
-                  ],
-                ),
+                  if (onNavigateToFeed != null)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _FeedPeekBar(onTap: onNavigateToFeed!),
+                    ),
+                ],
               ),
       ),
+    );
+  }
+}
 
-      // --- 4. FLOATING ACTION BUTTON (Góc dưới phải: nút tròn đen) ---
-      floatingActionButton: FloatingActionButton(
-        elevation: 4,
-        backgroundColor: const Color(0xFF221C18),
-        shape: const CircleBorder(),
-        onPressed: () => _openTodayLogsSheet(context),
-        child: const Icon(
-          Icons.auto_awesome_rounded,
-          color: Colors.white,
-          size: 23,
+/// Mũi tên mờ ở mép màn hình, gợi ý vuốt ngang; bấm cũng chuyển màn.
+class _EdgeHint extends StatelessWidget {
+  const _EdgeHint({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: 22,
+          height: 72,
+          child: Icon(icon, size: 20, color: const Color(0x55786A60)),
+        ),
+      ),
+    );
+  }
+}
+
+/// Thanh mờ ở đáy Trang chủ: mũi tên nhún nhẹ vài lần gợi ý vuốt lên để xem Bạn bè.
+class _FeedPeekBar extends StatefulWidget {
+  const _FeedPeekBar({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_FeedPeekBar> createState() => _FeedPeekBarState();
+}
+
+class _FeedPeekBarState extends State<_FeedPeekBar>
+    with SingleTickerProviderStateMixin {
+  /// Nhún 3 lần rồi đứng yên, để không gây rối mắt.
+  static const _bounces = 3;
+  int _done = 0;
+
+  late final AnimationController _bob =
+      AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 700),
+      )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _bob.reverse();
+        } else if (status == AnimationStatus.dismissed && ++_done < _bounces) {
+          _bob.forward();
+        }
+      });
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) _bob.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _bob.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Bạn bè',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        // Dải mờ dần bằng gradient thay cho BackdropFilter: blur phải tính lại mỗi khung hình
+        // lúc vuốt chuyển màn, làm vuốt bị khựng; phía sau thanh vốn chỉ là nền trơn.
+        child: Container(
+          height: 56,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x00FAF6F0), Color(0xCCF6EFE5), Color(0xFFF3EBDF)],
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedBuilder(
+                animation: _bob,
+                builder: (context, child) => Transform.translate(
+                  offset: Offset(
+                    0,
+                    -4 * Curves.easeInOut.transform(_bob.value),
+                  ),
+                  child: child,
+                ),
+                child: const Icon(
+                  Icons.keyboard_arrow_up_rounded,
+                  size: 22,
+                  color: Color(0xFF9E9287),
+                ),
+              ),
+              const Text(
+                'Bạn bè',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF9E9287),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

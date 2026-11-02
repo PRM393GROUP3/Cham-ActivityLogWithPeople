@@ -18,7 +18,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('MainShellPage displays ActivityDial and swipes left to FeedPage',
+  testWidgets('MainShellPage: swipe up to Bạn bè, sideways to Phân tích / Lịch sử, Back retraces',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(420, 920);
     tester.view.devicePixelRatio = 1.0;
@@ -57,21 +57,69 @@ void main() {
     expect(find.text('Chấm'), findsOneWidget);
     expect(find.textContaining('HÔM NAY'), findsOneWidget);
 
-    // 2. Swipe Left from Main Screen to Feed Screen
-    await tester.drag(find.byType(PageView), const Offset(-400, 0));
+    final center = tester.getCenter(find.byType(MainShellPage));
+
+    // 2. Swipe up from Home to the friends feed below it
+    await tester.dragFrom(center, const Offset(0, -500));
     await tester.pumpAndSettle();
 
     // Verify FeedPage shows friends and their Public records from the API
+    expect(find.text('Bạn bè'), findsOneWidget);
     expect(find.text('Tất cả'), findsOneWidget);
     expect(find.text('Minh Thư'), findsWidgets);
     expect(find.textContaining('đã chấm 🏃 Chạy bộ'), findsOneWidget);
     expect(find.text('15 phút trước'), findsOneWidget);
 
-    // 3. Swipe Right back to ActivityDialPage
-    await tester.drag(find.byType(PageView), const Offset(400, 0));
+    // No sideways swipe from the feed
+    await tester.dragFrom(center, const Offset(400, 0));
     await tester.pumpAndSettle();
+    expect(find.text('Phân tích'), findsNothing);
 
+    // 3. Pull down past the top of the feed to go back up to Home
+    await tester.dragFrom(center, const Offset(0, 300));
+    await tester.pumpAndSettle();
     expect(find.textContaining('HÔM NAY'), findsOneWidget);
+
+    // 4. Analytics is to the left of Home, History to the right
+    await tester.dragFrom(center, const Offset(400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Phân tích'), findsOneWidget);
+
+    await tester.dragFrom(center, const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    await tester.dragFrom(center, const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Lịch sử'), findsOneWidget);
+
+    // 5. Back retraces: History → Home → Analytics → Home → Feed → Home
+    Future<void> back() async {
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+    }
+
+    await back();
+    expect(find.textContaining('HÔM NAY'), findsOneWidget);
+    await back();
+    expect(find.text('Phân tích'), findsOneWidget);
+    await back();
+    expect(find.textContaining('HÔM NAY'), findsOneWidget);
+    await back();
+    expect(find.text('Bạn bè'), findsOneWidget);
+    await back();
+    expect(find.textContaining('HÔM NAY'), findsOneWidget);
+
+    // 6. At Home with nothing left: first Back only shows a small hint
+    expect(find.text('Bấm lần nữa để thoát'), findsOneWidget); // có sẵn, đang ẩn
+    await back();
+    expect(find.textContaining('HÔM NAY'), findsOneWidget);
+    expect(
+      tester.widget<AnimatedOpacity>(
+        find.ancestor(of: find.text('Bấm lần nữa để thoát'), matching: find.byType(AnimatedOpacity)),
+      ).opacity,
+      1,
+    );
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
 
     // 4. Test Navigation to Add QR from Profile Sheet
     await tester.tap(find.byIcon(Icons.person_rounded).first);
