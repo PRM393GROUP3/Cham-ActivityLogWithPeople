@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
@@ -43,7 +44,6 @@ object ChamWidgetUpdater {
     private const val PREFS_NAME = "FlutterSharedPreferences"
     private const val KEY_LOGS = "flutter.cham_activity_logs_v1"
     private const val KEY_EVENT_TYPES = "flutter.cham_event_types_v2"
-    private const val KEY_MEDIUM_TYPES = "flutter.cham_widget_medium_types_v1"
 
     private val VN_ZONE: ZoneId = ZoneId.of("Asia/Ho_Chi_Minh")
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -56,29 +56,6 @@ object ChamWidgetUpdater {
 
     private val glowBitmapCache = mutableMapOf<String, Bitmap>()
 
-    // Vibrant glow colors matching the 4 habit button slots (Coral, Emerald, Violet, Sky Blue)
-    private val SLOT_GLOW_COLORS = intArrayOf(
-        Color.parseColor("#FF5722"),
-        Color.parseColor("#2ECC71"),
-        Color.parseColor("#8E44AD"),
-        Color.parseColor("#2980B9")
-    )
-
-    private val SLOT_CORE_COLORS = intArrayOf(
-        Color.parseColor("#FF9E44"),
-        Color.parseColor("#69F0AE"),
-        Color.parseColor("#CE93D8"),
-        Color.parseColor("#64B5F6")
-    )
-
-    private val DEFAULT_HABITS = listOf(
-        WidgetHabitItem("coffee", "Cà phê", "☕"),
-        WidgetHabitItem("running", "Chạy bộ", "🏃"),
-        WidgetHabitItem("reading", "Đọc sách", "📖"),
-        WidgetHabitItem("meditate", "Thiền", "🧘")
-    )
-
-    // 19 loại mặc định của vòng Dial (khớp ActivityEventType.defaultTypes), dùng khi người dùng
     // chưa từng chỉnh danh sách nên Flutter chưa lưu KEY_EVENT_TYPES.
     private val ALL_DEFAULT_TYPES = listOf(
         WidgetHabitItem("coffee", "Cà phê", "☕"),
@@ -266,198 +243,71 @@ object ChamWidgetUpdater {
         manager.updateAppWidget(appWidgetId, views)
     }
 
+    /**
+     * Widget 4×2 "Bạn bè": danh sách cuộn những người bạn có hoạt động hôm nay (mới nhất trước),
+     * thả tim ngay trên widget. Dữ liệu là bản chụp app ghi lại ở lần tải feed gần nhất.
+     */
+    @Suppress("DEPRECATION")
     fun updateMediumWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val logsArray = loadOrSeedLogsArray(prefs)
-        val stats = computeStats(logsArray)
-        val habits = loadMediumHabits(prefs)
-
-        val options = manager.getAppWidgetOptions(appWidgetId)
-        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 120)
-        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
-        val isCompactHeight = minHeight in 1..95
-        val isExpandedHeight = minHeight >= 175
-
+        val snapshot = ChamFriendsStore.load(context)
         val views = RemoteViews(context.packageName, R.layout.cham_medium_widget)
-
-        val completedCount = habits.count { (stats.todayCountsByType[it.id] ?: 0) > 0 }
-        views.setTextViewText(R.id.medium_widget_badge, "✓ $completedCount/${habits.size}")
-        views.setTextViewText(
-            R.id.medium_widget_streak,
-            "⚡ Chuỗi ${stats.streakDays} ngày · ${stats.todayCount} chấm"
-        )
-
-        views.setViewVisibility(
-            R.id.medium_widget_footer,
-            if (isCompactHeight) View.GONE else View.VISIBLE
-        )
-
         val openAppIntent = createOpenAppPendingIntent(context, appWidgetId + 5000)
-        views.setOnClickPendingIntent(R.id.medium_widget_header, openAppIntent)
 
-        val btnIds = intArrayOf(R.id.medium_btn_1, R.id.medium_btn_2, R.id.medium_btn_3, R.id.medium_btn_4)
-        val countIds = intArrayOf(R.id.medium_count_1, R.id.medium_count_2, R.id.medium_count_3, R.id.medium_count_4)
-        val pulseIds = intArrayOf(
-            R.id.medium_pulse_ring_1,
-            R.id.medium_pulse_ring_2,
-            R.id.medium_pulse_ring_3,
-            R.id.medium_pulse_ring_4
-        )
-        val boxIds = intArrayOf(
-            R.id.medium_icon_box_1,
-            R.id.medium_icon_box_2,
-            R.id.medium_icon_box_3,
-            R.id.medium_icon_box_4
-        )
-        val defaultBoxBgs = intArrayOf(
-            R.drawable.widget_btn_1_bg,
-            R.drawable.widget_btn_2_bg,
-            R.drawable.widget_btn_3_bg,
-            R.drawable.widget_btn_4_bg
-        )
-        val emojiIds = intArrayOf(R.id.medium_emoji_1, R.id.medium_emoji_2, R.id.medium_emoji_3, R.id.medium_emoji_4)
-        val titleIds = intArrayOf(R.id.medium_title_1, R.id.medium_title_2, R.id.medium_title_3, R.id.medium_title_4)
-        val dotIds = intArrayOf(R.id.medium_dot_1, R.id.medium_dot_2, R.id.medium_dot_3, R.id.medium_dot_4)
-
-        val emojiSizeSp = if (isExpandedHeight) 24f else 20f
-        val titleSizeSp = if (isExpandedHeight) 12f else if (minWidth in 1..200) 9.5f else 11f
-        val countSizeSp = if (isExpandedHeight) 10.5f else 9f
-
-        for (i in 0 until 4) {
-            val habit = habits.getOrElse(i) { DEFAULT_HABITS[i] }
-            val habitCount = stats.todayCountsByType[habit.id] ?: 0
-            val isDoneToday = habitCount > 0
-            val isAnimating = animatingEventId == habit.id && animStep > 0
-
-            // 1. Count badge above each habit icon
-            views.setTextViewText(countIds[i], "$habitCount chấm")
-            views.setTextViewTextSize(countIds[i], TypedValue.COMPLEX_UNIT_SP, countSizeSp)
-            views.setInt(
-                countIds[i],
-                "setBackgroundResource",
-                if (isDoneToday) R.drawable.widget_count_pill_active else R.drawable.widget_count_pill_zero
-            )
-            views.setTextColor(
-                countIds[i],
-                if (isDoneToday) Color.parseColor("#B53216") else Color.parseColor("#7D726A")
-            )
-
-            // 2. Soft diffused under-glow aura beneath the icon + glowing border highlight
-            if (isAnimating) {
-                val glowBmp = getRoundedUnderGlowBitmap(slotIndex = i, step = animStep)
-                views.setImageViewBitmap(pulseIds[i], glowBmp)
-                views.setViewVisibility(pulseIds[i], View.VISIBLE)
-                val boxBgRes = if (animStep == 2) R.drawable.widget_btn_glow_2 else R.drawable.widget_btn_glow_1
-                views.setInt(boxIds[i], "setBackgroundResource", boxBgRes)
-            } else {
-                views.setViewVisibility(pulseIds[i], View.GONE)
-                views.setInt(boxIds[i], "setBackgroundResource", defaultBoxBgs[i])
+        // Dòng phụ cạnh tiêu đề: số người, hoặc báo dữ liệu cũ khi lâu chưa đồng bộ
+        val syncedAt = snapshot.syncedAt
+        when {
+            syncedAt != null && ChamFriendsStore.isStale(syncedAt) -> {
+                views.setTextViewText(R.id.medium_meta, "⟳ ${ChamFriendsStore.hm(syncedAt)} · mở app để làm mới")
+                views.setTextColor(R.id.medium_meta, Color.parseColor("#9A6A14"))
+                views.setViewVisibility(R.id.medium_meta, View.VISIBLE)
             }
-
-            // 3. Emoji and Habit Title
-            views.setTextViewText(emojiIds[i], habit.emoji)
-            views.setTextViewTextSize(emojiIds[i], TypedValue.COMPLEX_UNIT_SP, emojiSizeSp)
-            views.setTextViewText(titleIds[i], habit.name)
-            views.setTextViewTextSize(titleIds[i], TypedValue.COMPLEX_UNIT_SP, titleSizeSp)
-
-            // 4. Footer status dot
-            views.setImageViewResource(
-                dotIds[i],
-                if (isDoneToday) R.drawable.widget_dot_active else R.drawable.widget_dot_inactive
-            )
-
-            val logIntent = createQuickLogPendingIntent(
-                context = context,
-                requestCode = appWidgetId * 100 + i + 10,
-                habit = habit
-            )
-            views.setOnClickPendingIntent(btnIds[i], logIntent)
+            snapshot.items.isNotEmpty() -> {
+                views.setTextViewText(R.id.medium_meta, "${snapshot.items.size} người hôm nay")
+                views.setTextColor(R.id.medium_meta, Color.parseColor("#857469"))
+                views.setViewVisibility(R.id.medium_meta, View.VISIBLE)
+            }
+            else -> views.setViewVisibility(R.id.medium_meta, View.INVISIBLE)
         }
+        views.setOnClickPendingIntent(R.id.medium_meta, openAppIntent)
+        views.setOnClickPendingIntent(R.id.medium_title, openAppIntent)
+        views.setOnClickPendingIntent(
+            R.id.medium_plus_btn,
+            createDialPickerPendingIntent(context, appWidgetId * 10 + 5)
+        )
+
+        // Trạng thái trống: chưa từng tải feed, hoặc hôm nay bạn bè chưa chấm gì
+        if (syncedAt == null) {
+            views.setTextViewText(R.id.medium_empty_text, "Mở Chấm để xem bạn bè đang làm gì")
+            views.setTextViewText(R.id.medium_empty_cta, "Mở Chấm")
+        } else {
+            views.setTextViewText(
+                R.id.medium_empty_text,
+                "Hôm nay bạn bè chưa chấm gì. Rủ thêm bạn để cùng xem nhịp ngày."
+            )
+            views.setTextViewText(R.id.medium_empty_cta, "Mời bạn")
+        }
+        views.setOnClickPendingIntent(R.id.medium_empty_cta, openAppIntent)
+
+        val serviceIntent = Intent(context, ChamFriendsWidgetService::class.java).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
+        }
+        views.setRemoteAdapter(R.id.medium_list, serviceIntent)
+        views.setEmptyView(R.id.medium_list, R.id.medium_empty)
+
+        // Mỗi dòng gắn thêm loại thao tác (mở / thả tim / xem tất cả) vào mẫu intent này
+        val templateFlags = PendingIntent.FLAG_UPDATE_CURRENT or
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
+        val template = PendingIntent.getActivity(
+            context,
+            appWidgetId + 7000,
+            Intent(context, ChamWidgetActionActivity::class.java),
+            templateFlags
+        )
+        views.setPendingIntentTemplate(R.id.medium_list, template)
 
         manager.updateAppWidget(appWidgetId, views)
-    }
-
-    /**
-     * Generates a soft, multi-layered glowing backlight bitmap that sits underneath the 44dp rounded-square
-     * habit icon, radiating a warm luminous halo around its edges and slightly below it.
-     */
-    private fun getRoundedUnderGlowBitmap(slotIndex: Int, step: Int): Bitmap {
-        val key = "round_${slotIndex}_$step"
-        glowBitmapCache[key]?.let { return it }
-
-        val size = 186 // 3x density for 62dp container
-        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
-
-        val outerColor = SLOT_GLOW_COLORS[slotIndex % SLOT_GLOW_COLORS.size]
-        val coreColor = SLOT_CORE_COLORS[slotIndex % SLOT_CORE_COLORS.size]
-
-        // Intensity multiplier per animation frame (1: bloom, 2: peak radiant, 3: warm pulse, 4: fade)
-        val intensity = when (step) {
-            1 -> 0.80f
-            2 -> 1.00f
-            3 -> 0.72f
-            else -> 0.42f
-        }
-        val spreadPx = when (step) {
-            1 -> 20f
-            2 -> 26f
-            3 -> 22f
-            else -> 16f
-        }
-
-        val cx = size / 2f
-        val cy = size / 2f + 4f // Slightly shifted down so light blooms from underneath the icon
-
-        // Layer 1: Wide radial ambient backlight underneath the icon
-        val radialPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            shader = RadialGradient(
-                cx,
-                cy,
-                size * 0.48f,
-                intArrayOf(
-                    withAlpha(coreColor, (220 * intensity).toInt()),
-                    withAlpha(outerColor, (150 * intensity).toInt()),
-                    withAlpha(outerColor, 0)
-                ),
-                floatArrayOf(0f, 0.58f, 1f),
-                Shader.TileMode.CLAMP
-            )
-        }
-        canvas.drawCircle(cx, cy, size * 0.48f, radialPaint)
-
-        // Layer 2: Blurred rounded-square neon halo matching the 44dp (132px) icon box shape
-        val boxHalf = 66f
-        val glowRect = RectF(
-            cx - boxHalf - 4f,
-            (size / 2f) - boxHalf - 2f,
-            cx + boxHalf + 4f,
-            (size / 2f) + boxHalf + 8f
-        )
-        val blurPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            color = withAlpha(outerColor, (210 * intensity).toInt())
-            maskFilter = BlurMaskFilter(spreadPx, BlurMaskFilter.Blur.NORMAL)
-        }
-        canvas.drawRoundRect(glowRect, 48f, 48f, blurPaint)
-
-        // Layer 3: Crisp luminous border rim right around the icon edge
-        val rimRect = RectF(
-            (size / 2f) - boxHalf - 2f,
-            (size / 2f) - boxHalf - 2f,
-            (size / 2f) + boxHalf + 2f,
-            (size / 2f) + boxHalf + 2f
-        )
-        val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = if (step == 2) 7.5f else 5.5f
-            color = withAlpha(coreColor, (245 * intensity).toInt())
-            maskFilter = BlurMaskFilter(6f, BlurMaskFilter.Blur.NORMAL)
-        }
-        canvas.drawRoundRect(rimRect, 48f, 48f, rimPaint)
-
-        glowBitmapCache[key] = bmp
-        return bmp
+        manager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.medium_list)
     }
 
     private fun getCircleUnderGlowBitmap(step: Int): Bitmap {
@@ -520,70 +370,6 @@ object ChamWidgetUpdater {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         return PendingIntent.getActivity(context, requestCode, intent, flags)
-    }
-
-    private fun createQuickLogPendingIntent(
-        context: Context,
-        requestCode: Int,
-        habit: WidgetHabitItem
-    ): PendingIntent {
-        val intent = Intent(context, ChamSmallWidgetProvider::class.java).apply {
-            action = ACTION_QUICK_LOG
-            putExtra(EXTRA_EVENT_ID, habit.id)
-            putExtra(EXTRA_EVENT_NAME, habit.name)
-            putExtra(EXTRA_EVENT_EMOJI, habit.emoji)
-        }
-        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
-        return PendingIntent.getBroadcast(context, requestCode, intent, flags)
-    }
-
-    private fun loadMediumHabits(prefs: android.content.SharedPreferences): List<WidgetHabitItem> {
-        val raw = prefs.getString(KEY_MEDIUM_TYPES, null)
-        if (!raw.isNullOrEmpty()) {
-            try {
-                val arr = JSONArray(raw)
-                val list = mutableListOf<WidgetHabitItem>()
-                for (i in 0 until arr.length()) {
-                    val obj = arr.getJSONObject(i)
-                    list.add(
-                        WidgetHabitItem(
-                            id = obj.optString("id", "coffee"),
-                            name = obj.optString("name", "Cà phê"),
-                            emoji = obj.optString("emoji", "☕")
-                        )
-                    )
-                }
-                if (list.size >= 4) return list.take(4)
-            } catch (_: Exception) {
-            }
-        }
-        val allTypes = loadAvailableEventTypes(prefs)
-        if (allTypes.size >= 4) return allTypes.take(4)
-        return DEFAULT_HABITS
-    }
-
-    private fun loadAvailableEventTypes(prefs: android.content.SharedPreferences): List<WidgetHabitItem> {
-        val raw = prefs.getString(KEY_EVENT_TYPES, null)
-        if (!raw.isNullOrEmpty()) {
-            try {
-                val arr = JSONArray(raw)
-                val list = mutableListOf<WidgetHabitItem>()
-                for (i in 0 until arr.length()) {
-                    val obj = arr.getJSONObject(i)
-                    list.add(
-                        WidgetHabitItem(
-                            id = obj.optString("id"),
-                            name = obj.optString("name"),
-                            emoji = obj.optString("emoji")
-                        )
-                    )
-                }
-                if (list.isNotEmpty()) return list
-            } catch (_: Exception) {
-            }
-        }
-        return DEFAULT_HABITS
     }
 
     private fun loadEventTypesOrDefaults(prefs: android.content.SharedPreferences): List<WidgetHabitItem> {

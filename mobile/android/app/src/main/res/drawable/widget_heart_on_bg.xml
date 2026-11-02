@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nền hồng sau khi đã thả tim (vòng 26dp nằm giữa vùng chạm 34dp) -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:inset="4dp">
+    <shape android:shape="oval">
+        <solid android:color="#FFE1E1" />
+    </shape>
+</inset>

@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/time/vn_time.dart';
 import '../../activity_dial/domain/activity_event_type.dart';
+import '../../social/domain/feed_share.dart';
 import '../domain/widget_config.dart';
 
 /// Cầu nối đồng bộ cấu hình & dữ liệu giữa Flutter và Native Android AppWidgetProvider (WID-01, AC-01).
@@ -14,6 +16,11 @@ class HomeWidgetBridge {
   static const _channel = MethodChannel('com.cham.cham/widgets');
   static const _keySmallType = 'cham_widget_small_type_v1';
   static const _keyMediumTypes = 'cham_widget_medium_types_v1';
+  static const _keyFriends = 'cham_widget_friends_v1';
+  static const _keyPendingReactions = 'cham_widget_pending_reactions_v1';
+
+  /// Số dòng tối đa trong danh sách bạn bè của Widget 4×2.
+  static const _maxFriends = 20;
 
   static VoidCallback? _onWidgetLogged;
   static bool _listenerRegistered = false;
@@ -117,6 +124,65 @@ class HomeWidgetBridge {
       if (!defaults.any((d) => d.id == t.id)) defaults.add(t);
     }
     return defaults.take(4).toList();
+  }
+
+  /// Ghi cho Widget 4×2 "Bạn bè": mỗi người bạn có bài hôm nay (giờ VN) một dòng với bài mới nhất,
+  /// mới nhất trước, tối đa [_maxFriends] dòng; rồi làm mới widget.
+  static Future<void> saveFriendsSnapshot(List<FeedShare> feed) async {
+    try {
+      final latestByOwner = <String, FeedShare>{};
+      for (final s in feed) {
+        if (s.isMine || !VnTime.isToday(s.occurredAt)) continue;
+        final seen = latestByOwner[s.ownerId];
+        if (seen == null || s.occurredAt.isAfter(seen.occurredAt)) latestByOwner[s.ownerId] = s;
+      }
+      final items = latestByOwner.values.toList()..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _keyFriends,
+        jsonEncode({
+          'syncedAt': DateTime.now().toUtc().toIso8601String(),
+          'items': [
+            for (final s in items.take(_maxFriends))
+              {
+                'shareId': s.id,
+                'name': s.ownerName,
+                'avatar': s.ownerAvatarEmoji ?? '',
+                'emoji': s.emoji,
+                'activity': s.name,
+                'occurredAt': s.occurredAt.toUtc().toIso8601String(),
+                'myReaction': s.myReaction ?? '',
+              },
+          ],
+        }),
+      );
+      await updateWidgets();
+    } catch (_) {}
+  }
+
+  /// Gửi các lần thả / gỡ tim đã bấm trên Widget 4×2 lúc app chưa mở (`null` = gỡ cảm xúc).
+  /// Lần nào gửi lỗi thì giữ lại để thử ở lần sau.
+  static Future<void> flushPendingReactions(Future<void> Function(String shareId, String? emoji) send) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (isRealAndroidApp) await prefs.reload();
+      final raw = prefs.getString(_keyPendingReactions);
+      if (raw == null || raw.isEmpty) return;
+      final pending = (jsonDecode(raw) as Map<String, dynamic>).cast<String, String>();
+      final failed = <String, String>{};
+      for (final MapEntry(key: shareId, value: emoji) in pending.entries) {
+        try {
+          await send(shareId, emoji.isEmpty ? null : emoji);
+        } catch (_) {
+          failed[shareId] = emoji;
+        }
+      }
+      if (failed.isEmpty) {
+        await prefs.remove(_keyPendingReactions);
+      } else {
+        await prefs.setString(_keyPendingReactions, jsonEncode(failed));
+      }
+    } catch (_) {}
   }
 
   /// Lưu 4 loại sự kiện cho Widget Vừa (4×2) và cập nhật Native Widget.
