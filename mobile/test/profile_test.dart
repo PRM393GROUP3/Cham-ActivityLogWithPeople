@@ -153,7 +153,7 @@ void main() {
       api.takenUsernames.add('an_');
       await tester.tap(find.text('Lưu'));
       await tester.pumpAndSettle();
-      expect(find.text('Tên người dùng này đã có người dùng.'), findsOneWidget);
+      expect(find.text('Nickname này đã có người dùng.'), findsOneWidget);
       expect(find.text('Hồ sơ của bạn'), findsOneWidget);
       expect(api.profileUpdates, isEmpty);
     });
@@ -217,7 +217,7 @@ void main() {
       final api = await pump(tester, online: false);
       await tester.tap(find.text('Lưu'));
       await tester.pump();
-      expect(find.text('Hãy chọn một tên người dùng.'), findsOneWidget);
+      expect(find.text('Hãy chọn một nickname.'), findsOneWidget);
 
       await tester.enterText(find.byKey(const ValueKey('profile-username')), 'an_1');
       await tester.enterText(find.byKey(const ValueKey('profile-name')), '   ');

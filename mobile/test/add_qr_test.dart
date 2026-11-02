@@ -38,13 +38,13 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Chấm · @hamy_cham'), findsOneWidget);
-    expect(find.text('Sao chép tên'), findsOneWidget);
+    expect(find.text('Sao chép nickname'), findsOneWidget);
 
-    // Tap "Sao chép tên"
-    await tester.ensureVisible(find.text('Sao chép tên'));
-    await tester.tap(find.text('Sao chép tên'));
+    // Tap "Sao chép nickname"
+    await tester.ensureVisible(find.text('Sao chép nickname'));
+    await tester.tap(find.text('Sao chép nickname'));
     await tester.pumpAndSettle();
-    expect(find.text('Đã sao chép tên người dùng: @hamy_cham'), findsOneWidget);
+    expect(find.text('Đã sao chép nickname: @hamy_cham'), findsOneWidget);
 
     // Switch to "Quét mã QR" tab
     await tester.tap(find.text('Quét mã QR'));
@@ -57,7 +57,7 @@ void main() {
     );
     expect(find.text('Bật đèn'), findsOneWidget);
     expect(find.text('Chọn ảnh'), findsOneWidget);
-    expect(find.text('Nhập tên'), findsOneWidget);
+    expect(find.text('Nhập nickname'), findsOneWidget);
 
     // Toggle Flashlight
     await tester.tap(find.text('Bật đèn'));
@@ -65,13 +65,13 @@ void main() {
     expect(find.text('Tắt đèn'), findsOneWidget);
 
     // Open Manual code bottom sheet
-    await tester.tap(find.text('Nhập tên'));
+    await tester.tap(find.text('Nhập nickname'));
     await tester.pumpAndSettle();
-    expect(find.text('Nhập Tên Người Dùng'), findsOneWidget);
+    expect(find.text('Nhập Nickname'), findsOneWidget);
     expect(find.text('Kết nối bạn bè'), findsOneWidget);
 
     // Dismiss bottom sheet
-    Navigator.of(tester.element(find.text('Nhập Tên Người Dùng'))).pop();
+    Navigator.of(tester.element(find.text('Nhập Nickname'))).pop();
     await tester.pumpAndSettle();
 
     // Switch back to "Mã QR của tôi"
@@ -117,7 +117,7 @@ void main() {
       await tester.pumpWidget(app(FakeFriendsApi(), username: null));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('my_qr_card')), findsNothing);
-      await tester.tap(find.text('Đặt tên người dùng'));
+      await tester.tap(find.text('Đặt nickname'));
       await tester.pumpAndSettle();
       expect(find.text('profile-route'), findsOneWidget);
     });
@@ -139,7 +139,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Quét mã QR'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Nhập tên'));
+      await tester.tap(find.text('Nhập nickname'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), ' @Khoa.Nguyen ');
       await tester.tap(find.text('Kết nối bạn bè'));

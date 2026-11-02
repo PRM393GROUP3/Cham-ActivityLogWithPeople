@@ -26,7 +26,7 @@ Future<Uint8List?> _pickFromGallery() async {
 
 const _maxPhotoBytes = 2 * 1024 * 1024;
 
-/// Đặt tên người dùng (duy nhất), họ tên và avatar (ảnh hoặc emoji) — bạn bè thấy trong danh sách
+/// Đặt nickname (duy nhất), họ tên và avatar (ảnh hoặc emoji) — bạn bè thấy trong danh sách
 /// bạn bè, feed và reaction.
 /// Lưu lên server nên cần mạng; lần đầu sẽ tự tạo tài khoản ẩn danh.
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -163,7 +163,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Bạn bè thấy tên người dùng, họ tên và avatar này trong danh sách bạn bè và feed.',
+            'Bạn bè thấy nickname, họ tên và avatar này trong danh sách bạn bè và feed.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.5, color: Color(0xFF8A7E74)),
           ),
@@ -177,7 +177,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             keyboardType: TextInputType.visiblePassword, // bàn phím không gợi ý / tự viết hoa
             inputFormatters: [FilteringTextInputFormatter.allow(usernameAllowedChars)],
             decoration: InputDecoration(
-              labelText: 'Tên người dùng',
+              labelText: 'Nickname',
               prefixText: '@',
               helperText: 'Duy nhất, bạn bè dùng để nhận ra bạn.',
               errorText: _usernameError,

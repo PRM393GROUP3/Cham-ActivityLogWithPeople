@@ -28,8 +28,8 @@ class AccountApi {
         );
       });
 
-  /// PATCH /api/me — đổi tên, tên người dùng và / hoặc avatar. [clearAvatar] = bỏ avatar (về chữ cái đầu).
-  /// Tên người dùng đã có người khác dùng → [ApiException] mã `USERNAME_TAKEN`.
+  /// PATCH /api/me — đổi tên, nickname và / hoặc avatar. [clearAvatar] = bỏ avatar (về chữ cái đầu).
+  /// Nickname đã có người khác dùng → [ApiException] mã `USERNAME_TAKEN`.
   Future<Profile> updateProfile({
     String? displayName,
     String? username,

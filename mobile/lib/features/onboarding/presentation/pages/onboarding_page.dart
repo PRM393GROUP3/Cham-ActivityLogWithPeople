@@ -11,7 +11,7 @@ import '../../../account/presentation/account_controller.dart';
 import '../../../account/presentation/widgets/avatar_emoji_grid.dart';
 import '../../../account/presentation/widgets/user_avatar.dart';
 
-/// Màn chào lần đầu mở app: ba trang giới thiệu, trang cuối đặt tên người dùng (duy nhất), họ tên
+/// Màn chào lần đầu mở app: ba trang giới thiệu, trang cuối đặt nickname (duy nhất), họ tên
 /// và avatar emoji.
 /// Đặt hồ sơ cần mạng (tạo tài khoản ẩn danh); bỏ qua được và đặt lại sau trong Hồ sơ.
 class OnboardingPage extends ConsumerStatefulWidget {
@@ -201,7 +201,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           keyboardType: TextInputType.visiblePassword, // bàn phím không gợi ý / tự viết hoa
           inputFormatters: [FilteringTextInputFormatter.allow(usernameAllowedChars)],
           decoration: InputDecoration(
-            labelText: 'Tên người dùng',
+            labelText: 'Nickname',
             prefixText: '@',
             helperText: 'Duy nhất, bạn bè dùng để nhận ra bạn.',
             errorText: _usernameError,

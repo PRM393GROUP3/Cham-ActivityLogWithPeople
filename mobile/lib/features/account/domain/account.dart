@@ -13,7 +13,7 @@ class Account {
   final String id;
   final String displayName;
 
-  /// Tên người dùng duy nhất (chữ thường); `null` khi chưa đặt. Mã QR cá nhân mã hoá tên này và bạn bè
+  /// Nickname duy nhất (chữ thường); `null` khi chưa đặt. Mã QR cá nhân mã hoá tên này và bạn bè
   /// kết bạn bằng nó (SOC-01).
   final String? username;
 

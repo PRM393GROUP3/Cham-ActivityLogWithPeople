@@ -30,7 +30,7 @@ class AccountController extends AsyncNotifier<Account?> {
     return _registering ??= _register().whenComplete(() => _registering = null);
   }
 
-  /// Đặt tên hiển thị và — nếu truyền — tên người dùng và avatar emoji (`() => null` = bỏ avatar,
+  /// Đặt tên hiển thị và — nếu truyền — nickname và avatar emoji (`() => null` = bỏ avatar,
   /// kể cả ảnh; không truyền = giữ avatar hiện tại). Tự đăng ký ở lần đầu (cần mạng).
   Future<Account> updateProfile({
     required String displayName,

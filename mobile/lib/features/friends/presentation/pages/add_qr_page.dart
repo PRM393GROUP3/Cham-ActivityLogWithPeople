@@ -16,7 +16,7 @@ import '../widgets/qr_scanner_view.dart';
 
 enum QrTab { myQr, scanQr }
 
-/// QR cá nhân (mã hoá tên người dùng) và quét QR / nhập tên người dùng để kết bạn trực tiếp (SOC-01).
+/// QR cá nhân (mã hoá nickname) và quét QR / nhập nickname để kết bạn trực tiếp (SOC-01).
 class AddQrPage extends ConsumerStatefulWidget {
   const AddQrPage({
     super.key,
@@ -42,7 +42,7 @@ class AddQrPage extends ConsumerStatefulWidget {
 class _AddQrPageState extends ConsumerState<AddQrPage> {
   late QrTab _currentTab;
 
-  /// Vùng chụp ảnh mã QR (QR + dòng tên người dùng) để lưu về máy.
+  /// Vùng chụp ảnh mã QR (QR + dòng nickname) để lưu về máy.
   final _qrImageKey = GlobalKey();
 
   @override
@@ -68,10 +68,10 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
 
   void _copyUsername(String username) {
     Clipboard.setData(ClipboardData(text: '@$username'));
-    _toast('Đã sao chép tên người dùng: @$username');
+    _toast('Đã sao chép nickname: @$username');
   }
 
-  /// Lưu ảnh mã QR (kèm tên người dùng) về máy: Android → thư viện ảnh, Web → tải file PNG.
+  /// Lưu ảnh mã QR (kèm nickname) về máy: Android → thư viện ảnh, Web → tải file PNG.
   Future<void> _saveQrImage(String username) async {
     try {
       final boundary = _qrImageKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
@@ -86,16 +86,16 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
     }
   }
 
-  /// Nội dung quét / nhập → tên người dùng → xác nhận → kết bạn ngay (SOC-01).
+  /// Nội dung quét / nhập → nickname → xác nhận → kết bạn ngay (SOC-01).
   Future<void> _handleScannedCode(String raw) async {
     final username = InviteQr.decode(raw);
     if (username == null) {
-      _toast('Đây không phải mã QR hay tên người dùng của Chấm.');
+      _toast('Đây không phải mã QR hay nickname của Chấm.');
       return;
     }
     final own = widget.qrData?.username ?? ref.read(accountControllerProvider).value?.username;
     if (username == own) {
-      _toast('Đây là tên người dùng của chính bạn.');
+      _toast('Đây là nickname của chính bạn.');
       return;
     }
 
@@ -324,7 +324,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
     );
   }
 
-  /// Mã QR mã hoá tên người dùng, nên cần đặt tên trước.
+  /// Mã QR mã hoá nickname, nên cần đặt tên trước.
   Widget _buildNoUsername(BuildContext context) {
     return Padding(
       key: const ValueKey('my_qr_no_username'),
@@ -334,7 +334,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
           const Icon(Icons.alternate_email_rounded, size: 40, color: Color(0xFFB53216)),
           const SizedBox(height: 12),
           const Text(
-            'Đặt tên người dùng để có mã QR. Bạn bè quét mã hoặc nhập tên này để kết bạn với bạn.',
+            'Đặt nickname để có mã QR. Bạn bè quét mã hoặc nhập nickname này để kết bạn với bạn.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Color(0xFF6B645E), height: 1.4),
           ),
@@ -342,7 +342,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB53216)),
             onPressed: () => Navigator.pushNamed(context, '/profile'),
-            child: const Text('Đặt tên người dùng'),
+            child: const Text('Đặt nickname'),
           ),
         ],
       ),
@@ -468,7 +468,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
           const SizedBox(height: 20),
 
           // QR Code Graphic
-          // Vùng được chụp khi "Lưu ảnh QR": QR + tên người dùng trên nền trắng.
+          // Vùng được chụp khi "Lưu ảnh QR": QR + nickname trên nền trắng.
           RepaintBoundary(
             key: _qrImageKey,
             child: Container(
@@ -516,13 +516,13 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
 
           const SizedBox(height: 22),
 
-          // Sao chép tên người dùng & Lưu ảnh QR
+          // Sao chép nickname & Lưu ảnh QR
           Row(
             children: [
               Expanded(
                 child: _QrActionButton(
                   icon: Icons.copy_rounded,
-                  label: 'Sao chép tên',
+                  label: 'Sao chép nickname',
                   onTap: () => _copyUsername(qrData.username),
                 ),
               ),

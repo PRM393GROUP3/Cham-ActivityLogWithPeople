@@ -1,6 +1,6 @@
 import '../../account/domain/username.dart';
 
-/// Nội dung mã QR cá nhân: `CHAM:@<tên người dùng>` (SOC-01). QR chỉ chứa tên người dùng, không chứa
+/// Nội dung mã QR cá nhân: `CHAM:@<nickname>` (SOC-01). QR chỉ chứa nickname, không chứa
 /// nhật ký (NFR-02). Tiền tố giúp nhận ra ngay khi người dùng quét nhầm một mã QR khác (link web,
 /// mã thanh toán…).
 abstract final class InviteQr {
@@ -8,8 +8,8 @@ abstract final class InviteQr {
 
   static String encode(String username) => '$prefix@$username';
 
-  /// Lấy tên người dùng (chữ thường) từ nội dung quét được hoặc gõ tay: `CHAM:@ten`, `@ten` hay `ten`,
-  /// không phân biệt hoa thường. Trả `null` nếu không phải tên người dùng hợp lệ.
+  /// Lấy nickname (chữ thường) từ nội dung quét được hoặc gõ tay: `CHAM:@ten`, `@ten` hay `ten`,
+  /// không phân biệt hoa thường. Trả `null` nếu không phải nickname hợp lệ.
   static String? decode(String? raw) {
     if (raw == null) return null;
     var value = raw.trim();

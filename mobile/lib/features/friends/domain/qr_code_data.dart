@@ -9,7 +9,7 @@ class QrCodeData {
 
   final String displayName;
 
-  /// Tên người dùng (không có `@`); mã QR mã hoá chính nó.
+  /// Nickname (không có `@`); mã QR mã hoá chính nó.
   final String username;
   final String? avatarUrl;
 

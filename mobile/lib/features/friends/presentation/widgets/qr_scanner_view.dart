@@ -11,7 +11,7 @@ typedef QrImagePicker = Future<XFile?> Function();
 
 Future<XFile?> _pickFromGallery() => ImagePicker().pickImage(source: ImageSource.gallery);
 
-/// Quét mã QR kết bạn bằng camera (SOC-01), kèm bật đèn, quét từ ảnh (Android và Web) và nhập tên người dùng.
+/// Quét mã QR kết bạn bằng camera (SOC-01), kèm bật đèn, quét từ ảnh (Android và Web) và nhập nickname.
 /// Mỗi lần chỉ xử lý một mã: trong lúc [onCodeScanned] chưa xong, các lần đọc tiếp bị bỏ qua.
 class QrScannerView extends StatefulWidget {
   const QrScannerView({
@@ -22,7 +22,7 @@ class QrScannerView extends StatefulWidget {
     this.pickImage = _pickFromGallery,
   });
 
-  /// Nhận nội dung thô (QR hoặc tên người dùng gõ tay); bên gọi giải mã bằng [InviteQr.decode].
+  /// Nhận nội dung thô (QR hoặc nickname gõ tay); bên gọi giải mã bằng [InviteQr.decode].
   final Future<void> Function(String raw) onCodeScanned;
   final bool animateLaser;
 
@@ -191,7 +191,7 @@ class _QrScannerViewState extends State<QrScannerView>
               ),
               const SizedBox(height: 18),
               const Text(
-                'Nhập Tên Người Dùng',
+                'Nhập Nickname',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -201,7 +201,7 @@ class _QrScannerViewState extends State<QrScannerView>
               ),
               const SizedBox(height: 8),
               const Text(
-                'Nhập tên người dùng của bạn bè (vd. @khoa.nguyen).',
+                'Nhập nickname của bạn bè (vd. @khoa.nguyen).',
                 style: TextStyle(
                   fontSize: 13,
                   color: Color(0xFF756E68),
@@ -301,8 +301,8 @@ class _QrScannerViewState extends State<QrScannerView>
                       onDetect: _onDetect,
                       errorBuilder: (context, error) => _CameraMessage(
                         error.errorCode == MobileScannerErrorCode.permissionDenied
-                            ? 'Chưa được cấp quyền camera.\nHãy cho phép trong cài đặt, hoặc dùng "Nhập tên".'
-                            : 'Không mở được camera.\nHãy dùng "Nhập tên".',
+                            ? 'Chưa được cấp quyền camera.\nHãy cho phép trong cài đặt, hoặc dùng "Nhập nickname".'
+                            : 'Không mở được camera.\nHãy dùng "Nhập nickname".',
                       ),
                     ),
                   )
@@ -393,7 +393,7 @@ class _QrScannerViewState extends State<QrScannerView>
               Expanded(
                 child: _ScannerOptionButton(
                   icon: Icons.keyboard_alt_outlined,
-                  label: 'Nhập tên',
+                  label: 'Nhập nickname',
                   onTap: _openManualCodeDialog,
                 ),
               ),

@@ -50,7 +50,7 @@ void main() {
       final e = ApiException.fromDio(withBody(404, {
         'error': {'code': 'USER_NOT_FOUND', 'message': 'No user has this username'},
       }));
-      expect(e.message, 'Không tìm thấy ai có tên người dùng này.');
+      expect(e.message, 'Không tìm thấy ai có nickname này.');
       expect(e.isNetworkError, isFalse);
     });
 

@@ -101,7 +101,7 @@ void main() {
     }
     await tester.tap(find.text('Bắt đầu chấm'));
     await tester.pumpAndSettle();
-    expect(find.text('Hãy chọn một tên người dùng.'), findsOneWidget);
+    expect(find.text('Hãy chọn một nickname.'), findsOneWidget);
     expect(find.text('Hãy nhập họ và tên.'), findsOneWidget);
 
     await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'kh');
@@ -125,7 +125,7 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('onboarding-name')), 'Khoa');
     await tester.tap(find.text('Bắt đầu chấm'));
     await tester.pumpAndSettle();
-    expect(find.text('Tên người dùng này đã có người dùng.'), findsOneWidget);
+    expect(find.text('Nickname này đã có người dùng.'), findsOneWidget);
     expect(find.byType(OnboardingPage), findsOneWidget);
 
     await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'khoa_2');

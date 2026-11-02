@@ -30,7 +30,7 @@ class FakeAccountApi implements AccountApi {
 
   final profileUpdates = <({String? displayName, String? username, String? avatarEmoji, bool clearAvatar})>[];
 
-  /// Tên người dùng (chữ thường) đã thuộc về người khác.
+  /// Nickname (chữ thường) đã thuộc về người khác.
   final takenUsernames = <String>{};
 
   @override
@@ -42,7 +42,7 @@ class FakeAccountApi implements AccountApi {
   }) async {
     if (!online) throw offline;
     if (username != null && takenUsernames.contains(username.toLowerCase())) {
-      throw const ApiException('USERNAME_TAKEN', 'Tên người dùng này đã có người dùng.', statusCode: 409);
+      throw const ApiException('USERNAME_TAKEN', 'Nickname này đã có người dùng.', statusCode: 409);
     }
     profileUpdates.add(
       (displayName: displayName, username: username, avatarEmoji: avatarEmoji, clearAvatar: clearAvatar),
@@ -120,7 +120,7 @@ class FakeFriendsApi implements FriendsApi {
   @override
   Future<Friend> add(String username) async {
     if (username == 'nobody') {
-      throw const ApiException('USER_NOT_FOUND', 'Không tìm thấy ai có tên người dùng này.', statusCode: 404);
+      throw const ApiException('USER_NOT_FOUND', 'Không tìm thấy ai có nickname này.', statusCode: 404);
     }
     final friend = Friend(id: 'f-$username', displayName: 'Bạn $username', since: DateTime.utc(2026, 10, 1));
     friends.add(friend);

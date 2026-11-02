@@ -13,10 +13,10 @@ class ApiException implements Exception {
 
   /// Thông báo tiếng Việt cho các mã lỗi người dùng có thể gặp; mã khác dùng message của server.
   static const _messages = {
-    'USER_NOT_FOUND': 'Không tìm thấy ai có tên người dùng này.',
-    'CANNOT_FRIEND_SELF': 'Đây là tên người dùng của chính bạn.',
+    'USER_NOT_FOUND': 'Không tìm thấy ai có nickname này.',
+    'CANNOT_FRIEND_SELF': 'Đây là nickname của chính bạn.',
     'UNAUTHORIZED': 'Phiên đăng nhập không hợp lệ.',
-    'USERNAME_TAKEN': 'Tên người dùng này đã có người dùng.',
+    'USERNAME_TAKEN': 'Nickname này đã có người dùng.',
     'AVATAR_TOO_LARGE': 'Ảnh quá lớn (tối đa 2 MB).',
     'UNSUPPORTED_IMAGE': 'Chỉ dùng được ảnh JPEG, PNG hoặc WebP.',
   };

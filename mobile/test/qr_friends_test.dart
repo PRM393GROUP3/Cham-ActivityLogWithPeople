@@ -74,7 +74,7 @@ void main() {
     Future<void> enterCode(WidgetTester tester, String code) async {
       await tester.tap(find.text('Quét mã QR'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Nhập tên'));
+      await tester.tap(find.text('Nhập nickname'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), code);
       await tester.tap(find.text('Kết nối bạn bè'));
@@ -89,7 +89,7 @@ void main() {
     testWidgets('a QR that is not a Chấm code is rejected without calling the API', (tester) async {
       await pump(tester);
       await enterCode(tester, 'https://example.com');
-      expect(find.text('Đây không phải mã QR hay tên người dùng của Chấm.'), findsOneWidget);
+      expect(find.text('Đây không phải mã QR hay nickname của Chấm.'), findsOneWidget);
       expect(find.text('Kết bạn?'), findsNothing);
       expect(friendsApi.friends, isEmpty);
     });
@@ -97,7 +97,7 @@ void main() {
     testWidgets('scanning your own code or typing your own username is rejected', (tester) async {
       await pump(tester);
       await enterCode(tester, 'CHAM:@toi.cham');
-      expect(find.text('Đây là tên người dùng của chính bạn.'), findsOneWidget);
+      expect(find.text('Đây là nickname của chính bạn.'), findsOneWidget);
       expect(find.text('Kết bạn?'), findsNothing);
     });
 
@@ -106,7 +106,7 @@ void main() {
       await enterCode(tester, '@nobody');
       await tester.tap(find.text('Kết bạn'));
       await tester.pumpAndSettle();
-      expect(find.text('Không kết bạn được: Không tìm thấy ai có tên người dùng này.'), findsOneWidget);
+      expect(find.text('Không kết bạn được: Không tìm thấy ai có nickname này.'), findsOneWidget);
       expect(friendsApi.friends, isEmpty);
     });
 
