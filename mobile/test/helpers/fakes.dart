@@ -12,20 +12,21 @@ import 'package:cham/features/social/domain/feed_share.dart';
 
 const offline = ApiException('NETWORK_ERROR', 'offline');
 
-const testAccount = Account(id: 'me', displayName: 'Bạn', inviteCode: 'MYCODE', token: 't0k3n');
+const testAccount = Account(id: 'me', displayName: 'Bạn', token: 't0k3n');
 
 class FakeAccountApi implements AccountApi {
   int calls = 0;
   bool online = true;
 
+  /// Tài khoản `register` trả về.
+  Account account = testAccount;
+
   @override
   Future<Account> register(String displayName) async {
     calls++;
     if (!online) throw offline;
-    return testAccount;
+    return account;
   }
-
-  String nextInviteCode = 'B3T8WQ2N6M';
 
   final profileUpdates = <({String? displayName, String? username, String? avatarEmoji, bool clearAvatar})>[];
 
@@ -64,12 +65,6 @@ class FakeAccountApi implements AccountApi {
     avatarUploads.add(bytes);
     avatarUrl = '/api/avatars/me/${avatarUploads.length}.jpg';
     return (displayName: testAccount.displayName, username: null, avatarEmoji: null, avatarUrl: avatarUrl);
-  }
-
-  @override
-  Future<String> rotateInviteCode() async {
-    if (!online) throw offline;
-    return nextInviteCode;
   }
 }
 
@@ -123,9 +118,11 @@ class FakeFriendsApi implements FriendsApi {
   Future<List<Friend>> list() async => List.of(friends);
 
   @override
-  Future<Friend> add(String inviteCode) async {
-    if (inviteCode == 'BAD') throw const ApiException('NOT_FOUND', 'Mã mời không tồn tại', statusCode: 404);
-    final friend = Friend(id: 'f-$inviteCode', displayName: 'Bạn $inviteCode', since: DateTime.utc(2026, 10, 1));
+  Future<Friend> add(String username) async {
+    if (username == 'nobody') {
+      throw const ApiException('USER_NOT_FOUND', 'Không tìm thấy ai có tên người dùng này.', statusCode: 404);
+    }
+    final friend = Friend(id: 'f-$username', displayName: 'Bạn $username', since: DateTime.utc(2026, 10, 1));
     friends.add(friend);
     return friend;
   }

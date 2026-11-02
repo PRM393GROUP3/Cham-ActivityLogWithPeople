@@ -75,7 +75,7 @@ class FriendsPage extends ConsumerWidget {
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
-                    _Message(text: 'Chưa có bạn bè nào.\nBấm "Thêm bạn" để quét mã QR hoặc nhập mã mời.'),
+                    _Message(text: 'Chưa có bạn bè nào.\nBấm "Thêm bạn" để quét mã QR hoặc nhập tên người dùng.'),
                   ],
                 )
               : ListView.separated(

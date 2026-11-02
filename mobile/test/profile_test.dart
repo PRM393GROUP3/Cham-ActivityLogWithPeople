@@ -38,7 +38,7 @@ void main() {
   });
 
   test('Account keeps the avatar through JSON (and works without one)', () {
-    const a = Account(id: 'i', displayName: 'An', inviteCode: 'C', token: 't', avatarEmoji: '🐼');
+    const a = Account(id: 'i', displayName: 'An', token: 't', avatarEmoji: '🐼');
     expect(Account.fromJson(a.toJson()).avatarEmoji, '🐼');
     expect(Account.fromJson(a.copyWith(avatarEmoji: () => null).toJson()).avatarEmoji, isNull);
     final photo = a.copyWith(avatarEmoji: () => null, avatarUrl: () => '/api/avatars/i/x.jpg');

@@ -48,9 +48,9 @@ void main() {
 
     test('shows Vietnamese messages for user-facing error codes', () {
       final e = ApiException.fromDio(withBody(404, {
-        'error': {'code': 'INVITE_NOT_FOUND', 'message': 'Invite code is invalid or has been rotated'},
+        'error': {'code': 'USER_NOT_FOUND', 'message': 'No user has this username'},
       }));
-      expect(e.message, 'Mã mời không đúng hoặc đã được đổi.');
+      expect(e.message, 'Không tìm thấy ai có tên người dùng này.');
       expect(e.isNetworkError, isFalse);
     });
 

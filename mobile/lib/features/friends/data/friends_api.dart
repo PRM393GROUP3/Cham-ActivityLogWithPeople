@@ -16,9 +16,9 @@ class FriendsApi {
         return (res.data!['data'] as List).map((e) => Friend.fromJson(e as Map<String, dynamic>)).toList();
       });
 
-  /// Kết bạn trực tiếp bằng mã mời đọc từ QR (SOC-01): không cần người kia xác nhận.
-  Future<Friend> add(String inviteCode) => guardApi(() async {
-        final res = await _dio.post<Map<String, dynamic>>('/friends', data: {'inviteCode': inviteCode});
+  /// Kết bạn trực tiếp bằng tên người dùng, gõ tay hoặc đọc từ QR (SOC-01): không cần người kia xác nhận.
+  Future<Friend> add(String username) => guardApi(() async {
+        final res = await _dio.post<Map<String, dynamic>>('/friends', data: {'username': username});
         return Friend.fromJson(res.data!['data'] as Map<String, dynamic>);
       });
 

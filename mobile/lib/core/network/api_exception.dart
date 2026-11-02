@@ -13,8 +13,8 @@ class ApiException implements Exception {
 
   /// Thông báo tiếng Việt cho các mã lỗi người dùng có thể gặp; mã khác dùng message của server.
   static const _messages = {
-    'INVITE_NOT_FOUND': 'Mã mời không đúng hoặc đã được đổi.',
-    'CANNOT_FRIEND_SELF': 'Đây là mã mời của chính bạn.',
+    'USER_NOT_FOUND': 'Không tìm thấy ai có tên người dùng này.',
+    'CANNOT_FRIEND_SELF': 'Đây là tên người dùng của chính bạn.',
     'UNAUTHORIZED': 'Phiên đăng nhập không hợp lệ.',
     'USERNAME_TAKEN': 'Tên người dùng này đã có người dùng.',
     'AVATAR_TOO_LARGE': 'Ảnh quá lớn (tối đa 2 MB).',

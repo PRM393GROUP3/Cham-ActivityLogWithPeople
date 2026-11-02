@@ -21,10 +21,10 @@ class FriendsController extends AsyncNotifier<List<Friend>> {
     state = await AsyncValue.guard(build);
   }
 
-  /// Kết bạn bằng mã mời; feed được tải lại vì bạn mới thấy được cả các bản Public cũ.
-  Future<Friend> add(String inviteCode) async {
+  /// Kết bạn bằng tên người dùng; feed được tải lại vì bạn mới thấy được cả các bản Public cũ.
+  Future<Friend> add(String username) async {
     await ref.read(accountControllerProvider.notifier).ensure();
-    final friend = await _api.add(inviteCode.trim());
+    final friend = await _api.add(username.trim());
     await refresh();
     ref.invalidate(feedControllerProvider);
     return friend;

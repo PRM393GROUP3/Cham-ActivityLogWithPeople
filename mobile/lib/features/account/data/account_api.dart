@@ -21,7 +21,7 @@ class AccountApi {
         return Account(
           id: user['id'] as String,
           displayName: user['displayName'] as String,
-          inviteCode: user['inviteCode'] as String,
+          username: user['username'] as String?,
           avatarEmoji: user['avatarEmoji'] as String?,
           avatarUrl: user['avatarUrl'] as String?,
           token: data['token'] as String,
@@ -64,10 +64,4 @@ class AccountApi {
       avatarUrl: me['avatarUrl'] as String?,
     );
   }
-
-  /// POST /api/me/invite-code → mã mời mới; mã cũ (và QR cũ) hết hiệu lực.
-  Future<String> rotateInviteCode() => guardApi(() async {
-        final res = await _dio.post<Map<String, dynamic>>('/me/invite-code');
-        return (res.data!['data'] as Map<String, dynamic>)['inviteCode'] as String;
-      });
 }

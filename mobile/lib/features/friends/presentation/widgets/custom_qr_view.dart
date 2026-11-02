@@ -11,7 +11,7 @@ class CustomQrView extends StatelessWidget {
     this.onTap,
   });
 
-  /// Nội dung mã hoá, vd. `InviteQr.encode(inviteCode)`.
+  /// Nội dung mã hoá, vd. `InviteQr.encode(username)`.
   final String data;
   final double size;
   final VoidCallback? onTap;

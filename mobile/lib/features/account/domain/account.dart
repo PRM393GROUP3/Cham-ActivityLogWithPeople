@@ -4,7 +4,6 @@ class Account {
   const Account({
     required this.id,
     required this.displayName,
-    required this.inviteCode,
     required this.token,
     this.username,
     this.avatarEmoji,
@@ -14,7 +13,8 @@ class Account {
   final String id;
   final String displayName;
 
-  /// Tên người dùng duy nhất (chữ thường); `null` khi chưa đặt.
+  /// Tên người dùng duy nhất (chữ thường); `null` khi chưa đặt. Mã QR cá nhân mã hoá tên này và bạn bè
+  /// kết bạn bằng nó (SOC-01).
   final String? username;
 
   /// Avatar là một emoji, hoặc ảnh đã tải lên ([avatarUrl]); cả hai `null` = hiện chữ cái đầu của tên.
@@ -23,14 +23,10 @@ class Account {
   /// Đường dẫn ảnh avatar trên server (`/api/avatars/...`); có ảnh thì không có emoji.
   final String? avatarUrl;
 
-  /// Mã được mã hoá trong QR cá nhân (SOC-01).
-  final String inviteCode;
-
   /// Bearer token do server cấp khi đăng ký.
   final String token;
 
   Account copyWith({
-    String? inviteCode,
     String? displayName,
     String? username,
     String? Function()? avatarEmoji,
@@ -42,7 +38,6 @@ class Account {
         username: username ?? this.username,
         avatarEmoji: avatarEmoji != null ? avatarEmoji() : this.avatarEmoji,
         avatarUrl: avatarUrl != null ? avatarUrl() : this.avatarUrl,
-        inviteCode: inviteCode ?? this.inviteCode,
         token: token,
       );
 
@@ -52,7 +47,6 @@ class Account {
         if (username != null) 'username': username,
         if (avatarEmoji != null) 'avatarEmoji': avatarEmoji,
         if (avatarUrl != null) 'avatarUrl': avatarUrl,
-        'inviteCode': inviteCode,
         'token': token,
       };
 
@@ -62,7 +56,6 @@ class Account {
         username: json['username'] as String?,
         avatarEmoji: json['avatarEmoji'] as String?,
         avatarUrl: json['avatarUrl'] as String?,
-        inviteCode: json['inviteCode'] as String,
         token: json['token'] as String,
       );
 }

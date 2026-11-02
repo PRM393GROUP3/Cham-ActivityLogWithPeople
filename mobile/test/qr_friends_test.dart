@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:cham/core/utils/image_saver/image_saver.dart';
 import 'package:cham/features/account/data/account_api.dart';
-import 'package:cham/features/account/presentation/account_controller.dart';
 import 'package:cham/features/friends/data/friends_api.dart';
 import 'package:cham/features/friends/domain/friend.dart';
 import 'package:cham/features/friends/domain/invite_qr.dart';
@@ -21,25 +20,26 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   group('InviteQr', () {
-    test('encodes with the CHAM: prefix and decodes it back', () {
-      expect(InviteQr.encode('H4R7N2Q8ZK'), 'CHAM:H4R7N2Q8ZK');
-      expect(InviteQr.decode('CHAM:H4R7N2Q8ZK'), 'H4R7N2Q8ZK');
+    test('encodes the username with the CHAM:@ prefix and decodes it back', () {
+      expect(InviteQr.encode('khoa.nguyen'), 'CHAM:@khoa.nguyen');
+      expect(InviteQr.decode('CHAM:@khoa.nguyen'), 'khoa.nguyen');
     });
 
-    test('accepts a bare code, any case and spaces (typed by hand)', () {
-      expect(InviteQr.decode('h4r7 n2q8zk'), 'H4R7N2Q8ZK');
-      expect(InviteQr.decode(' cham:h4r7n2q8zk '), 'H4R7N2Q8ZK');
+    test('accepts a typed username with or without @, any case, spaces around', () {
+      expect(InviteQr.decode(' @Khoa.Nguyen '), 'khoa.nguyen');
+      expect(InviteQr.decode('khoa_2'), 'khoa_2');
+      expect(InviteQr.decode(' cham:@KHOA '), 'khoa');
     });
 
-    test('rejects other QR codes and invalid characters', () {
-      for (final raw in [null, '', 'https://example.com', 'CHAM:SHORT', 'H4R7N2Q8Z0', 'H4R7N2Q8ZKX', 'WIFI:S:x;;']) {
+    test('rejects other QR codes and invalid usernames', () {
+      for (final raw in [null, '', '@', 'https://example.com', 'CHAM:@ab', 'khoa nguyen', 'khoá', 'WIFI:S:x;;']) {
         expect(InviteQr.decode(raw), isNull, reason: '$raw');
       }
     });
   });
 
-  testWidgets('My QR is a real QR code holding CHAM:<invite code>', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: CustomQrView(data: 'CHAM:H4R7N2Q8ZK'))));
+  testWidgets('My QR is a real QR code holding CHAM:@<username>', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: CustomQrView(data: 'CHAM:@khoa.nguyen'))));
     final qr = tester.widget<QrImageView>(find.byType(QrImageView));
     expect(qr.errorCorrectionLevel, QrErrorCorrectLevel.H, reason: 'logo overlay needs high error correction');
     expect(find.bySemanticsLabel('Mã QR kết bạn'), findsOneWidget);
@@ -53,7 +53,7 @@ void main() {
       tester.view.physicalSize = const Size(420, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
-      accountApi = FakeAccountApi();
+      accountApi = FakeAccountApi()..account = testAccount.copyWith(username: 'toi.cham');
       friendsApi = FakeFriendsApi();
       final c = ProviderContainer(overrides: [
         accountApiProvider.overrideWithValue(accountApi),
@@ -74,55 +74,49 @@ void main() {
     Future<void> enterCode(WidgetTester tester, String code) async {
       await tester.tap(find.text('Quét mã QR'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Nhập mã'));
+      await tester.tap(find.text('Nhập tên'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), code);
       await tester.tap(find.text('Kết nối bạn bè'));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('the QR encodes the account invite code', (tester) async {
+    testWidgets('the QR encodes the account username', (tester) async {
       await pump(tester);
-      expect(tester.widget<CustomQrView>(find.byType(CustomQrView)).data, 'CHAM:MYCODE');
+      expect(tester.widget<CustomQrView>(find.byType(CustomQrView)).data, 'CHAM:@toi.cham');
     });
 
     testWidgets('a QR that is not a Chấm code is rejected without calling the API', (tester) async {
       await pump(tester);
       await enterCode(tester, 'https://example.com');
-      expect(find.text('Đây không phải mã QR kết bạn của Chấm.'), findsOneWidget);
+      expect(find.text('Đây không phải mã QR hay tên người dùng của Chấm.'), findsOneWidget);
       expect(find.text('Kết bạn?'), findsNothing);
       expect(friendsApi.friends, isEmpty);
     });
 
-    testWidgets('scanning your own code is rejected', (tester) async {
-      final c = await pump(tester);
-      await c.read(accountControllerProvider.notifier).rotateInviteCode(); // mã hợp lệ: B3T8WQ2N6M
-      await tester.pumpAndSettle();
-      await enterCode(tester, 'CHAM:B3T8WQ2N6M');
-      expect(find.text('Đây là mã mời của chính bạn.'), findsOneWidget);
+    testWidgets('scanning your own code or typing your own username is rejected', (tester) async {
+      await pump(tester);
+      await enterCode(tester, 'CHAM:@toi.cham');
+      expect(find.text('Đây là tên người dùng của chính bạn.'), findsOneWidget);
+      expect(find.text('Kết bạn?'), findsNothing);
     });
 
-    testWidgets('"Đổi mã mời" asks first, then shows the new code everywhere', (tester) async {
-      final c = await pump(tester);
-      await tester.ensureVisible(find.text('Đổi mã mời'));
-      await tester.tap(find.text('Đổi mã mời'));
+    testWidgets('an unknown username explains why nothing happened', (tester) async {
+      await pump(tester);
+      await enterCode(tester, '@nobody');
+      await tester.tap(find.text('Kết bạn'));
       await tester.pumpAndSettle();
-      expect(find.text('Đổi mã mời?'), findsOneWidget);
-
-      await tester.tap(find.text('Đổi mã'));
-      await tester.pumpAndSettle();
-      expect(c.read(accountControllerProvider).value!.inviteCode, 'B3T8WQ2N6M');
-      expect(find.text('Mã mời: B3T8WQ2N6M'), findsOneWidget);
-      expect(tester.widget<CustomQrView>(find.byType(CustomQrView)).data, 'CHAM:B3T8WQ2N6M');
+      expect(find.text('Không kết bạn được: Không tìm thấy ai có tên người dùng này.'), findsOneWidget);
+      expect(friendsApi.friends, isEmpty);
     });
 
-    testWidgets('"Lưu ảnh QR" saves a PNG of the QR named after the invite code', (tester) async {
+    testWidgets('"Lưu ảnh QR" saves a PNG of the QR named after the username', (tester) async {
       tester.view.physicalSize = const Size(420, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
       final saved = <(Uint8List, String)>[];
       final c = ProviderContainer(overrides: [
-        accountApiProvider.overrideWithValue(FakeAccountApi()),
+        accountApiProvider.overrideWithValue(FakeAccountApi()..account = testAccount.copyWith(username: 'toi.cham')),
         friendsApiProvider.overrideWithValue(FakeFriendsApi()),
         pngSaverProvider.overrideWithValue((bytes, {required fileName}) async {
           saved.add((bytes, fileName));
@@ -143,7 +137,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(saved, hasLength(1));
-      expect(saved.single.$2, 'cham-ma-moi-MYCODE');
+      expect(saved.single.$2, 'cham-qr-toi.cham');
       expect(saved.single.$1.sublist(0, 4), [0x89, 0x50, 0x4E, 0x47], reason: 'PNG signature');
       expect(find.text('saved-ok'), findsOneWidget);
     });

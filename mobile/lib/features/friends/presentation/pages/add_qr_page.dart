@@ -16,7 +16,7 @@ import '../widgets/qr_scanner_view.dart';
 
 enum QrTab { myQr, scanQr }
 
-/// QR cá nhân (mã mời) và quét / nhập mã để kết bạn trực tiếp (SOC-01).
+/// QR cá nhân (mã hoá tên người dùng) và quét QR / nhập tên người dùng để kết bạn trực tiếp (SOC-01).
 class AddQrPage extends ConsumerStatefulWidget {
   const AddQrPage({
     super.key,
@@ -42,13 +42,13 @@ class AddQrPage extends ConsumerStatefulWidget {
 class _AddQrPageState extends ConsumerState<AddQrPage> {
   late QrTab _currentTab;
 
-  /// Vùng chụp ảnh mã QR (QR + dòng mã mời) để lưu về máy.
+  /// Vùng chụp ảnh mã QR (QR + dòng tên người dùng) để lưu về máy.
   final _qrImageKey = GlobalKey();
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Tạo tài khoản ẩn danh ngay khi mở màn QR lần đầu để có mã mời.
+    // Tạo tài khoản ẩn danh ngay khi mở màn QR lần đầu.
     if (widget.qrData == null) {
       ref.read(accountControllerProvider.notifier).ensure().ignore();
     }
@@ -66,63 +66,36 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
     );
   }
 
-  void _copyCode(String inviteCode) {
-    Clipboard.setData(ClipboardData(text: inviteCode));
-    _toast('Đã sao chép mã mời: $inviteCode');
+  void _copyUsername(String username) {
+    Clipboard.setData(ClipboardData(text: '@$username'));
+    _toast('Đã sao chép tên người dùng: @$username');
   }
 
-  /// Lưu ảnh mã QR (kèm mã mời) về máy: Android → thư viện ảnh, Web → tải file PNG.
-  Future<void> _saveQrImage(String inviteCode) async {
+  /// Lưu ảnh mã QR (kèm tên người dùng) về máy: Android → thư viện ảnh, Web → tải file PNG.
+  Future<void> _saveQrImage(String username) async {
     try {
       final boundary = _qrImageKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
       final image = await boundary.toImage(pixelRatio: 3);
       final png = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       final save = ref.read(pngSaverProvider);
-      final message = await save(png!.buffer.asUint8List(), fileName: 'cham-ma-moi-$inviteCode');
+      final message = await save(png!.buffer.asUint8List(), fileName: 'cham-qr-$username');
       if (mounted) _toast(message);
     } catch (e) {
       if (mounted) _toast(e is StateError ? e.message : 'Không lưu được ảnh mã QR.');
     }
   }
 
-  Future<void> _rotateCode() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Đổi mã mời?'),
-        content: const Text(
-          'Mã và ảnh QR cũ sẽ không dùng để kết bạn được nữa. Bạn bè hiện có không bị ảnh hưởng.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB53216)),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Đổi mã'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
-    try {
-      final account = await ref.read(accountControllerProvider.notifier).rotateInviteCode();
-      if (mounted) _toast('Mã mời mới: ${account.inviteCode}');
-    } catch (e) {
-      if (mounted) _toast('Không đổi được mã: $e');
-    }
-  }
-
-  /// Nội dung quét / nhập → mã mời → xác nhận → kết bạn ngay (SOC-01).
+  /// Nội dung quét / nhập → tên người dùng → xác nhận → kết bạn ngay (SOC-01).
   Future<void> _handleScannedCode(String raw) async {
-    final code = InviteQr.decode(raw);
-    if (code == null) {
-      _toast('Đây không phải mã QR kết bạn của Chấm.');
+    final username = InviteQr.decode(raw);
+    if (username == null) {
+      _toast('Đây không phải mã QR hay tên người dùng của Chấm.');
       return;
     }
-    final own = widget.qrData?.inviteCode ?? ref.read(accountControllerProvider).value?.inviteCode;
-    if (code == own) {
-      _toast('Đây là mã mời của chính bạn.');
+    final own = widget.qrData?.username ?? ref.read(accountControllerProvider).value?.username;
+    if (username == own) {
+      _toast('Đây là tên người dùng của chính bạn.');
       return;
     }
 
@@ -148,7 +121,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
             ],
           ),
           content: Text(
-            'Kết bạn ngay với chủ mã "$code"? Hai bạn sẽ thấy các hoạt động Công khai của nhau.',
+            'Kết bạn ngay với @$username? Hai bạn sẽ thấy các hoạt động Công khai của nhau.',
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF5E5752),
@@ -177,7 +150,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
 
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final friend = await ref.read(friendsControllerProvider.notifier).add(code);
+      final friend = await ref.read(friendsControllerProvider.notifier).add(username);
       messenger.showSnackBar(
         SnackBar(content: Text('Đã kết bạn với ${friend.displayName}!'), behavior: SnackBarBehavior.floating),
       );
@@ -315,18 +288,18 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
 
     final account = ref.watch(accountControllerProvider);
     final data = account.value;
-    if (data != null) {
+    if (data != null && data.username != null) {
       return _buildMyQrCard(
         context,
         QrCodeData(
           displayName: data.displayName,
-          username: 'Mã mời: ${data.inviteCode}',
-          inviteCode: data.inviteCode,
+          username: data.username!,
           avatarEmoji: data.avatarEmoji,
           avatarUrl: data.avatarUrl,
         ),
       );
     }
+    if (data != null) return _buildNoUsername(context);
     return Padding(
       key: const ValueKey('my_qr_pending'),
       padding: const EdgeInsets.all(32),
@@ -335,7 +308,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
           : Column(
               children: [
                 Text(
-                  'Cần kết nối mạng ở lần đầu để tạo mã mời.'
+                  'Cần kết nối mạng ở lần đầu để tạo mã QR.'
                   '${account.hasError ? '\n${account.error}' : ''}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14, color: Color(0xFF6B645E)),
@@ -348,6 +321,31 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
                 ),
               ],
             ),
+    );
+  }
+
+  /// Mã QR mã hoá tên người dùng, nên cần đặt tên trước.
+  Widget _buildNoUsername(BuildContext context) {
+    return Padding(
+      key: const ValueKey('my_qr_no_username'),
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          const Icon(Icons.alternate_email_rounded, size: 40, color: Color(0xFFB53216)),
+          const SizedBox(height: 12),
+          const Text(
+            'Đặt tên người dùng để có mã QR. Bạn bè quét mã hoặc nhập tên này để kết bạn với bạn.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B645E), height: 1.4),
+          ),
+          const SizedBox(height: 14),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB53216)),
+            onPressed: () => Navigator.pushNamed(context, '/profile'),
+            child: const Text('Đặt tên người dùng'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -459,7 +457,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
 
           // Username Handle
           Text(
-            qrData.username,
+            '@${qrData.username}',
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -470,7 +468,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
           const SizedBox(height: 20),
 
           // QR Code Graphic
-          // Vùng được chụp khi "Lưu ảnh QR": QR + mã mời trên nền trắng.
+          // Vùng được chụp khi "Lưu ảnh QR": QR + tên người dùng trên nền trắng.
           RepaintBoundary(
             key: _qrImageKey,
             child: Container(
@@ -480,13 +478,13 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   CustomQrView(
-                    data: InviteQr.encode(qrData.inviteCode),
+                    data: InviteQr.encode(qrData.username),
                     size: 240,
-                    onTap: () => _copyCode(qrData.inviteCode),
+                    onTap: () => _copyUsername(qrData.username),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Chấm · Mã mời ${qrData.inviteCode}',
+                    'Chấm · @${qrData.username}',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -518,14 +516,14 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
 
           const SizedBox(height: 22),
 
-          // Sao chép mã & Lưu ảnh QR; Đổi mã mời (chỉ với tài khoản thật) ở hàng dưới
+          // Sao chép tên người dùng & Lưu ảnh QR
           Row(
             children: [
               Expanded(
                 child: _QrActionButton(
                   icon: Icons.copy_rounded,
-                  label: 'Sao chép mã',
-                  onTap: () => _copyCode(qrData.inviteCode),
+                  label: 'Sao chép tên',
+                  onTap: () => _copyUsername(qrData.username),
                 ),
               ),
               const SizedBox(width: 10),
@@ -533,22 +531,11 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
                 child: _QrActionButton(
                   icon: Icons.download_rounded,
                   label: 'Lưu ảnh QR',
-                  onTap: () => _saveQrImage(qrData.inviteCode),
+                  onTap: () => _saveQrImage(qrData.username),
                 ),
               ),
             ],
           ),
-          if (widget.qrData == null) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: _QrActionButton(
-                icon: Icons.autorenew_rounded,
-                label: 'Đổi mã mời',
-                onTap: _rotateCode,
-              ),
-            ),
-          ],
         ],
       ),
     );
