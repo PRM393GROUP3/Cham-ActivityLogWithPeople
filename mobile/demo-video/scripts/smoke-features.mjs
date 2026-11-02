@@ -34,7 +34,8 @@ async function onboard(page, name, emoji, prefix) {
   await page.getByText('Mỗi việc là một chấm').waitFor({ timeout: 60_000 });
   await shot(page, `${prefix}-1-welcome`);
   for (let i = 0; i < 3; i++) await tap(page, 'Tiếp tục');
-  await page.getByRole('textbox').fill(name);
+  await page.getByRole('textbox').nth(0).fill(`${prefix}_${Date.now().toString(36)}`); // tên người dùng, duy nhất
+  await page.getByRole('textbox').nth(1).fill(name);
   await tap(page, emoji);
   await shot(page, `${prefix}-2-profile`);
   await tap(page, 'Bắt đầu chấm');
@@ -53,7 +54,7 @@ await onboard(khoa, 'Khoa', '🐻', 'khoa');
 
 const a = await account(thu), b = await account(khoa);
 const H = (t) => ({ 'content-type': 'application/json', authorization: `Bearer ${t}` });
-let r = await fetch(`${API}/friends`, { method: 'POST', headers: H(b.token), body: JSON.stringify({ inviteCode: a.inviteCode }) });
+let r = await fetch(`${API}/friends`, { method: 'POST', headers: H(b.token), body: JSON.stringify({ username: a.username }) });
 console.log('friend', r.status);
 r = await fetch(`${API}/shares/${crypto.randomUUID()}`, {
   method: 'PUT', headers: H(a.token),
