@@ -254,12 +254,13 @@ class ActivityDialPage extends ConsumerWidget {
                                 InkWell(
                                   onTap: () => _openProfileSheet(context),
                                   borderRadius: BorderRadius.circular(20),
-                                  child: account?.avatarEmoji != null
+                                  child: account?.avatarEmoji != null || account?.avatarUrl != null
                                       ? Tooltip(
                                           message: 'Hồ sơ',
                                           child: UserAvatar(
                                             name: account!.displayName,
                                             emoji: account.avatarEmoji,
+                                            imageUrl: account.avatarUrl,
                                             radius: 17,
                                           ),
                                         )

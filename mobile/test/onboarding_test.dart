@@ -72,7 +72,7 @@ void main() {
     expect(find.byType(Dialog), findsOneWidget);
   });
 
-  testWidgets('the last page sets the name and emoji avatar, then opens the dial', (tester) async {
+  testWidgets('the last page sets the username, full name and emoji avatar, then opens the dial', (tester) async {
     await pump(tester, {});
     await next(tester);
     expect(find.text('Riêng tư là mặc định'), findsOneWidget);
@@ -81,14 +81,57 @@ void main() {
     await next(tester);
 
     expect(find.text('Bạn bè sẽ gọi bạn là gì?'), findsOneWidget);
-    await tester.enterText(find.byKey(const ValueKey('onboarding-name')), 'Khoa');
+    await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'Khoa.Nguyen');
+    await tester.enterText(find.byKey(const ValueKey('onboarding-name')), 'Nguyễn Đăng Khoa');
     await tester.tap(find.byKey(const ValueKey('avatar-🐻')));
     await tester.pump();
     await tester.tap(find.text('Bắt đầu chấm'));
     await tester.pumpAndSettle();
 
-    expect(accounts.profileUpdates.single.displayName, 'Khoa');
+    expect(accounts.profileUpdates.single.username, 'khoa.nguyen');
+    expect(accounts.profileUpdates.single.displayName, 'Nguyễn Đăng Khoa');
     expect(accounts.profileUpdates.single.avatarEmoji, '🐻');
+    expect(find.byType(ActivityDialPage), findsOneWidget);
+  });
+
+  testWidgets('username and full name are required, and the username must be well-formed', (tester) async {
+    await pump(tester, {});
+    for (var i = 0; i < 3; i++) {
+      await next(tester);
+    }
+    await tester.tap(find.text('Bắt đầu chấm'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hãy chọn một tên người dùng.'), findsOneWidget);
+    expect(find.text('Hãy nhập họ và tên.'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'kh');
+    await tester.enterText(find.byKey(const ValueKey('onboarding-name')), 'Khoa');
+    await tester.tap(find.text('Bắt đầu chấm'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('3–20 ký tự'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'khoa nguyễn!');
+    expect(tester.widget<TextField>(find.byKey(const ValueKey('onboarding-username'))).controller!.text, 'khoanguyn');
+    expect(accounts.calls, 0); // chưa hợp lệ thì chưa tạo tài khoản
+  });
+
+  testWidgets('a username someone else has stays on the page with an explanation', (tester) async {
+    await pump(tester, {});
+    accounts.takenUsernames.add('khoa');
+    for (var i = 0; i < 3; i++) {
+      await next(tester);
+    }
+    await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'Khoa');
+    await tester.enterText(find.byKey(const ValueKey('onboarding-name')), 'Khoa');
+    await tester.tap(find.text('Bắt đầu chấm'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tên người dùng này đã có người dùng.'), findsOneWidget);
+    expect(find.byType(OnboardingPage), findsOneWidget);
+
+    await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'khoa_2');
+    await tester.tap(find.text('Bắt đầu chấm'));
+    await tester.pumpAndSettle();
+    expect(accounts.profileUpdates.single.username, 'khoa_2');
     expect(find.byType(ActivityDialPage), findsOneWidget);
   });
 
@@ -98,6 +141,7 @@ void main() {
     for (var i = 0; i < 3; i++) {
       await next(tester);
     }
+    await tester.enterText(find.byKey(const ValueKey('onboarding-username')), 'khoa');
     await tester.enterText(find.byKey(const ValueKey('onboarding-name')), 'Khoa');
     await tester.tap(find.text('Bắt đầu chấm'));
     await tester.pumpAndSettle();

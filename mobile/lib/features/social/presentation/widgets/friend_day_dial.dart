@@ -72,7 +72,13 @@ class FriendDayDial extends StatelessWidget {
                   size: const Size.square(_dialSize),
                   painter: OrbitalDialPainter(r1: _ringRadius[0], r2: _ringRadius[1], r3: _ringRadius[2]),
                 ),
-                UserAvatar(name: user.name, emoji: user.avatarEmoji, radius: 26, backgroundColor: Colors.white),
+                UserAvatar(
+                  name: user.name,
+                  emoji: user.avatarEmoji,
+                  imageUrl: user.avatarUrl,
+                  radius: 26,
+                  backgroundColor: Colors.white,
+                ),
                 for (var i = 0; i < shown.length; i++)
                   Transform.translate(
                     offset: positions[i],

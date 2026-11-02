@@ -79,6 +79,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                     rangeLabel: _rangeLabel,
                     displayName: account?.displayName ?? AccountController.defaultDisplayName,
                     avatarEmoji: account?.avatarEmoji,
+                    avatarUrl: account?.avatarUrl,
                   ),
                 ),
               ),

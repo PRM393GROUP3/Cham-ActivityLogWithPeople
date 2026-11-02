@@ -323,6 +323,7 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
           username: 'Mã mời: ${data.inviteCode}',
           inviteCode: data.inviteCode,
           avatarEmoji: data.avatarEmoji,
+          avatarUrl: data.avatarUrl,
         ),
       );
     }
@@ -391,14 +392,12 @@ class _AddQrPageState extends ConsumerState<AddQrPage> {
                   ],
                 ),
                 child: ClipOval(
-                  child: qrData.avatarEmoji != null
-                      ? UserAvatar(name: qrData.displayName, emoji: qrData.avatarEmoji, radius: 33)
-                      : qrData.avatarUrl != null
-                      ? Image.network(
-                          qrData.avatarUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _buildDefaultAvatar(),
+                  child: qrData.avatarEmoji != null || qrData.avatarUrl != null
+                      ? UserAvatar(
+                          name: qrData.displayName,
+                          emoji: qrData.avatarEmoji,
+                          imageUrl: qrData.avatarUrl,
+                          radius: 33,
                         )
                       : _buildDefaultAvatar(),
                 ),

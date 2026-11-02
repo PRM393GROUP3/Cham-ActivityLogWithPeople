@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cham/core/network/api_exception.dart';
 import 'package:cham/features/account/data/account_api.dart';
 import 'package:cham/features/account/domain/account.dart';
@@ -25,13 +27,43 @@ class FakeAccountApi implements AccountApi {
 
   String nextInviteCode = 'B3T8WQ2N6M';
 
-  final profileUpdates = <({String? displayName, String? avatarEmoji, bool clearAvatar})>[];
+  final profileUpdates = <({String? displayName, String? username, String? avatarEmoji, bool clearAvatar})>[];
+
+  /// Tên người dùng (chữ thường) đã thuộc về người khác.
+  final takenUsernames = <String>{};
 
   @override
-  Future<Profile> updateProfile({String? displayName, String? avatarEmoji, bool clearAvatar = false}) async {
+  Future<Profile> updateProfile({
+    String? displayName,
+    String? username,
+    String? avatarEmoji,
+    bool clearAvatar = false,
+  }) async {
     if (!online) throw offline;
-    profileUpdates.add((displayName: displayName, avatarEmoji: avatarEmoji, clearAvatar: clearAvatar));
-    return (displayName: displayName ?? testAccount.displayName, avatarEmoji: clearAvatar ? null : avatarEmoji);
+    if (username != null && takenUsernames.contains(username.toLowerCase())) {
+      throw const ApiException('USERNAME_TAKEN', 'Tên người dùng này đã có người dùng.', statusCode: 409);
+    }
+    profileUpdates.add(
+      (displayName: displayName, username: username, avatarEmoji: avatarEmoji, clearAvatar: clearAvatar),
+    );
+    return (
+      displayName: displayName ?? testAccount.displayName,
+      username: username?.toLowerCase(),
+      avatarEmoji: clearAvatar ? null : avatarEmoji,
+      avatarUrl: avatarEmoji != null || clearAvatar ? null : avatarUrl,
+    );
+  }
+
+  /// Ảnh avatar hiện tại trên "server".
+  String? avatarUrl;
+  final avatarUploads = <Uint8List>[];
+
+  @override
+  Future<Profile> uploadAvatar(Uint8List bytes) async {
+    if (!online) throw offline;
+    avatarUploads.add(bytes);
+    avatarUrl = '/api/avatars/me/${avatarUploads.length}.jpg';
+    return (displayName: testAccount.displayName, username: null, avatarEmoji: null, avatarUrl: avatarUrl);
   }
 
   @override

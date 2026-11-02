@@ -1,14 +1,18 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../account/domain/avatar.dart';
+import '../../../account/domain/username.dart';
 import '../../../account/presentation/account_controller.dart';
 import '../../../account/presentation/widgets/avatar_emoji_grid.dart';
 import '../../../account/presentation/widgets/user_avatar.dart';
 
-/// Màn chào lần đầu mở app: ba trang giới thiệu, trang cuối đặt tên và avatar emoji.
+/// Màn chào lần đầu mở app: ba trang giới thiệu, trang cuối đặt tên người dùng (duy nhất), họ tên
+/// và avatar emoji.
 /// Đặt hồ sơ cần mạng (tạo tài khoản ẩn danh); bỏ qua được và đặt lại sau trong Hồ sơ.
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key, required this.onDone});
@@ -39,10 +43,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   ];
 
   final _pages = PageController();
+  final _username = TextEditingController();
   final _name = TextEditingController();
   int _page = 0;
   String? _emoji;
   bool _saving = false;
+  String? _usernameError;
+  String? _nameError;
   String? _error;
 
   int get _pageCount => _intros.length + 1;
@@ -50,6 +57,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   @override
   void dispose() {
     _pages.dispose();
+    _username.dispose();
     _name.dispose();
     super.dispose();
   }
@@ -58,19 +66,34 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   Future<void> _finish() async {
     final name = _name.text.trim();
-    if (name.isEmpty && _emoji == null) return widget.onDone();
-    if (name.characters.length > 50) return setState(() => _error = 'Tên tối đa 50 ký tự.');
-    if (_emoji != null && !isSingleEmoji(_emoji!)) return setState(() => _error = 'Avatar phải là đúng một emoji.');
-
     setState(() {
-      _saving = true;
-      _error = null;
+      _usernameError = usernameError(_username.text);
+      _nameError = name.isEmpty
+          ? 'Hãy nhập họ và tên.'
+          : name.characters.length > 50
+              ? 'Họ và tên tối đa 50 ký tự.'
+              : null;
+      _error = _emoji != null && !isSingleEmoji(_emoji!) ? 'Avatar phải là đúng một emoji.' : null;
     });
+    if (_usernameError != null || _nameError != null || _error != null) return;
+
+    setState(() => _saving = true);
     try {
-      await ref
-          .read(accountControllerProvider.notifier)
-          .updateProfile(displayName: name.isEmpty ? AccountController.defaultDisplayName : name, avatarEmoji: _emoji);
+      await ref.read(accountControllerProvider.notifier).updateProfile(
+            displayName: name,
+            username: normalizeUsername(_username.text),
+            avatarEmoji: () => _emoji,
+          );
       widget.onDone();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        if (e.code == 'USERNAME_TAKEN') {
+          _usernameError = e.message;
+        } else {
+          _error = 'Chưa kết nối được. Bạn có thể bấm "Để sau" và đặt lại trong Hồ sơ.';
+        }
+      });
     } catch (_) {
       if (mounted) {
         setState(() => _error = 'Chưa kết nối được. Bạn có thể bấm "Để sau" và đặt lại trong Hồ sơ.');
@@ -170,12 +193,35 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         ),
         const SizedBox(height: 16),
         TextField(
+          key: const ValueKey('onboarding-username'),
+          controller: _username,
+          maxLength: usernameMaxLength,
+          autocorrect: false,
+          enableSuggestions: false,
+          keyboardType: TextInputType.visiblePassword, // bàn phím không gợi ý / tự viết hoa
+          inputFormatters: [FilteringTextInputFormatter.allow(usernameAllowedChars)],
+          decoration: InputDecoration(
+            labelText: 'Tên người dùng',
+            prefixText: '@',
+            helperText: 'Duy nhất, bạn bè dùng để nhận ra bạn.',
+            errorText: _usernameError,
+            errorMaxLines: 2,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: (_) => setState(() => _usernameError = null),
+        ),
+        const SizedBox(height: 4),
+        TextField(
           key: const ValueKey('onboarding-name'),
           controller: _name,
           maxLength: 50,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Tên hiển thị', border: OutlineInputBorder()),
-          onChanged: (_) => setState(() => _error = null),
+          decoration: InputDecoration(
+            labelText: 'Họ và tên',
+            errorText: _nameError,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: (_) => setState(() => _nameError = null),
         ),
         AvatarEmojiGrid(
           selected: _emoji,

@@ -63,7 +63,7 @@ class UserProfileSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            child: UserAvatar(name: displayName, emoji: account?.avatarEmoji, radius: 33),
+            child: UserAvatar(name: displayName, emoji: account?.avatarEmoji, imageUrl: account?.avatarUrl, radius: 33),
           ),
           TextButton.icon(
             onPressed: () {

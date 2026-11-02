@@ -16,6 +16,9 @@ class ApiException implements Exception {
     'INVITE_NOT_FOUND': 'Mã mời không đúng hoặc đã được đổi.',
     'CANNOT_FRIEND_SELF': 'Đây là mã mời của chính bạn.',
     'UNAUTHORIZED': 'Phiên đăng nhập không hợp lệ.',
+    'USERNAME_TAKEN': 'Tên người dùng này đã có người dùng.',
+    'AVATAR_TOO_LARGE': 'Ảnh quá lớn (tối đa 2 MB).',
+    'UNSUPPORTED_IMAGE': 'Chỉ dùng được ảnh JPEG, PNG hoặc WebP.',
   };
 
   factory ApiException.fromDio(DioException e) {

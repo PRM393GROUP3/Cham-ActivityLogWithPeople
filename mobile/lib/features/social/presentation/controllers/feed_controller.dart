@@ -25,7 +25,7 @@ class FeedController extends AsyncNotifier<List<FeedShare>> {
     final feed = [
       ...friends,
       for (final json in own)
-        FeedShare.fromOwnJson(json, ownerId: me.id, ownerName: me.displayName, ownerAvatarEmoji: me.avatarEmoji),
+        FeedShare.fromOwnJson(json, ownerId: me.id, ownerName: me.displayName, ownerAvatarEmoji: me.avatarEmoji, ownerAvatarUrl: me.avatarUrl),
     ]..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
     unawaited(HomeWidgetBridge.saveFriendsSnapshot(feed));
     return feed;

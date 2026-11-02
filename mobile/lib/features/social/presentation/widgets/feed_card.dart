@@ -41,7 +41,7 @@ class FeedCard extends StatelessWidget {
             height: 56,
             child: Stack(
               children: [
-                UserAvatar(name: share.ownerName, emoji: share.ownerAvatarEmoji, radius: 28),
+                UserAvatar(name: share.ownerName, emoji: share.ownerAvatarEmoji, imageUrl: share.ownerAvatarUrl, radius: 28),
                 Positioned(
                   right: 0,
                   bottom: 0,
@@ -185,7 +185,7 @@ class FeedCard extends StatelessWidget {
                 children: [
                   for (final r in share.reactors)
                     ListTile(
-                      leading: UserAvatar(name: r.displayName, emoji: r.avatarEmoji, radius: 20),
+                      leading: UserAvatar(name: r.displayName, emoji: r.avatarEmoji, imageUrl: r.avatarUrl, radius: 20),
                       title: Text(r.displayName, style: const TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: Text(VnTime.relative(r.reactedAt)),
                       trailing: Text(r.emoji, style: const TextStyle(fontSize: 24)),

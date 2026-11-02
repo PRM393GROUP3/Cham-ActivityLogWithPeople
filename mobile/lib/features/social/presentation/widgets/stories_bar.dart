@@ -158,7 +158,7 @@ class StoriesBar extends StatelessWidget {
                       width: isSelected ? 3.0 : 2.0,
                     ),
                   ),
-                  child: UserAvatar(name: user.name, emoji: user.avatarEmoji, radius: 29),
+                  child: UserAvatar(name: user.name, emoji: user.avatarEmoji, imageUrl: user.avatarUrl, radius: 29),
                 ),
                 if (isSelected)
                   Positioned(

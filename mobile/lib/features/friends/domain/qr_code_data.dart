@@ -13,7 +13,7 @@ class QrCodeData {
   final String inviteCode;
   final String? avatarUrl;
 
-  /// Avatar emoji của tài khoản; ưu tiên hơn [avatarUrl].
+  /// Avatar emoji của tài khoản (có ảnh [avatarUrl] thì không có emoji).
   final String? avatarEmoji;
   final String instruction;
 

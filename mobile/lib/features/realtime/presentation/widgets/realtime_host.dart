@@ -84,7 +84,7 @@ class _ReactionBanner extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
         child: Row(
           children: [
-            UserAvatar(name: r.displayName, emoji: r.avatarEmoji, radius: 20),
+            UserAvatar(name: r.displayName, emoji: r.avatarEmoji, imageUrl: r.avatarUrl, radius: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

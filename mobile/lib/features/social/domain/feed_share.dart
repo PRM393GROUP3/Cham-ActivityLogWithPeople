@@ -1,10 +1,18 @@
 /// Một người đã thả cảm xúc vào bài của mình.
 class Reactor {
-  const Reactor({required this.userId, required this.displayName, this.avatarEmoji, required this.emoji, required this.reactedAt});
+  const Reactor({
+    required this.userId,
+    required this.displayName,
+    this.avatarEmoji,
+    this.avatarUrl,
+    required this.emoji,
+    required this.reactedAt,
+  });
 
   final String userId;
   final String displayName;
   final String? avatarEmoji;
+  final String? avatarUrl;
 
   /// Cảm xúc đã thả.
   final String emoji;
@@ -16,6 +24,7 @@ class Reactor {
       userId: user['id'] as String,
       displayName: user['displayName'] as String,
       avatarEmoji: user['avatarEmoji'] as String?,
+      avatarUrl: user['avatarUrl'] as String?,
       emoji: json['emoji'] as String,
       reactedAt: DateTime.parse(json['reactedAt'] as String),
     );
@@ -30,6 +39,7 @@ class FeedShare {
     required this.ownerId,
     required this.ownerName,
     this.ownerAvatarEmoji,
+    this.ownerAvatarUrl,
     required this.emoji,
     required this.name,
     required this.occurredAt,
@@ -43,6 +53,7 @@ class FeedShare {
   final String ownerId;
   final String ownerName;
   final String? ownerAvatarEmoji;
+  final String? ownerAvatarUrl;
   final String emoji;
   final String name;
   final DateTime occurredAt;
@@ -68,6 +79,7 @@ class FeedShare {
       ownerId: owner['id'] as String,
       ownerName: owner['displayName'] as String,
       ownerAvatarEmoji: owner['avatarEmoji'] as String?,
+      ownerAvatarUrl: owner['avatarUrl'] as String?,
       emoji: json['emoji'] as String,
       name: json['name'] as String,
       occurredAt: DateTime.parse(json['occurredAt'] as String),
@@ -80,7 +92,13 @@ class FeedShare {
   }
 
   /// Bài Công khai của chính mình từ `GET /api/shares` (kèm danh sách người thả cảm xúc).
-  factory FeedShare.fromOwnJson(Map<String, dynamic> json, {required String ownerId, required String ownerName, String? ownerAvatarEmoji}) {
+  factory FeedShare.fromOwnJson(
+    Map<String, dynamic> json, {
+    required String ownerId,
+    required String ownerName,
+    String? ownerAvatarEmoji,
+    String? ownerAvatarUrl,
+  }) {
     final reactors = (json['reactions'] as List).map((e) => Reactor.fromJson(e as Map<String, dynamic>)).toList();
     final counts = <String, int>{};
     for (final r in reactors) {
@@ -91,6 +109,7 @@ class FeedShare {
       ownerId: ownerId,
       ownerName: ownerName,
       ownerAvatarEmoji: ownerAvatarEmoji,
+      ownerAvatarUrl: ownerAvatarUrl,
       emoji: json['emoji'] as String,
       name: json['name'] as String,
       occurredAt: DateTime.parse(json['occurredAt'] as String),
@@ -119,6 +138,7 @@ class FeedShare {
       ownerId: ownerId,
       ownerName: ownerName,
       ownerAvatarEmoji: ownerAvatarEmoji,
+      ownerAvatarUrl: ownerAvatarUrl,
       emoji: this.emoji,
       name: name,
       occurredAt: occurredAt,

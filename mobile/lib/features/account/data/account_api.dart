@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,20 +23,47 @@ class AccountApi {
           displayName: user['displayName'] as String,
           inviteCode: user['inviteCode'] as String,
           avatarEmoji: user['avatarEmoji'] as String?,
+          avatarUrl: user['avatarUrl'] as String?,
           token: data['token'] as String,
         );
       });
 
-  /// PATCH /api/me — đổi tên và / hoặc avatar. [clearAvatar] = bỏ avatar (về chữ cái đầu).
-  Future<Profile> updateProfile({String? displayName, String? avatarEmoji, bool clearAvatar = false}) =>
+  /// PATCH /api/me — đổi tên, tên người dùng và / hoặc avatar. [clearAvatar] = bỏ avatar (về chữ cái đầu).
+  /// Tên người dùng đã có người khác dùng → [ApiException] mã `USERNAME_TAKEN`.
+  Future<Profile> updateProfile({
+    String? displayName,
+    String? username,
+    String? avatarEmoji,
+    bool clearAvatar = false,
+  }) =>
       guardApi(() async {
         final res = await _dio.patch<Map<String, dynamic>>('/me', data: {
           'displayName': ?displayName,
+          'username': ?username,
           if (clearAvatar) 'avatarEmoji': null else 'avatarEmoji': ?avatarEmoji,
         });
-        final me = res.data!['data'] as Map<String, dynamic>;
-        return (displayName: me['displayName'] as String, avatarEmoji: me['avatarEmoji'] as String?);
+        return _profile(res.data!);
       });
+
+  /// PUT /api/me/avatar — ảnh JPEG / PNG / WebP (≤ 2 MB) làm avatar, thay emoji hoặc ảnh cũ.
+  Future<Profile> uploadAvatar(Uint8List bytes) => guardApi(() async {
+        final res = await _dio.put<Map<String, dynamic>>(
+          '/me/avatar',
+          data: bytes,
+          options: Options(contentType: 'application/octet-stream'),
+        );
+        return _profile(res.data!);
+      });
+
+  static Profile _profile(Map<String, dynamic> body) {
+    final me = body['data'] as Map<String, dynamic>;
+    return (
+      displayName: me['displayName'] as String,
+      username: me['username'] as String?,
+      avatarEmoji: me['avatarEmoji'] as String?,
+      avatarUrl: me['avatarUrl'] as String?,
+    );
+  }
 
   /// POST /api/me/invite-code → mã mời mới; mã cũ (và QR cũ) hết hiệu lực.
   Future<String> rotateInviteCode() => guardApi(() async {

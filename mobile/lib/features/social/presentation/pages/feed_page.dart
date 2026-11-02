@@ -87,8 +87,8 @@ class _FeedPageState extends ConsumerState<FeedPage> {
     final me = ref.watch(accountControllerProvider).value;
     final storyUsers = [
       // "Bạn": lọc bài Công khai của chính mình để xem bạn bè đã thả cảm xúc gì.
-      if (me != null) StoryUser(id: me.id, name: 'Bạn', avatarEmoji: me.avatarEmoji),
-      for (final f in friends) StoryUser(id: f.id, name: f.displayName, avatarEmoji: f.avatarEmoji),
+      if (me != null) StoryUser(id: me.id, name: 'Bạn', avatarEmoji: me.avatarEmoji, avatarUrl: me.avatarUrl),
+      for (final f in friends) StoryUser(id: f.id, name: f.displayName, avatarEmoji: f.avatarEmoji, avatarUrl: f.avatarUrl),
     ];
 
     return Scaffold(
