@@ -7,6 +7,7 @@ import type { NewUserRow, UserRow } from "./user.types";
 export const publicUserColumns = {
   id: users.id,
   displayName: users.displayName,
+  username: users.username,
   avatarEmoji: users.avatarEmoji,
   avatarKey: users.avatarKey,
 };
@@ -16,6 +17,10 @@ export class UserRepository {
 
   findById(id: string): Promise<UserRow | undefined> {
     return this.db.select().from(users).where(eq(users.id, id)).get();
+  }
+
+  findByUsername(username: string): Promise<UserRow | undefined> {
+    return this.db.select().from(users).where(eq(users.username, username)).get();
   }
 
   findByInviteCode(inviteCode: string): Promise<UserRow | undefined> {

@@ -2,6 +2,15 @@ import { z } from "zod";
 
 const displayName = z.string().trim().min(1).max(50);
 
+/** 3–20 chars of `a-z 0-9 . _`, case-insensitive (stored lowercase); no leading/trailing or doubled dot. */
+const username = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^(?!\.)(?!.*\.\.)[a-z0-9._]{3,20}(?<!\.)$/, {
+    message: "username must be 3-20 characters of a-z, 0-9, '.' or '_'",
+  });
+
 const graphemes = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
 /**
@@ -20,9 +29,13 @@ const avatarEmoji = z
 export const registerSchema = z.object({ displayName, avatarEmoji: avatarEmoji.nullish() });
 
 export const updateMeSchema = z
-  .object({ displayName: displayName.optional(), avatarEmoji: avatarEmoji.nullable().optional() })
-  .refine((v) => v.displayName !== undefined || v.avatarEmoji !== undefined, {
-    message: "At least one of 'displayName' or 'avatarEmoji' is required",
+  .object({
+    displayName: displayName.optional(),
+    username: username.optional(),
+    avatarEmoji: avatarEmoji.nullable().optional(),
+  })
+  .refine((v) => v.displayName !== undefined || v.username !== undefined || v.avatarEmoji !== undefined, {
+    message: "At least one of 'displayName', 'username' or 'avatarEmoji' is required",
   });
 
 export const avatarParamSchema = z.object({

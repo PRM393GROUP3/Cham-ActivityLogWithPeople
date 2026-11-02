@@ -7,6 +7,7 @@ export type NewUserRow = typeof users.$inferInsert;
 export type MeDto = {
   id: string;
   displayName: string;
+  username: string | null;
   avatarEmoji: string | null;
   /** Uploaded avatar image path (`/api/avatars/...`); takes precedence over `avatarEmoji`. */
   avatarUrl: string | null;
@@ -18,9 +19,16 @@ export type MeDto = {
 export type PublicUserDto = {
   id: string;
   displayName: string;
+  username: string | null;
   avatarEmoji: string | null;
   avatarUrl: string | null;
 };
 
 /** The `users` columns behind a PublicUserDto; select these and map with `toPublicUserDto`. */
-export type PublicUserRow = { id: string; displayName: string; avatarEmoji: string | null; avatarKey: string | null };
+export type PublicUserRow = {
+  id: string;
+  displayName: string;
+  username: string | null;
+  avatarEmoji: string | null;
+  avatarKey: string | null;
+};

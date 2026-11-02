@@ -12,6 +12,8 @@ const updatedAt = integer("updated_at", { mode: "timestamp_ms" })
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   displayName: text("display_name").notNull(),
+  /** Unique handle (`[a-z0-9._]`, stored lowercase). Null until the user picks one. */
+  username: text("username").unique(),
   /**
    * Avatar is either an uploaded image (R2 object key, see AvatarStorage) or a single emoji; setting
    * one clears the other. Both null = show the name's first letter.

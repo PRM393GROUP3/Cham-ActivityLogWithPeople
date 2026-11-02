@@ -1,4 +1,4 @@
-import { AppError, NotFoundError } from "../../shared/errors/app-error";
+import { AppError, ConflictError, NotFoundError } from "../../shared/errors/app-error";
 import { generateInviteCode, generateToken, hashToken } from "../../shared/utils/crypto";
 import { detectImageFormat } from "../../shared/utils/image";
 import { avatarUrl, MAX_AVATAR_BYTES, type AvatarStorage } from "./avatar.storage";
@@ -9,6 +9,7 @@ import type { MeDto, PublicUserDto, PublicUserRow, UserRow } from "./user.types"
 export const toPublicUserDto = (row: PublicUserRow): PublicUserDto => ({
   id: row.id,
   displayName: row.displayName,
+  username: row.username,
   avatarEmoji: row.avatarEmoji,
   avatarUrl: avatarUrl(row.avatarKey),
 });
@@ -45,14 +46,21 @@ export class UserService {
     return toMeDto(await this.require(id));
   }
 
-  /** Setting `avatarEmoji` (or clearing it with null) also removes an uploaded avatar image. */
+  /**
+   * Setting `avatarEmoji` (or clearing it with null) also removes an uploaded avatar image.
+   * A username someone else has is a 409 USERNAME_TAKEN.
+   */
   async update(id: string, input: UpdateMeInput): Promise<MeDto> {
-    if (input.avatarEmoji === undefined) return this.save(id, { displayName: input.displayName });
-    return this.replaceAvatar(id, {
+    if (input.username !== undefined) {
+      const owner = await this.repo.findByUsername(input.username);
+      if (owner && owner.id !== id) throw usernameTaken();
+    }
+    const profile = {
       ...(input.displayName !== undefined && { displayName: input.displayName }),
-      avatarEmoji: input.avatarEmoji,
-      avatarKey: null,
-    });
+      ...(input.username !== undefined && { username: input.username }),
+    };
+    if (input.avatarEmoji === undefined) return this.save(id, profile);
+    return this.replaceAvatar(id, { ...profile, avatarEmoji: input.avatarEmoji, avatarKey: null });
   }
 
   /** Stores a JPEG / PNG / WebP (≤ MAX_AVATAR_BYTES) as the avatar, replacing any emoji or older image. */
@@ -91,11 +99,17 @@ export class UserService {
   }
 
   private async save(id: string, data: Partial<UserRow>): Promise<MeDto> {
-    const row = await this.repo.update(id, { ...data, updatedAt: new Date() });
+    const row = await this.repo.update(id, { ...data, updatedAt: new Date() }).catch((e: unknown) => {
+      // Lost a race for the same username between the check and the write.
+      if (data.username && /UNIQUE constraint failed: users\.username/.test(String(e))) throw usernameTaken();
+      throw e;
+    });
     if (!row) throw new NotFoundError("User", id);
     return toMeDto(row);
   }
 }
+
+const usernameTaken = () => new AppError(409, "USERNAME_TAKEN", "This username is already taken");
 
 export const avatarTooLarge = () =>
   new AppError(413, "AVATAR_TOO_LARGE", `Avatar must be at most ${MAX_AVATAR_BYTES / 1024 / 1024} MB`);
