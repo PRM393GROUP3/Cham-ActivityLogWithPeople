@@ -13,7 +13,7 @@
 
          This Theme is only used starting with V2 of Flutter's Android embedding. -->
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">?android:colorBackground</item>
+        <item name="android:windowBackground">@color/cham_background</item>
     </style>
     <!-- Vòng chọn hoạt động của Widget 2x2: nền trong suốt để màn hình chính hiện mờ phía sau -->
     <style name="ChamDialPickerTheme" parent="@android:style/Theme.Translucent.NoTitleBar.Fullscreen">

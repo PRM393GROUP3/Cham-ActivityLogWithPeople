@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Trùng scaffoldBackgroundColor của app: splash chuyển sang Flutter không bị nháy màu -->
+    <color name="cham_background">#FAF6F0</color>
+</resources>
