@@ -126,8 +126,9 @@ class UserProfileSheet extends ConsumerWidget {
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: () {
-                    if (username != null)
+                    if (username != null) {
                       return _copyUsername(context, username);
+                    }
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/profile');
                   },
