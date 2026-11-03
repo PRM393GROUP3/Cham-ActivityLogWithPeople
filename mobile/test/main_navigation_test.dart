@@ -145,7 +145,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.person_rounded).first);
       await tester.pumpAndSettle();
 
-      expect(find.text('MÃ MỜI KẾT BẠN'), findsOneWidget);
+      expect(find.text('KẾT BẠN'), findsOneWidget);
       expect(find.text('Mở Mã QR & Quét Bạn Bè'), findsOneWidget);
 
       await tester.tap(find.text('Mở Mã QR & Quét Bạn Bè'));

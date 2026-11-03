@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart' show StringCharacters;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/time/vn_time.dart';
@@ -22,6 +23,7 @@ class ActivityDialState {
     required this.eventTypes,
     required this.isLoading,
     this.lastTappedType,
+    this.audienceMode = ShareVisibility.private,
   });
 
   final List<ActivityLog> logs;
@@ -30,6 +32,11 @@ class ActivityDialState {
   final List<ActivityEventType> eventTypes;
   final bool isLoading;
   final ActivityEventType? lastTappedType;
+
+  /// Chế độ đối tượng chia sẻ Locket-style (SOC-03):
+  /// [ShareVisibility.public] = Bạn bè (tự động chia sẻ lên feed)
+  /// [ShareVisibility.private] = Chỉ mình tôi (lưu offline máy)
+  final ShareVisibility audienceMode;
 
   /// Mọi loại sự kiện, đã được gán vòng và góc trên vòng Dial theo thứ tự.
   List<ActivityEventType> get dialTypes => layoutDial(eventTypes);
@@ -49,12 +56,14 @@ class ActivityDialState {
     List<ActivityEventType>? eventTypes,
     bool? isLoading,
     ActivityEventType? lastTappedType,
+    ShareVisibility? audienceMode,
   }) {
     return ActivityDialState(
       logs: logs ?? this.logs,
       eventTypes: eventTypes ?? this.eventTypes,
       isLoading: isLoading ?? this.isLoading,
       lastTappedType: lastTappedType ?? this.lastTappedType,
+      audienceMode: audienceMode ?? this.audienceMode,
     );
   }
 }
@@ -95,9 +104,29 @@ class ActivityDialController extends Notifier<ActivityDialState> {
     }
   }
 
+  static const _audiencePrefKey = 'cham_audience_mode';
+
+  /// Đổi chế độ chia sẻ Locket-style và ghi nhớ lựa chọn (Sticky Preference, SOC-03).
+  Future<void> setAudienceMode(ShareVisibility mode) async {
+    if (state.audienceMode == mode) return;
+    state = state.copyWith(audienceMode: mode);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _audiencePrefKey,
+      mode == ShareVisibility.private ? 'private' : 'public',
+    );
+  }
+
   Future<void> _init() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedMode = prefs.getString(_audiencePrefKey);
+    final audienceMode = savedMode == 'public'
+        ? ShareVisibility.public
+        : ShareVisibility.private;
+
     state = state.copyWith(
       eventTypes: await ref.read(eventTypeStorageProvider).load(),
+      audienceMode: audienceMode,
     );
 
     final storedLogs = await _storage.loadLogs();
@@ -158,14 +187,17 @@ class ActivityDialController extends Notifier<ActivityDialState> {
   }
 
   /// Ghi nhận 1-chạm tức thì với thời điểm hiện tại (LOG-03, BR-01, DAT-01).
-  /// Không mở form, không hỏi thêm. Bản ghi luôn bắt đầu ở chế độ Private (SOC-03).
+  /// Không mở form, không hỏi thêm. Tự động áp dụng chế độ chia sẻ đang chọn (SOC-03).
   Future<ActivityLog> quickLog(ActivityEventType type) async {
+    final isPublic = state.audienceMode == ShareVisibility.public;
     final newLog = ActivityLog(
       id: uuidV4(),
       eventTypeId: type.id,
       name: type.name,
       emoji: type.emoji,
       occurredAt: DateTime.now(),
+      visibility: isPublic ? ShareVisibility.public : ShareVisibility.private,
+      syncStatus: isPublic ? ShareSyncStatus.pending : ShareSyncStatus.synced,
     );
 
     // Lưu vào Local Storage (BR-02)
@@ -173,6 +205,19 @@ class ActivityDialController extends Notifier<ActivityDialState> {
     state = state.copyWith(logs: updatedLogs, lastTappedType: type);
 
     await _storage.saveLogs(updatedLogs);
+
+    if (isPublic) {
+      await _outbox.put(
+        ShareOp.publish(
+          recordId: newLog.id,
+          emoji: newLog.emoji,
+          name: newLog.name,
+          occurredAt: newLog.occurredAt,
+        ),
+      );
+      await syncShares();
+    }
+
     return newLog;
   }
 

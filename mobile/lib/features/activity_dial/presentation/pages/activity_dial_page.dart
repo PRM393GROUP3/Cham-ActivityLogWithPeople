@@ -5,12 +5,13 @@ import '../../../../core/time/vn_time.dart';
 import '../activity_dial_controller.dart';
 import '../../../account/presentation/account_controller.dart';
 import '../../../account/presentation/widgets/user_avatar.dart';
-import '../../domain/activity_event_type.dart';
 import '../widgets/add_activity_dialog.dart';
 import '../widgets/orbital_dial_widget.dart';
 import '../widgets/today_logs_sheet.dart';
 import '../widgets/today_summary_card.dart';
 import '../widgets/user_profile_sheet.dart';
+import '../../domain/activity_log.dart';
+import '../widgets/audience_selector_bar.dart';
 
 /// Màn hình chính "Chấm — Màn hình chính (Wear OS Dial)"
 /// Chuẩn xác 100% theo bản thiết kế mẫu và yêu cầu SRS (LOG-01 → 05, DAT-01).
@@ -27,42 +28,69 @@ class ActivityDialPage extends ConsumerWidget {
   final VoidCallback? onNavigateToAnalytics;
   final VoidCallback? onNavigateToHistory;
 
-  void _showFeedbackToast(BuildContext context, ActivityEventType type) {
+  void _showFeedbackToast(BuildContext context, WidgetRef ref, ActivityLog log) {
+    final controller = ref.read(activityDialControllerProvider.notifier);
+    final isPublic = log.isPublic;
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         backgroundColor: const Color(0xFF2B221D),
         elevation: 6,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
         content: Row(
           children: [
-            Text(type.emoji, style: const TextStyle(fontSize: 20)),
+            Text(log.emoji, style: const TextStyle(fontSize: 20)),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                'Đã chấm ${type.name} lúc ${VnTime.hm(DateTime.now())}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13.5,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Đã chấm ${log.name} lúc ${VnTime.hm(log.occurredAt)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    isPublic ? 'Đã chia sẻ cho bạn bè 🌐' : 'Lưu riêng tư trên máy 🔒',
+                    style: TextStyle(
+                      color: isPublic
+                          ? const Color(0xFFFF8A70)
+                          : const Color(0xFFC7BCB3),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF694A),
-                borderRadius: BorderRadius.circular(10),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: isPublic
+                    ? const Color(0xFFFFC0B2)
+                    : const Color(0xFFFF8A70),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: const Text(
-                'Đã lưu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                controller.setVisibility(
+                  log.id,
+                  isPublic ? ShareVisibility.private : ShareVisibility.public,
+                );
+              },
+              child: Text(
+                isPublic ? 'Giữ riêng tư' : 'Chia sẻ ngay 🌐',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -291,7 +319,15 @@ class ActivityDialPage extends ConsumerWidget {
                           onTap: () => _openTodayLogsSheet(context),
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
+
+                        // --- LOCKET AUDIENCE BAR: Bạn bè ⟷ Chỉ mình tôi (SOC-03) ---
+                        AudienceSelectorBar(
+                          selectedMode: state.audienceMode,
+                          onChanged: controller.setAudienceMode,
+                        ),
+
+                        const SizedBox(height: 10),
 
                         // --- 3. RADIAL ORBITAL DIAL (Wear OS Dial) ---
                         // Thu nhỏ vừa phần còn lại của màn hình thay vì cuộn.
@@ -305,9 +341,9 @@ class ActivityDialPage extends ConsumerWidget {
                                 child: OrbitalDialWidget(
                                   eventTypes: state.dialTypes,
                                   onTapNode: (type) async {
-                                    await controller.quickLog(type);
+                                    final log = await controller.quickLog(type);
                                     if (context.mounted) {
-                                      _showFeedbackToast(context, type);
+                                      _showFeedbackToast(context, ref, log);
                                     }
                                   },
                                   onTapCenter: () =>
