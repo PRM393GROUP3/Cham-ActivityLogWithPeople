@@ -14,6 +14,7 @@ class ActivityEventType {
     required this.orbit,
     required this.angleDegree,
     this.isCustom = false,
+    this.defaultPublic = false,
   });
 
   /// Loại sự kiện người dùng tự tạo trong Cài đặt: hiển thị bằng emoji.
@@ -21,6 +22,7 @@ class ActivityEventType {
     required this.id,
     required this.name,
     required this.emoji,
+    this.defaultPublic = false,
   }) : icon = null,
        bgColor = const Color(0xFFFFF4EC),
        accentColor = const Color(0xFFB53216),
@@ -46,8 +48,17 @@ class ActivityEventType {
 
   final bool isCustom;
 
+  /// Chế độ chia sẻ mặc định (SOC-03): true = tự động chia sẻ lên Feed bạn bè khi chấm.
+  final bool defaultPublic;
+
   /// Đổi emoji thì bỏ icon Material (không còn khớp), hiển thị emoji mới.
-  ActivityEventType copyWith({String? name, String? emoji, int? orbit, double? angleDegree}) {
+  ActivityEventType copyWith({
+    String? name,
+    String? emoji,
+    int? orbit,
+    double? angleDegree,
+    bool? defaultPublic,
+  }) {
     final emojiChanged = emoji != null && emoji != this.emoji;
     return ActivityEventType(
       id: id,
@@ -59,20 +70,38 @@ class ActivityEventType {
       orbit: orbit ?? this.orbit,
       angleDegree: angleDegree ?? this.angleDegree,
       isCustom: isCustom,
+      defaultPublic: defaultPublic ?? this.defaultPublic,
     );
   }
 
-  /// Chỉ lưu id, tên, emoji; icon và màu của loại mặc định được lấy lại theo id.
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'emoji': emoji};
+  /// Chỉ lưu id, tên, emoji, và tùy chọn chia sẻ mặc định.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'emoji': emoji,
+    'defaultPublic': defaultPublic,
+  };
 
   factory ActivityEventType.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String;
     final name = json['name'] as String;
     final emoji = json['emoji'] as String;
+    final defaultPublic = json['defaultPublic'] as bool? ?? false;
     for (final d in defaultTypes) {
-      if (d.id == id) return d.copyWith(name: name, emoji: emoji);
+      if (d.id == id) {
+        return d.copyWith(
+          name: name,
+          emoji: emoji,
+          defaultPublic: defaultPublic,
+        );
+      }
     }
-    return ActivityEventType.custom(id: id, name: name, emoji: emoji);
+    return ActivityEventType.custom(
+      id: id,
+      name: name,
+      emoji: emoji,
+      defaultPublic: defaultPublic,
+    );
   }
 
   /// 19 Loại sự kiện chuẩn theo bản thiết kế "Wear OS Dial"
