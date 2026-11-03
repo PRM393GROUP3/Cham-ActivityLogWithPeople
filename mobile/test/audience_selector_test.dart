@@ -86,7 +86,7 @@ void main() {
 
       final outbox = container.read(shareOutboxProvider);
       final ops = await outbox.load();
-      // Since FakeShareApi may sync or ops are queued
+      expect(ops, isNotNull);
       expect(container.read(activityDialControllerProvider).logs.first.isPublic, isTrue);
 
       // 4. Verify sticky preference survives reload
